@@ -1,6 +1,7 @@
 import { Db, MongoClient, Collection } from 'mongodb'
 import { mongORMetaDataStorage } from '..'
 import { errors } from '../messages.const'
+import { pick } from 'lodash'
 
 export interface ConnectionOptions {
 	databaseName: string
@@ -44,8 +45,6 @@ export class MongORMConnection {
 			this.collections[collectionName] = collectionCreated
 		}
 
-		console.log(mongORMetaDataStorage().mongORMIndexMetas)
-
 		collectionNames = Object.keys(mongORMetaDataStorage().mongORMIndexMetas)
 
 		for (const collectionName of collectionNames) {
@@ -83,6 +82,22 @@ export class MongORMConnection {
 			await this.collections[collectionName].deleteMany({})
 		}
 	}
+
+	public getMongORMPartial(
+		obj: Object,
+		collectionName: string
+	): Partial<Object> {
+		// Select fields and indexes
+		const fieldKeys = mongORMetaDataStorage().mongORMFieldMetas[collectionName]
+
+		const indexKeys = mongORMetaDataStorage().mongORMIndexMetas[
+			collectionName
+		].map((indexMeta) => {
+			return indexMeta.key
+		})
+
+		return pick(obj, fieldKeys.concat(indexKeys))
+	}
 }
 
 /**
@@ -102,4 +117,12 @@ export function createConnectionString(options: ConnectionOptions): string {
 
 export function generateCollectionName(object: Object) {
 	return object.constructor.name.toLowerCase()
+}
+
+export function generateCollectionNameForStatic(object: Object) {
+	return object
+		.toString()
+		.split('(' || /s+/)[0]
+		.split(' ' || /s+/)[1]
+		.toLowerCase()
 }

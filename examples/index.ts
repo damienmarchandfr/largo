@@ -52,7 +52,7 @@ new MongORMConnection({
 		// User added
 		console.log('User added. MongoID = ' + userId)
 
-		
+		User.update(connection, { email: 'toto' }, { email: 'damien@dev.fr' })
 	})
 	.catch((err) => {
 		console.error(err)

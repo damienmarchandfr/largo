@@ -1,7 +1,9 @@
-import { MongORMConnection, generateCollectionName } from '../connection'
+import {
+	MongORMConnection,
+	generateCollectionName,
+	generateCollectionNameForStatic,
+} from '../connection'
 import { FilterQuery, UpdateOneOptions, ObjectID } from 'mongodb'
-import { mongORMetaDataStorage } from '..'
-import { pick } from 'lodash'
 
 export class MongORMEntity {
 	/**
@@ -17,21 +19,14 @@ export class MongORMEntity {
 		filter: FilterQuery<any> = {},
 		options?: UpdateOneOptions
 	) {
-		const collectionName = generateCollectionName(this)
-
-		// Select keys of partial
-		const fieldKeys = mongORMetaDataStorage().mongORMFieldMetas[collectionName]
-		const indexKeys = mongORMetaDataStorage().mongORMIndexMetas[
-			collectionName
-		].map((indexMeta) => {
-			return indexMeta.key
-		})
-
-		const toUpdate = pick(partial, fieldKeys.concat(indexKeys))
+		const collectionName = generateCollectionNameForStatic(this)
+		const toUpdate = connect.getMongORMPartial(partial, collectionName)
 
 		return connect.collections[collectionName].updateMany(
 			filter,
-			toUpdate,
+			{
+				$set: toUpdate,
+			},
 			options
 		)
 	}
@@ -46,7 +41,6 @@ export class MongORMEntity {
 		filter: FilterQuery<any> = {}
 	) {
 		const collectionName = generateCollectionName(this)
-
 		return connect.collections[collectionName].deleteMany(filter)
 	}
 
@@ -58,16 +52,7 @@ export class MongORMEntity {
 	 */
 	async insert(connect: MongORMConnection) {
 		const collectionName = generateCollectionName(this)
-
-		// Select fields and indexes
-		const fieldKeys = mongORMetaDataStorage().mongORMFieldMetas[collectionName]
-		const indexKeys = mongORMetaDataStorage().mongORMIndexMetas[
-			collectionName
-		].map((indexMeta) => {
-			return indexMeta.key
-		})
-
-		const toInsert = pick(this, fieldKeys.concat(indexKeys))
+		const toInsert = connect.getMongORMPartial(this, collectionName)
 
 		const inserted = await connect.collections[collectionName].insertOne(
 			toInsert
@@ -83,16 +68,7 @@ export class MongORMEntity {
 	 */
 	async update(connect: MongORMConnection, options?: UpdateOneOptions) {
 		const collectionName = generateCollectionName(this)
-
-		// Select fields and indexes
-		const fieldKeys = mongORMetaDataStorage().mongORMFieldMetas[collectionName]
-		const indexKeys = mongORMetaDataStorage().mongORMIndexMetas[
-			collectionName
-		].map((indexMeta) => {
-			return indexMeta.key
-		})
-
-		const toUpdate = pick(this, fieldKeys.concat(indexKeys))
+		const toUpdate = connect.getMongORMPartial(this, collectionName)
 
 		return connect.collections[collectionName].updateOne(
 			{ _id: this._id },

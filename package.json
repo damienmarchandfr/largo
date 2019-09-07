@@ -23,7 +23,7 @@
 		"release:first": "standard-version --first-release",
 		"test": "jest --detectOpenHandles",
 		"test:watch": "jest --watch --verbose false",
-		"example": "ts-node examples/index.ts"
+		"example": "ts-node-dev examples/index.ts"
 	},
 	"dependencies": {
 		"lodash": "^4.17.15",
