@@ -1,0 +1,28 @@
+{
+	"defaultSeverity": "warning",
+	"extends": ["tslint:latest", "tslint-config-prettier"],
+	"rulesDirectory": [],
+	// https://palantir.github.io/tslint/rules/
+	"rules": {
+		"variable-name": [
+			true,
+			"require-const-for-all-caps",
+			"ban-keywords",
+			"check-format",
+			"allow-trailing-underscore",
+			"allow-leading-underscore"
+		],
+		"interface-name": [true, "never-prefix"],
+		"no-implicit-dependencies": [true, "dev"],
+		"interface-over-type-literal": false,
+		"no-angle-bracket-type-assertion": false,
+		"no-console": false,
+		"object-literal-sort-keys": false,
+		"ordered-imports": false,
+		"member-access": false,
+		"curly": [true, "ignore-same-line"],
+		"array-type": [true, "array-simple"],
+		"max-classes-per-file": false,
+		"ban-types": false
+	}
+}

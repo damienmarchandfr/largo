@@ -1,0 +1,52 @@
+{
+	"name": "mongorm",
+	"version": "1.0.0",
+	"author": "Damien Marchand",
+	"license": "MIT",
+	"repository": "",
+	"keywords": [],
+	"main": "dist/index.js",
+	"types": "dist/index.d.ts",
+	"files": [
+		"dist"
+	],
+	"engines": {
+		"node": ">=8.10"
+	},
+	"engineStrict": true,
+	"scripts": {
+		"start": "ts-node src/index.ts",
+		"dev": "ts-node-dev --respawn --no-notify src/index.ts",
+		"build": "rimraf dist && tsc -p tsconfig.build.json",
+		"prepublishOnly": "yarn build",
+		"release": "standard-version",
+		"release:first": "standard-version --first-release",
+		"test": "jest --detectOpenHandles",
+		"test:watch": "jest --watch --verbose false",
+		"example": "ts-node examples/index.ts"
+	},
+	"dependencies": {
+		"lodash": "^4.17.15",
+		"mongodb": "^3.3.2",
+		"reflect-metadata": "^0.1.13"
+	},
+	"devDependencies": {
+		"@commitlint/cli": "^8.0.0",
+		"@commitlint/config-conventional": "^8.0.0",
+		"@types/jest": "^24.0.17",
+		"@types/lodash": "^4.14.138",
+		"@types/mongodb": "^3.3.1",
+		"@types/node": "^12.7.4",
+		"husky": "^3.0.3",
+		"jest": "^24.8.0",
+		"rimraf": "^3.0.0",
+		"standard-version": "^7.0.0",
+		"ts-jest": "^24.0.2",
+		"ts-node": "^8.3.0",
+		"ts-node-dev": "^1.0.0-pre.40",
+		"tslint": "^5.19.0",
+		"tslint-config-prettier": "^1.18.0",
+		"typescript": "^3.5.3",
+		"typescript-tslint-plugin": "^0.5.4"
+	}
+}
