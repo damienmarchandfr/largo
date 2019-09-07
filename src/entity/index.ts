@@ -3,9 +3,23 @@ import {
 	generateCollectionName,
 	generateCollectionNameForStatic,
 } from '../connection'
-import { FilterQuery, UpdateOneOptions, ObjectID } from 'mongodb'
+import {
+	FilterQuery,
+	UpdateOneOptions,
+	ObjectID,
+	FindOneOptions,
+} from 'mongodb'
 
 export class MongORMEntity {
+	static async findOne(
+		connect: MongORMConnection,
+		filter: FilterQuery<any>,
+		findOptions?: FindOneOptions
+	) {
+		const collectionName = generateCollectionNameForStatic(this)
+		return connect.collections[collectionName].findOne(filter, findOptions)
+	}
+
 	/**
 	 * Update many objects with query filter
 	 * @param connect
@@ -40,7 +54,7 @@ export class MongORMEntity {
 		connect: MongORMConnection,
 		filter: FilterQuery<any> = {}
 	) {
-		const collectionName = generateCollectionName(this)
+		const collectionName = generateCollectionNameForStatic(this)
 		return connect.collections[collectionName].deleteMany(filter)
 	}
 

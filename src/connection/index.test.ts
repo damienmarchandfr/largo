@@ -2,6 +2,7 @@ import {
 	createConnectionString,
 	MongORMConnection,
 	generateCollectionName,
+	generateCollectionNameForStatic,
 } from '.'
 import { errors } from '../messages.const'
 
@@ -36,55 +37,68 @@ describe('generateCollectionName function', () => {
 	})
 })
 
-describe('connect function', () => {
-	test('must connect to mongo', async () => {
-		const mongORM = new MongORMConnection({
-			databaseName: 'toto',
-		})
-		await mongORM.connect()
-
-		expect(mongORM.collections).toBe({})
-	})
-})
-
-describe('disconnect function', () => {
-	test('must throw an error if not connected', async () => {
-		const mongORM = new MongORMConnection({
-			databaseName: 'toto',
-		})
-
-		let hasError = false
-
-		try {
-			await mongORM.disconnect()
-		} catch (error) {
-			expect(error.message).toEqual(
-				errors.CLIENT_NOT_CONNECTED_CANNOT_DISCONNECT
-			)
-			hasError = true
+describe('generateCollectionName', () => {
+	test('must return a valid collection name for static', () => {
+		class User {
+			static test() {
+				return this
+			}
 		}
 
-		expect(hasError).toBe(true)
-	})
-
-	test('must set connected to false after called', async () => {
-		const mongORM = new MongORMConnection({
-			databaseName: 'toto',
-		})
-
-		await mongORM.connect()
-		await mongORM.disconnect()
-
-		expect(mongORM.collections).toEqual({})
+		const collectionName = generateCollectionNameForStatic(User.test())
+		expect(collectionName).toEqual('user')
 	})
 })
 
-describe('createIndexesObject function', () => {
-	it('should return an array of collections name', () => {
-		const metas: Array<{
-			obj: Object
-			key: string
-			unique: boolean
-		}> = []
-	})
-})
+// describe('connect function', () => {
+// 	test('must connect to mongo', async () => {
+// 		const mongORM = new MongORMConnection({
+// 			databaseName: 'toto',
+// 		})
+// 		await mongORM.connect()
+
+// 		expect(mongORM.collections).toBe({})
+// 	})
+// })
+
+// describe('disconnect function', () => {
+// 	test('must throw an error if not connected', async () => {
+// 		const mongORM = new MongORMConnection({
+// 			databaseName: 'toto',
+// 		})
+
+// 		let hasError = false
+
+// 		try {
+// 			await mongORM.disconnect()
+// 		} catch (error) {
+// 			expect(error.message).toEqual(
+// 				errors.CLIENT_NOT_CONNECTED_CANNOT_DISCONNECT
+// 			)
+// 			hasError = true
+// 		}
+
+// 		expect(hasError).toBe(true)
+// 	})
+
+// 	test('must set connected to false after called', async () => {
+// 		const mongORM = new MongORMConnection({
+// 			databaseName: 'toto',
+// 		})
+
+// 		await mongORM.connect()
+// 		await mongORM.disconnect()
+
+// 		expect(mongORM.collections).toEqual({})
+// 	})
+// })
+
+// describe('createIndexesObject function', () => {
+// 	it('should return an array of collections name', () => {
+// 		const metas: Array<{
+// 			obj: Object
+// 			key: string
+// 			unique: boolean
+// 		}> = []
+// 	})
+// })
