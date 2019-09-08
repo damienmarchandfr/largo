@@ -2,6 +2,7 @@ import {
 	MongORMConnection,
 	generateCollectionName,
 	generateCollectionNameForStatic,
+	getMongORMPartial,
 } from '../connection'
 import {
 	FilterQuery,
@@ -34,7 +35,7 @@ export class MongORMEntity {
 		options?: UpdateOneOptions
 	) {
 		const collectionName = generateCollectionNameForStatic(this)
-		const toUpdate = connect.getMongORMPartial(partial, collectionName)
+		const toUpdate = getMongORMPartial(partial, collectionName)
 
 		return connect.collections[collectionName].updateMany(
 			filter,
@@ -66,7 +67,8 @@ export class MongORMEntity {
 	 */
 	async insert(connect: MongORMConnection) {
 		const collectionName = generateCollectionName(this)
-		const toInsert = connect.getMongORMPartial(this, collectionName)
+
+		const toInsert = getMongORMPartial(this, collectionName)
 
 		const inserted = await connect.collections[collectionName].insertOne(
 			toInsert
@@ -82,7 +84,7 @@ export class MongORMEntity {
 	 */
 	async update(connect: MongORMConnection, options?: UpdateOneOptions) {
 		const collectionName = generateCollectionName(this)
-		const toUpdate = connect.getMongORMPartial(this, collectionName)
+		const toUpdate = getMongORMPartial(this, collectionName)
 
 		return connect.collections[collectionName].updateOne(
 			{ _id: this._id },

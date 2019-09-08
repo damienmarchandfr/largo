@@ -29,6 +29,11 @@ export class MongORMConnection {
 	}
 
 	public async connect(): Promise<MongORMConnection> {
+		// Check if already connected
+		if (this.mongoClient) {
+			throw new Error(errors.ALREADY_CONNECTED)
+		}
+
 		const url = createConnectionString(this.options)
 		this.mongoClient = await MongoClient.connect(url, {
 			useNewUrlParser: true,
@@ -48,6 +53,10 @@ export class MongORMConnection {
 		collectionNames = Object.keys(mongORMetaDataStorage().mongORMIndexMetas)
 
 		for (const collectionName of collectionNames) {
+			if (!this.collections[collectionName]) {
+				const collectionCreated = await this.db.createCollection(collectionName)
+				this.collections[collectionName] = collectionCreated
+			}
 			await this.collections[collectionName].dropIndexes()
 			const collectionIndexMetas = mongORMetaDataStorage().mongORMIndexMetas[
 				collectionName
@@ -82,22 +91,26 @@ export class MongORMConnection {
 			await this.collections[collectionName].deleteMany({})
 		}
 	}
+}
 
-	public getMongORMPartial(
-		obj: Object,
-		collectionName: string
-	): Partial<Object> {
-		// Select fields and indexes
-		const fieldKeys = mongORMetaDataStorage().mongORMFieldMetas[collectionName]
+export function getMongORMPartial(
+	obj: Object,
+	collectionName: string
+): Partial<Object> {
+	// Select fields and indexes
+	const fieldKeys =
+		mongORMetaDataStorage().mongORMFieldMetas[collectionName] || []
 
-		const indexKeys = mongORMetaDataStorage().mongORMIndexMetas[
-			collectionName
-		].map((indexMeta) => {
-			return indexMeta.key
-		})
-
-		return pick(obj, fieldKeys.concat(indexKeys))
+	let indexKeys: string[] = []
+	if (mongORMetaDataStorage().mongORMIndexMetas[collectionName]) {
+		indexKeys = mongORMetaDataStorage().mongORMIndexMetas[collectionName].map(
+			(indexMeta) => {
+				return indexMeta.key
+			}
+		)
 	}
+
+	return pick(obj, fieldKeys.concat(indexKeys))
 }
 
 /**

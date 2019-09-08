@@ -3,10 +3,12 @@ import {
 	generateCollectionName,
 	generateCollectionNameForStatic,
 	MongORMConnection,
+	getMongORMPartial,
 } from '.'
 import { MongORMField } from '../decorators/field.decorator'
 import { errors } from '../messages.const'
-import { exportAllDeclaration } from '@babel/types'
+import { MongORMEntity } from '../entity'
+import { MongORMIndex } from '../decorators/index.decorator'
 
 describe('createConnectionString function', () => {
 	test('must return a valid connection string with all parameters', () => {
@@ -79,6 +81,48 @@ describe('connect function', () => {
 
 		expect(mongORM.collections.user).toBeDefined()
 	})
+
+	test('must throw error if already connected', async () => {
+		const connection = new MongORMConnection({
+			databaseName: 'already',
+		})
+
+		await connection.connect()
+
+		let hasError = false
+
+		try {
+			await connection.connect()
+		} catch (error) {
+			expect(error.message).toEqual(errors.ALREADY_CONNECTED)
+			hasError = true
+		}
+
+		expect(hasError).toBe(true)
+	})
+
+	it('must create index', async () => {
+		class Indexed extends MongORMEntity {
+			@MongORMIndex({
+				unique: false,
+			})
+			firstname: string
+
+			constructor() {
+				super()
+				this.firstname = 'Damien'
+			}
+		}
+
+		const connection = new MongORMConnection({
+			databaseName: 'indexed',
+		})
+
+		await connection.connect()
+
+		const indexes = await connection.collections.indexed.listIndexes().toArray()
+		expect(indexes[1].key.firstname).toEqual(1)
+	})
 })
 
 describe('disconnect function', () => {
@@ -120,5 +164,133 @@ describe('disconnect function', () => {
 
 		await connection.disconnect()
 		expect(connection.collections).toStrictEqual({})
+	})
+})
+
+describe('clean function', () => {
+	test('must throw error if not connected', async () => {
+		const connection = new MongORMConnection({
+			databaseName: 'clean',
+		})
+
+		let hasError = false
+
+		try {
+			await connection.clean()
+		} catch (error) {
+			expect(error.message).toEqual(errors.NOT_CONNECTED)
+			hasError = true
+		}
+
+		expect(hasError).toBe(true)
+	})
+
+	test('should clean all collections', async () => {
+		class User extends MongORMEntity {
+			@MongORMField()
+			firstname: string
+
+			constructor() {
+				super()
+				this.firstname = 'Damien'
+			}
+		}
+
+		class Job extends MongORMEntity {
+			@MongORMField()
+			name: string
+
+			constructor() {
+				super()
+				this.name = 'clown'
+			}
+		}
+
+		const job = new Job()
+		const user = new User()
+
+		const connection = new MongORMConnection({
+			databaseName: 'cleanCollections',
+		})
+
+		await connection.connect()
+		const jobId = await job.insert(connection)
+
+		// Search job with mongo native
+		const nativeJob = await connection.collections.job.findOne({ _id: jobId })
+		expect(nativeJob._id).toStrictEqual(jobId)
+
+		const userId = await user.insert(connection)
+		const nativeUser = await connection.collections.user.findOne({
+			_id: userId,
+		})
+		expect(nativeUser._id).toStrictEqual(userId)
+
+		await connection.clean()
+
+		// Count all users
+		const usersCount = await connection.collections.user.count()
+		expect(usersCount).toEqual(0)
+
+		// Count all jobs
+		const jobsCount = await connection.collections.job.count()
+		expect(jobsCount).toEqual(0)
+	})
+})
+
+describe('getMongORMPartial function', () => {
+	it('should not return field without decorator', () => {
+		class Full extends MongORMEntity {
+			@MongORMIndex({
+				unique: false,
+			})
+			firstname: string
+
+			@MongORMField()
+			lastname: string
+
+			age: number
+
+			constructor() {
+				super()
+				this.firstname = 'Damien'
+				this.lastname = 'Marchand'
+				this.age = 18
+			}
+		}
+
+		const partial = getMongORMPartial(
+			new Full(),
+			generateCollectionName(new Full())
+		)
+
+		expect(partial).toStrictEqual({
+			lastname: 'Marchand',
+			firstname: 'Damien',
+		})
+	})
+
+	it('should not return empty field', () => {
+		class Full extends MongORMEntity {
+			@MongORMField()
+			firstname: string
+
+			@MongORMField()
+			age?: number
+
+			constructor() {
+				super()
+				this.firstname = 'Damien'
+			}
+		}
+
+		const partial = getMongORMPartial(
+			new Full(),
+			generateCollectionName(new Full())
+		)
+
+		expect(partial).toStrictEqual({
+			firstname: 'Damien',
+		})
 	})
 })
