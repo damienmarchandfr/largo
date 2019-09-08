@@ -229,11 +229,11 @@ describe('clean function', () => {
 		await connection.clean()
 
 		// Count all users
-		const usersCount = await connection.collections.user.count()
+		const usersCount = await connection.collections.user.countDocuments()
 		expect(usersCount).toEqual(0)
 
 		// Count all jobs
-		const jobsCount = await connection.collections.job.count()
+		const jobsCount = await connection.collections.job.countDocuments()
 		expect(jobsCount).toEqual(0)
 	})
 })
