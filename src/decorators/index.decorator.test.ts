@@ -1,8 +1,6 @@
-import { MongORMField } from './field.decorator'
 import { mongORMetaDataStorage } from '..'
 import { generateCollectionName } from '../connection'
 import { MongORMIndex } from './index.decorator'
-import { yieldExpression } from '@babel/types'
 
 describe('MongORMIndex decorator', () => {
 	it('should add index meta to mongORMetaDataStorage', () => {
