@@ -2,7 +2,6 @@ import { MongORMConnection, generateCollectionName } from '../connection'
 import { MongORMEntity } from '.'
 import { MongORMField } from '../decorators/field.decorator'
 import { exec } from 'child_process'
-import { cpus } from 'os'
 
 const databaseName = 'entitytest'
 
@@ -327,6 +326,42 @@ describe(`MongORM class`, () => {
 			})
 
 			expect(saved.age).toBeUndefined()
+		})
+	})
+
+	describe('delete methode', () => {
+		it('should delete', async () => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor(email: string) {
+					super()
+					this.email = email
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const user = new User('damien@dev.fr')
+
+			const insertResult = await connection.collections.user.insertOne(user)
+			user._id = insertResult.insertedId
+
+			// Check user in db
+			const check = await connection.collections.user.findOne({ _id: user._id })
+			expect(check.email).toEqual(user.email)
+
+			// Delete
+			await user.delete(connection)
+			const checkDeleted = await connection.collections.user.findOne({
+				_id: user._id,
+			})
+			expect(checkDeleted).toEqual(null)
 		})
 	})
 })
