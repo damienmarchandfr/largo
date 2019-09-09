@@ -11,6 +11,10 @@ export interface ConnectionOptions {
 	port?: number
 }
 
+export interface ConnectOptions {
+	clean: boolean
+}
+
 export class MongORMConnection {
 	// Native Mongo collections
 	public collections: {
@@ -28,7 +32,9 @@ export class MongORMConnection {
 		this.collections = {}
 	}
 
-	public async connect(): Promise<MongORMConnection> {
+	public async connect(
+		options: ConnectOptions = { clean: false }
+	): Promise<MongORMConnection> {
 		// Check if already connected
 		if (this.mongoClient) {
 			throw new Error(errors.ALREADY_CONNECTED)
@@ -65,6 +71,12 @@ export class MongORMConnection {
 				await this.collections[collectionName].createIndex(indexMeta.key, {
 					unique: indexMeta.unique,
 				})
+			}
+		}
+
+		if (options.clean) {
+			for (const collectionName of Object.keys(this.collections)) {
+				await this.collections[collectionName].deleteMany({})
 			}
 		}
 

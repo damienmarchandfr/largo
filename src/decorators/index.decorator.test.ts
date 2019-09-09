@@ -1,5 +1,5 @@
 import { mongORMetaDataStorage } from '..'
-import { generateCollectionName } from '../connection'
+import { generateCollectionName, MongORMConnection } from '../connection'
 import { MongORMIndex } from './index.decorator'
 
 describe('MongORMIndex decorator', () => {
@@ -36,4 +36,35 @@ describe('MongORMIndex decorator', () => {
 			unique: false,
 		})
 	})
+
+	// it('should create a unique index', async () => {
+	// 	class UniqueIndex {
+	// 		@MongORMIndex({
+	// 			unique: true,
+	// 		})
+	// 		id: string
+
+	// 		constructor() {
+	// 			this.id = 'hello'
+	// 		}
+	// 	}
+
+	// 	const connexion = await new MongORMConnection({
+	// 		databaseName: 'uniqueindex',
+	// 	}).connect()
+
+	// 	// No error for the first object saved with id = hello
+	// 	const collectionName = generateCollectionName(new UniqueIndex())
+	// 	await connexion.collections[collectionName].insertOne(new UniqueIndex())
+
+	// 	let hasError = false
+
+	// 	try {
+	// 		await connexion.collections[collectionName].insertOne(new UniqueIndex())
+	// 	} catch (error) {
+	// 		hasError = true
+	// 	}
+
+	// 	expect(hasError).toBe(true)
+	// })
 })

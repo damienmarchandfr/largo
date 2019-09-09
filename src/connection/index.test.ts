@@ -9,6 +9,8 @@ import { MongORMField } from '../decorators/field.decorator'
 import { errors } from '../messages.const'
 import { MongORMIndex } from '../decorators/index.decorator'
 
+const databaseName = 'connectiontest'
+
 describe('createConnectionString function', () => {
 	test('must return a valid connection string with all parameters', () => {
 		const url = createConnectionString({
@@ -16,18 +18,18 @@ describe('createConnectionString function', () => {
 			password: 'toto',
 			host: 'localhost',
 			port: 8080,
-			databaseName: 'toto',
+			databaseName,
 		})
 
-		expect(url).toEqual('mongodb://damien:toto@localhost:8080/toto')
+		expect(url).toEqual('mongodb://damien:toto@localhost:8080/' + databaseName)
 	})
 
 	test(`must return a valid connection string with just database name set`, () => {
 		const url = createConnectionString({
-			databaseName: 'toto',
+			databaseName,
 		})
 
-		expect(url).toEqual(`mongodb://localhost:27017/toto`)
+		expect(url).toEqual(`mongodb://localhost:27017/${databaseName}`)
 	})
 })
 
@@ -54,17 +56,8 @@ describe('generateCollectionNameForStatic function', () => {
 })
 
 describe('connect function', () => {
-	test('must have no collections if no models loaded', async () => {
-		const mongORM = new MongORMConnection({
-			databaseName: 'toto',
-		})
-		await mongORM.connect()
-
-		expect(mongORM.collections).toStrictEqual({})
-	})
-
 	test('must have collections if models loaded', async () => {
-		class User {
+		class ConnexionUser {
 			@MongORMField()
 			field: string
 
@@ -74,16 +67,18 @@ describe('connect function', () => {
 		}
 
 		const mongORM = new MongORMConnection({
-			databaseName: 'toto',
+			databaseName,
 		})
 		await mongORM.connect()
 
-		expect(mongORM.collections.user).toBeDefined()
+		expect(
+			mongORM.collections[generateCollectionName(new ConnexionUser())]
+		).toBeDefined()
 	})
 
 	test('must throw error if already connected', async () => {
 		const connection = new MongORMConnection({
-			databaseName: 'already',
+			databaseName,
 		})
 
 		await connection.connect()
@@ -113,7 +108,7 @@ describe('connect function', () => {
 		}
 
 		const connection = new MongORMConnection({
-			databaseName: 'indexed',
+			databaseName,
 		})
 
 		await connection.connect()
@@ -121,12 +116,42 @@ describe('connect function', () => {
 		const indexes = await connection.collections.indexed.listIndexes().toArray()
 		expect(indexes[1].key.firstname).toEqual(1)
 	})
+
+	it('must clean collections if clean = true', async () => {
+		class Cleaned {
+			@MongORMField()
+			field: string
+
+			constructor() {
+				this.field = 'value'
+			}
+		}
+
+		const connection = await new MongORMConnection({
+			databaseName,
+		}).connect()
+
+		expect(connection.collections.cleaned).toBeDefined()
+
+		await connection.collections.cleaned.insertOne(new Cleaned())
+
+		// Create new connection with clean = true
+		const secondConnection = await new MongORMConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+		expect(secondConnection.collections.cleaned).toBeDefined()
+
+		const count = await secondConnection.collections.cleaned.count()
+		expect(count).toEqual(0)
+	})
 })
 
 describe('disconnect function', () => {
 	test('must throw an error if not connected', async () => {
 		const mongORM = new MongORMConnection({
-			databaseName: 'toto',
+			databaseName,
 		})
 
 		let hasError = false
@@ -143,7 +168,7 @@ describe('disconnect function', () => {
 		expect(hasError).toBe(true)
 	})
 
-	it('must disconnect after a connection', async () => {
+	it('must accept disconnect after a connection', async () => {
 		class City {
 			@MongORMField()
 			name: string
@@ -154,7 +179,7 @@ describe('disconnect function', () => {
 		}
 
 		const connection = new MongORMConnection({
-			databaseName: 'yop',
+			databaseName,
 		})
 
 		await connection.connect()
@@ -168,7 +193,7 @@ describe('disconnect function', () => {
 describe('clean function', () => {
 	test('must throw error if not connected', async () => {
 		const connection = new MongORMConnection({
-			databaseName: 'clean',
+			databaseName,
 		})
 
 		let hasError = false
@@ -203,7 +228,7 @@ describe('clean function', () => {
 		}
 
 		const connection = await new MongORMConnection({
-			databaseName: 'cleanCollections',
+			databaseName,
 		}).connect()
 
 		await connection.collections.job.insertOne(new Job())
