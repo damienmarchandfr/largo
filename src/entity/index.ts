@@ -51,12 +51,20 @@ export class MongORMEntity {
 	 * @param connect
 	 * @param filter
 	 */
-	static async delete(
+	static async delete<T>(
+		connect: MongORMConnection,
+		filter: FilterQuery<T> = {}
+	) {
+		const collectionName = generateCollectionNameForStatic(this)
+		return connect.collections[collectionName].deleteMany(filter)
+	}
+
+	static async countDocuments(
 		connect: MongORMConnection,
 		filter: FilterQuery<any> = {}
 	) {
 		const collectionName = generateCollectionNameForStatic(this)
-		return connect.collections[collectionName].deleteMany(filter)
+		return connect.collections[collectionName].countDocuments(filter)
 	}
 
 	public _id: ObjectID | null = null

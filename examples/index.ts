@@ -44,13 +44,19 @@ new MongORMConnection({
 	.then(async (connection) => {
 		// Connected to Mongo database
 		console.log('Your are now connected')
-		// Clean collections user
+
+		// Clean all collections
+		await connection.clean()
+
+		// Delete all users
 		await User.delete(connection)
+
 		// Create first user
 		const user = new User('damien@dev.fr', 'azerty123')
 		const userId = await user.insert(connection)
 		// User added
 		console.log('User added. MongoID = ' + userId)
+
 		// Change email
 		User.update(
 			connection,
@@ -62,6 +68,8 @@ new MongORMConnection({
 			email: 'toto@toto.com',
 		})
 		console.log('New email = ' + updatedUser.email)
+
+		console.log('Script executed :)')
 	})
 	.catch((err) => {
 		console.error(err)

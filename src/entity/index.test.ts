@@ -176,6 +176,69 @@ describe(`MongORM class`, () => {
 		})
 	})
 
+	describe('countDocuments static method', () => {
+		it('should count all documents', async () => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor(email: string) {
+					super()
+					this.email = email
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const users: User[] = []
+			// Add 10 users
+			for (let i = 0; i < 10; i++) {
+				users.push(new User('damien@dev.fr'))
+			}
+			await connection.collections.user.insertMany(users)
+
+			const count = await User.countDocuments(connection)
+			expect(count).toEqual(10)
+		})
+
+		it('should count documents with query filter', async () => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor(email: string) {
+					super()
+					this.email = email
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const users: User[] = []
+			// Add 10 users
+			for (let i = 0; i < 10; i++) {
+				users.push(new User('damien@dev.fr'))
+			}
+			// User in filter
+			users.push(new User('jeremy@dev.fr'))
+
+			await connection.collections.user.insertMany(users)
+
+			const count = await User.countDocuments(connection, {
+				email: 'jeremy@dev.fr',
+			})
+			expect(count).toEqual(1)
+		})
+	})
+
 	describe('insert method', () => {
 		it('should insert', async () => {
 			class User extends MongORMEntity {
