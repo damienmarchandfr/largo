@@ -143,7 +143,7 @@ describe('connect function', () => {
 		})
 		expect(secondConnection.collections.cleaned).toBeDefined()
 
-		const count = await secondConnection.collections.cleaned.count()
+		const count = await secondConnection.collections.cleaned.countDocuments()
 		expect(count).toEqual(0)
 	})
 })

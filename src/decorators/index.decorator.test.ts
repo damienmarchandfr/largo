@@ -2,6 +2,8 @@ import { mongORMetaDataStorage } from '..'
 import { generateCollectionName, MongORMConnection } from '../connection'
 import { MongORMIndex } from './index.decorator'
 
+const databaseName = 'indexDecorator'
+
 describe('MongORMIndex decorator', () => {
 	it('should add index meta to mongORMetaDataStorage', () => {
 		class MongORMIndexClass {
@@ -37,34 +39,36 @@ describe('MongORMIndex decorator', () => {
 		})
 	})
 
-	// it('should create a unique index', async () => {
-	// 	class UniqueIndex {
-	// 		@MongORMIndex({
-	// 			unique: true,
-	// 		})
-	// 		id: string
+	it('should create a unique index', async () => {
+		class UniqueIndex {
+			@MongORMIndex({
+				unique: true,
+			})
+			id: string
 
-	// 		constructor() {
-	// 			this.id = 'hello'
-	// 		}
-	// 	}
+			constructor() {
+				this.id = 'hello'
+			}
+		}
 
-	// 	const connexion = await new MongORMConnection({
-	// 		databaseName: 'uniqueindex',
-	// 	}).connect()
+		const connexion = await new MongORMConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
 
-	// 	// No error for the first object saved with id = hello
-	// 	const collectionName = generateCollectionName(new UniqueIndex())
-	// 	await connexion.collections[collectionName].insertOne(new UniqueIndex())
+		// No error for the first object saved with id = hello
+		const collectionName = generateCollectionName(new UniqueIndex())
+		await connexion.collections[collectionName].insertOne(new UniqueIndex())
 
-	// 	let hasError = false
+		let hasError = false
 
-	// 	try {
-	// 		await connexion.collections[collectionName].insertOne(new UniqueIndex())
-	// 	} catch (error) {
-	// 		hasError = true
-	// 	}
+		try {
+			await connexion.collections[collectionName].insertOne(new UniqueIndex())
+		} catch (error) {
+			hasError = true
+		}
 
-	// 	expect(hasError).toBe(true)
-	// })
+		expect(hasError).toBe(true)
+	})
 })
