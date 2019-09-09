@@ -7,7 +7,6 @@ import {
 } from '.'
 import { MongORMField } from '../decorators/field.decorator'
 import { errors } from '../messages.const'
-import { MongORMEntity } from '../entity'
 import { MongORMIndex } from '../decorators/index.decorator'
 
 describe('createConnectionString function', () => {
@@ -102,14 +101,13 @@ describe('connect function', () => {
 	})
 
 	it('must create index', async () => {
-		class Indexed extends MongORMEntity {
+		class Indexed {
 			@MongORMIndex({
 				unique: false,
 			})
 			firstname: string
 
 			constructor() {
-				super()
 				this.firstname = 'Damien'
 			}
 		}
@@ -186,45 +184,30 @@ describe('clean function', () => {
 	})
 
 	test('should clean all collections', async () => {
-		class User extends MongORMEntity {
+		class User {
 			@MongORMField()
 			firstname: string
 
 			constructor() {
-				super()
 				this.firstname = 'Damien'
 			}
 		}
 
-		class Job extends MongORMEntity {
+		class Job {
 			@MongORMField()
 			name: string
 
 			constructor() {
-				super()
 				this.name = 'clown'
 			}
 		}
 
-		const job = new Job()
-		const user = new User()
-
-		const connection = new MongORMConnection({
+		const connection = await new MongORMConnection({
 			databaseName: 'cleanCollections',
-		})
+		}).connect()
 
-		await connection.connect()
-		const jobId = await job.insert(connection)
-
-		// Search job with mongo native
-		const nativeJob = await connection.collections.job.findOne({ _id: jobId })
-		expect(nativeJob._id).toStrictEqual(jobId)
-
-		const userId = await user.insert(connection)
-		const nativeUser = await connection.collections.user.findOne({
-			_id: userId,
-		})
-		expect(nativeUser._id).toStrictEqual(userId)
+		await connection.collections.job.insertOne(new Job())
+		await connection.collections.user.insertOne(new User())
 
 		await connection.clean()
 
@@ -240,7 +223,7 @@ describe('clean function', () => {
 
 describe('getMongORMPartial function', () => {
 	it('should not return field without decorator', () => {
-		class Full extends MongORMEntity {
+		class Full {
 			@MongORMIndex({
 				unique: false,
 			})
@@ -252,7 +235,6 @@ describe('getMongORMPartial function', () => {
 			age: number
 
 			constructor() {
-				super()
 				this.firstname = 'Damien'
 				this.lastname = 'Marchand'
 				this.age = 18
@@ -271,7 +253,7 @@ describe('getMongORMPartial function', () => {
 	})
 
 	it('should not return empty field', () => {
-		class Full extends MongORMEntity {
+		class Full {
 			@MongORMField()
 			firstname: string
 
@@ -279,7 +261,6 @@ describe('getMongORMPartial function', () => {
 			age?: number
 
 			constructor() {
-				super()
 				this.firstname = 'Damien'
 			}
 		}
