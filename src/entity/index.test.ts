@@ -1,7 +1,8 @@
 import { MongORMConnection, generateCollectionName } from '../connection'
 import { MongORMEntity } from '.'
 import { MongORMField } from '../decorators/field.decorator'
-import { exec } from 'child_process'
+import { async } from 'rxjs/internal/scheduler/async'
+import { doesNotReject } from 'assert'
 
 const databaseName = 'entitytest'
 
@@ -307,6 +308,62 @@ describe(`MongORM class`, () => {
 				email: 'damien@dev.fr',
 			})
 		})
+
+		it('should trigger beforeInsert', async (done) => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				firstname: string
+
+				constructor() {
+					super()
+					this.firstname = 'Damien'
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const user = new User()
+
+			user.events.beforeInsert.subscribe((userToInsert) => {
+				expect(userToInsert.firstname).toEqual('Damien')
+				expect(userToInsert._id).not.toBeDefined()
+				done()
+			})
+
+			await user.insert(connection)
+		})
+
+		it('should trigger afterInsert', async (done) => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				firstname: string
+
+				constructor() {
+					super()
+					this.firstname = 'Damien'
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const user = new User()
+
+			user.events.afterInsert.subscribe((userSaved) => {
+				expect(userSaved.firstname).toEqual('Damien')
+				expect(userSaved._id).toBeDefined()
+				done()
+			})
+
+			await user.insert(connection)
+		})
 	})
 
 	describe('update methode', () => {
@@ -390,6 +447,90 @@ describe(`MongORM class`, () => {
 
 			expect(saved.age).toBeUndefined()
 		})
+
+		it('should trigger beforeUpdate', async (done) => {
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			class User extends MongORMEntity {
+				@MongORMField()
+				firstname: string
+
+				constructor(firstname: string) {
+					super()
+					this.firstname = firstname
+				}
+			}
+
+			const user = await connection.collections.user.insertOne({
+				firstname: 'Damien',
+			})
+			const id = user.insertedId
+
+			const updateUser = new User('Damien')
+			updateUser._id = id
+
+			updateUser.events.beforeUpdate.subscribe((update) => {
+				const source = update.oldValue
+				const partial = update.partial
+
+				expect(source._id).toBeDefined()
+				expect(source.firstname).toEqual('Damien')
+
+				expect(partial._id).not.toBeDefined()
+				expect(partial.firstname).toEqual('Jeremy')
+
+				done()
+			})
+
+			updateUser.firstname = 'Jeremy'
+			await updateUser.update(connection)
+		})
+
+		it('should trigger afterUpdate', async (done) => {
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			class User extends MongORMEntity {
+				@MongORMField()
+				firstname: string
+
+				constructor(firstname: string) {
+					super()
+					this.firstname = firstname
+				}
+			}
+
+			const user = await connection.collections.user.insertOne({
+				firstname: 'Damien',
+			})
+			const id = user.insertedId
+
+			const updateUser = new User('Damien')
+			updateUser._id = id
+
+			updateUser.events.afterUpdate.subscribe((updateResult) => {
+				const before = updateResult.oldValue
+				const after = updateResult.newValue
+
+				expect(before._id).toBeDefined()
+				expect(before._id).toStrictEqual(after._id)
+
+				expect(before.firstname).toEqual('Damien')
+				expect(after.firstname).toEqual('Jeremy')
+
+				done()
+			})
+
+			updateUser.firstname = 'Jeremy'
+			await updateUser.update(connection)
+		})
 	})
 
 	describe('delete methode', () => {
@@ -425,6 +566,78 @@ describe(`MongORM class`, () => {
 				_id: user._id,
 			})
 			expect(checkDeleted).toEqual(null)
+		})
+
+		it('should trigger beforeDelete', async (done) => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor(email: string) {
+					super()
+					this.email = email
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const inserted = await connection.collections.user.insertOne({
+				email: 'damien@dev.fr',
+			})
+
+			const user = new User('damien@de.fr')
+			user._id = inserted.insertedId
+
+			user.events.beforeDelete.subscribe((userBeforeDelete) => {
+				expect(userBeforeDelete._id).toStrictEqual(inserted.insertedId)
+				done()
+			})
+
+			await user.delete(connection)
+		})
+
+		it('should trigger afterDelete', async (done) => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor(email: string) {
+					super()
+					this.email = email
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const inserted = await connection.collections.user.insertOne({
+				email: 'damien@dev.fr',
+			})
+
+			const user = new User('damien@dev.fr')
+			user._id = inserted.insertedId
+
+			user.events.afterDelete.subscribe(async (userDeleted) => {
+				expect(userDeleted._id).toStrictEqual(inserted.insertedId)
+
+				// Check if in db
+				const checkUser = await connection.collections.user.findOne({
+					_id: inserted.insertedId,
+				})
+
+				expect(checkUser).toEqual(null)
+
+				done()
+			})
+
+			await user.delete(connection)
 		})
 	})
 })

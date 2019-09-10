@@ -28,7 +28,8 @@
 	"dependencies": {
 		"lodash": "^4.17.15",
 		"mongodb": "^3.3.2",
-		"reflect-metadata": "^0.1.13"
+		"reflect-metadata": "^0.1.13",
+		"rxjs": "^6.5.3"
 	},
 	"devDependencies": {
 		"@commitlint/cli": "^8.0.0",

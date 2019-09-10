@@ -10,6 +10,7 @@ import {
 	ObjectID,
 	FindOneOptions,
 } from 'mongodb'
+import { Subject } from 'rxjs'
 
 export class MongORMEntity {
 	static async findOne(
@@ -18,6 +19,7 @@ export class MongORMEntity {
 		findOptions?: FindOneOptions
 	) {
 		const collectionName = generateCollectionNameForStatic(this)
+
 		return connect.collections[collectionName].findOne(filter, findOptions)
 	}
 
@@ -67,7 +69,32 @@ export class MongORMEntity {
 		return connect.collections[collectionName].countDocuments(filter)
 	}
 
-	public _id: ObjectID | null = null
+	public _id?: ObjectID
+	public events: {
+		beforeInsert: Subject<any>
+		afterInsert: Subject<any>
+		beforeUpdate: Subject<{
+			oldValue: any // Values before update
+			partial: any // New values set
+		}>
+		afterUpdate: Subject<{
+			oldValue: any // Values before update
+			newValue: any // Values after update
+		}>
+		beforeDelete: Subject<any>
+		afterDelete: Subject<any>
+	}
+
+	constructor() {
+		this.events = {
+			beforeInsert: new Subject(),
+			afterInsert: new Subject(),
+			beforeUpdate: new Subject(),
+			afterUpdate: new Subject(),
+			beforeDelete: new Subject(),
+			afterDelete: new Subject(),
+		}
+	}
 
 	/**
 	 * Insert in database
@@ -75,13 +102,17 @@ export class MongORMEntity {
 	 */
 	async insert(connect: MongORMConnection) {
 		const collectionName = generateCollectionName(this)
-
 		const toInsert = getMongORMPartial(this, collectionName)
+
+		this.events.beforeInsert.next(this)
 
 		const inserted = await connect.collections[collectionName].insertOne(
 			toInsert
 		)
 		this._id = inserted.insertedId
+
+		this.events.afterInsert.next(this)
+
 		return this._id
 	}
 
@@ -94,13 +125,32 @@ export class MongORMEntity {
 		const collectionName = generateCollectionName(this)
 		const toUpdate = getMongORMPartial(this, collectionName)
 
-		return connect.collections[collectionName].updateOne(
+		// Search old values
+		const savedVersion = await connect.collections[collectionName].findOne({
+			_id: this._id,
+		})
+
+		this.events.beforeUpdate.next({
+			oldValue: savedVersion,
+			partial: toUpdate,
+		})
+
+		await connect.collections[collectionName].updateOne(
 			{ _id: this._id },
 			{
 				$set: toUpdate,
 			},
 			options || undefined
 		)
+
+		const saved = await connect.collections[collectionName].findOne({
+			_id: this._id,
+		})
+
+		this.events.afterUpdate.next({
+			oldValue: savedVersion,
+			newValue: saved,
+		})
 	}
 
 	/**
@@ -108,7 +158,9 @@ export class MongORMEntity {
 	 * @param connect
 	 */
 	async delete(connect: MongORMConnection) {
+		this.events.beforeDelete.next(this)
 		const collectionName = generateCollectionName(this)
-		return connect.collections[collectionName].deleteOne({ _id: this._id })
+		await connect.collections[collectionName].deleteOne({ _id: this._id })
+		this.events.afterDelete.next(this)
 	}
 }

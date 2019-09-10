@@ -40,7 +40,9 @@ const databaseName = 'mongORMexample'
 new MongORMConnection({
 	databaseName,
 })
-	.connect()
+	.connect({
+		clean: true,
+	})
 	.then(async (connection) => {
 		// Connected to Mongo database
 		console.log('Your are now connected')
@@ -53,6 +55,11 @@ new MongORMConnection({
 
 		// Create first user
 		const user = new User('damien@dev.fr', 'azerty123')
+
+		user.events.afterInsert.subscribe((u) => {
+			console.log(u)
+		})
+
 		const userId = await user.insert(connection)
 		// User added
 		console.log('User added. MongoID = ' + userId)
