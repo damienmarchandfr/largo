@@ -300,3 +300,38 @@ describe('getMongORMPartial function', () => {
 		})
 	})
 })
+
+describe('checkCollectionExists function', () => {
+	it('should return false if connection does not exist', async () => {
+		const connection = await new MongORMConnection({
+			databaseName,
+		}).connect({
+			clean: false,
+		})
+
+		const exists = connection.checkCollectionExists('user123NeverUsed')
+
+		expect(exists).toEqual(false)
+	})
+
+	it('should return true if collection exists', async () => {
+		class User {
+			@MongORMField()
+			firstname: string
+
+			constructor() {
+				this.firstname = 'Damien'
+			}
+		}
+
+		const connection = await new MongORMConnection({
+			databaseName,
+		}).connect({
+			clean: false,
+		})
+
+		const exists = connection.checkCollectionExists('user')
+
+		expect(exists).toEqual(true)
+	})
+})

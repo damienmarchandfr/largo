@@ -11,6 +11,9 @@ import {
 	FindOneOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
+import { mongORMetaDataStorage } from '..'
+import format from 'string-template'
+import { errors } from '../messages.const'
 
 export class MongORMEntity {
 	static async findOne(
@@ -19,6 +22,12 @@ export class MongORMEntity {
 		findOptions?: FindOneOptions
 	) {
 		const collectionName = generateCollectionNameForStatic(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
 
 		return connect.collections[collectionName].findOne(filter, findOptions)
 	}
@@ -37,6 +46,13 @@ export class MongORMEntity {
 		options?: UpdateOneOptions
 	) {
 		const collectionName = generateCollectionNameForStatic(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
 		const toUpdate = getMongORMPartial(partial, collectionName)
 
 		return connect.collections[collectionName].updateMany(
@@ -58,6 +74,13 @@ export class MongORMEntity {
 		filter: FilterQuery<T> = {}
 	) {
 		const collectionName = generateCollectionNameForStatic(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
 		return connect.collections[collectionName].deleteMany(filter)
 	}
 
@@ -66,6 +89,13 @@ export class MongORMEntity {
 		filter: FilterQuery<any> = {}
 	) {
 		const collectionName = generateCollectionNameForStatic(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
 		return connect.collections[collectionName].countDocuments(filter)
 	}
 
@@ -102,6 +132,13 @@ export class MongORMEntity {
 	 */
 	async insert(connect: MongORMConnection) {
 		const collectionName = generateCollectionName(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
 		const toInsert = getMongORMPartial(this, collectionName)
 
 		this.events.beforeInsert.next(this)
@@ -123,6 +160,13 @@ export class MongORMEntity {
 	 */
 	async update(connect: MongORMConnection, options?: UpdateOneOptions) {
 		const collectionName = generateCollectionName(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
 		const toUpdate = getMongORMPartial(this, collectionName)
 
 		// Search old values
@@ -159,8 +203,61 @@ export class MongORMEntity {
 	 */
 	async delete(connect: MongORMConnection) {
 		this.events.beforeDelete.next(this)
+
 		const collectionName = generateCollectionName(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
 		await connect.collections[collectionName].deleteOne({ _id: this._id })
 		this.events.afterDelete.next(this)
+	}
+
+	async populate(connect: MongORMConnection) {
+		const collectionName = generateCollectionName(this)
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
+		const relationMetas = mongORMetaDataStorage().mongORMRelationsMetas[
+			collectionName
+		]
+
+		const pipeline: any[] = [
+			{
+				$match: {
+					_id: this._id,
+				},
+			},
+		]
+
+		for (const meta of relationMetas) {
+			if ((this as any)[meta.key]) {
+				pipeline.push({
+					$lookup: {
+						from: generateCollectionNameForStatic(meta.targetType),
+						localField: meta.key,
+						foreignField: meta.targetKey,
+						as: meta.populatedKey,
+					},
+				})
+
+				pipeline.push({
+					$unwind: {
+						path: '$' + meta.populatedKey,
+						// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
+						preserveNullAndEmptyArrays: true,
+					},
+				})
+			}
+		}
+
+		return connect.collections[collectionName].aggregate(pipeline).next()
 	}
 }

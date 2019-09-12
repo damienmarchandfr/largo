@@ -2,7 +2,6 @@ import { Db, MongoClient, Collection } from 'mongodb'
 import { mongORMetaDataStorage } from '..'
 import { errors } from '../messages.const'
 import { pick } from 'lodash'
-import { Subject } from 'rxjs'
 
 export interface ConnectionOptions {
 	databaseName: string
@@ -31,6 +30,10 @@ export class MongORMConnection {
 		this.db = null
 		this.mongoClient = null
 		this.collections = {}
+	}
+
+	public checkCollectionExists(collectionName: string): boolean {
+		return !!this.collections[collectionName]
 	}
 
 	public async connect(
@@ -123,7 +126,16 @@ export function getMongORMPartial(
 		)
 	}
 
-	return pick(obj, fieldKeys.concat(indexKeys))
+	let relationKeys: string[] = []
+	if (mongORMetaDataStorage().mongORMRelationsMetas[collectionName]) {
+		relationKeys = mongORMetaDataStorage().mongORMRelationsMetas[
+			collectionName
+		].map((relationMeta) => {
+			return relationMeta.key
+		})
+	}
+
+	return pick(obj, fieldKeys.concat(indexKeys).concat(relationKeys))
 }
 
 /**
