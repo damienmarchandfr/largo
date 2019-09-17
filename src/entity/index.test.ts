@@ -6,6 +6,115 @@ import { ObjectID } from 'mongodb'
 const databaseName = 'entitytest'
 
 describe(`MongORM class`, () => {
+	describe('find static method', () => {
+		it('should throw an error if collection does not exist', async () => {
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: false,
+			})
+
+			class RandomClassWithoutDecorator extends MongORMEntity {
+				name: string
+
+				constructor() {
+					super()
+					this.name = 'toto'
+				}
+			}
+
+			let hasError = false
+
+			try {
+				await RandomClassWithoutDecorator.find(connection, { name: 'toto' })
+			} catch (error) {
+				hasError = true
+				expect(error.message).toEqual(
+					`Collection ${generateCollectionName(
+						new RandomClassWithoutDecorator()
+					)} does not exist.`
+				)
+			}
+
+			expect(hasError).toEqual(true)
+		})
+
+		it('should return a cursor', async () => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor(email: string) {
+					super()
+					this.email = email
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const usersCursor = await User.find(connection, {})
+			expect(usersCursor.constructor.name).toEqual('Cursor')
+		})
+
+		it('should find all with empty filter', async () => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor(email: string) {
+					super()
+					this.email = email
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			// Insert users with mongodb native lib
+			await connection.collections.user.insertOne(new User('damien@dev.fr'))
+			await connection.collections.user.insertOne(new User('jeremy@dev.fr'))
+
+			const usersCursor = await User.find(connection, {})
+			const users = await usersCursor.sort({ _id: 1 }).toArray()
+
+			expect(users.length).toEqual(2)
+
+			expect(users[0].email).toEqual('damien@dev.fr')
+			expect(users[1].email).toEqual('jeremy@dev.fr')
+		})
+
+		it('should not find and return emtpy array', async () => {
+			class User extends MongORMEntity {
+				@MongORMField()
+				email: string
+
+				constructor() {
+					super()
+					this.email = 'damien@marchand.fr'
+				}
+			}
+
+			const connection = await new MongORMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			const goodManCursor = await User.find(connection, {
+				email: 'donal@trump.usa',
+			})
+			const goodMens = await goodManCursor.toArray()
+			expect(goodMens.length).toEqual(0)
+		})
+	})
+
 	describe('findOne static method', () => {
 		it('should throw an error if collection does not exist', async () => {
 			const connection = await new MongORMConnection({

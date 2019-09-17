@@ -16,6 +16,35 @@ import format from 'string-template'
 import { errors } from '../messages.const'
 
 export class MongORMEntity {
+	static async find(
+		connect: MongORMConnection,
+		filter: FilterQuery<any>,
+		findOptions?: FindOneOptions
+	) {
+		const collectionName = generateCollectionNameForStatic(this)
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
+		const cursor = await connect.collections[collectionName].find(
+			filter,
+			findOptions
+		)
+
+		const mongoElements = await cursor.toArray()
+		const results: MongORMEntity[] = []
+
+		for (const mongoElement of mongoElements) {
+			const object = new this()
+			Object.assign(object, mongoElement)
+			results.push(object)
+		}
+
+		return results
+	}
+
 	static async findOne(
 		connect: MongORMConnection,
 		filter: FilterQuery<any>,
@@ -29,7 +58,20 @@ export class MongORMEntity {
 			)
 		}
 
-		return connect.collections[collectionName].findOne(filter, findOptions)
+		const mongoElement = await connect.collections[collectionName].findOne(
+			filter,
+			findOptions
+		)
+
+		// If null
+		if (!mongoElement) {
+			return null
+		}
+
+		const object = new this()
+		Object.assign(object, mongoElement)
+
+		return object
 	}
 
 	/**
@@ -239,22 +281,33 @@ export class MongORMEntity {
 
 		for (const meta of relationMetas) {
 			if ((this as any)[meta.key]) {
-				pipeline.push({
-					$lookup: {
-						from: generateCollectionNameForStatic(meta.targetType),
-						localField: meta.key,
-						foreignField: meta.targetKey,
-						as: meta.populatedKey,
-					},
-				})
+				if (!Array.isArray((this as any)[meta.key])) {
+					pipeline.push({
+						$lookup: {
+							from: generateCollectionNameForStatic(meta.targetType),
+							localField: meta.key,
+							foreignField: meta.targetKey,
+							as: meta.populatedKey,
+						},
+					})
 
-				pipeline.push({
-					$unwind: {
-						path: '$' + meta.populatedKey,
-						// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
-						preserveNullAndEmptyArrays: true,
-					},
-				})
+					pipeline.push({
+						$unwind: {
+							path: '$' + meta.populatedKey,
+							// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
+							preserveNullAndEmptyArrays: true,
+						},
+					})
+				} else {
+					pipeline.push({
+						$lookup: {
+							from: generateCollectionNameForStatic(meta.targetType),
+							localField: meta.key,
+							foreignField: meta.targetKey,
+							as: meta.populatedKey,
+						},
+					})
+				}
 			}
 		}
 

@@ -61,8 +61,15 @@ class User extends MongORMEntity {
 		targetKey: '_id',
 	})
 	jobId?: ObjectID
-
 	job?: Job
+
+	@MongORMRelation({
+		populatedKey: 'jobs',
+		targetKey: '_id',
+		targetType: Job,
+	})
+	jobIds?: ObjectID[]
+	jobs?: Job[]
 
 	@MongORMRelation({
 		populatedKey: 'hobby',
@@ -70,6 +77,7 @@ class User extends MongORMEntity {
 		targetKey: 'customId',
 	})
 	hobbyId?: ObjectID
+	hobby?: Hobby
 
 	constructor(email: string, password: string) {
 		super()
@@ -81,6 +89,10 @@ class User extends MongORMEntity {
 
 	setJob(jobId: ObjectID) {
 		this.jobId = jobId
+	}
+
+	setJobs(jobIds: ObjectID[]) {
+		this.jobIds = jobIds
 	}
 
 	setHobby(hobbyId: ObjectID) {
@@ -148,8 +160,18 @@ new MongORMConnection({
 		user.setHobby(hobby.customId)
 		await user.update(connection)
 
-		const r = await user.populate(connection)
-		console.log(r)
+		const jobsSavedIds: ObjectID[] = []
+		// Create jobs
+		for (let i = 0; i < 200; i++) {
+			const jobForList = new Job('Dev JS number ' + i)
+			jobsSavedIds.push(await jobForList.insert(connection))
+		}
+		// Add jobs to user
+		user.setJobs(jobsSavedIds)
+		await user.update(connection)
+
+		const populated = await user.populate(connection)
+		console.log(populated)
 
 		console.log('Script executed :)')
 	})
