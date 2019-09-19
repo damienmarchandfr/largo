@@ -19,7 +19,7 @@
 		"prepublishOnly": "yarn build",
 		"release": "standard-version",
 		"release:first": "standard-version --first-release",
-		"test": "jest",
+		"test": "jest --detectOpenHandles",
 		"test:watch": "jest --watch --verbose false",
 		"example": "ts-node-dev examples/index.ts",
 		"bench_populate_orm": "ts-node-dev benchmark/populate/mongorm.ts",
