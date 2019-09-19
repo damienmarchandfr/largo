@@ -39,27 +39,6 @@ describe(`MongORM class`, () => {
 			expect(hasError).toEqual(true)
 		})
 
-		it('should return a cursor', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
-				email: string
-
-				constructor(email: string) {
-					super()
-					this.email = email
-				}
-			}
-
-			const connection = await new MongORMConnection({
-				databaseName,
-			}).connect({
-				clean: true,
-			})
-
-			const usersCursor = await User.find(connection, {})
-			expect(usersCursor.constructor.name).toEqual('Cursor')
-		})
-
 		it('should find all with empty filter', async () => {
 			class User extends MongORMEntity {
 				@MongORMField()
@@ -81,13 +60,9 @@ describe(`MongORM class`, () => {
 			await connection.collections.user.insertOne(new User('damien@dev.fr'))
 			await connection.collections.user.insertOne(new User('jeremy@dev.fr'))
 
-			const usersCursor = await User.find(connection, {})
-			const users = await usersCursor.sort({ _id: 1 }).toArray()
+			const users = await User.find(connection, {})
 
-			expect(users.length).toEqual(2)
-
-			expect(users[0].email).toEqual('damien@dev.fr')
-			expect(users[1].email).toEqual('jeremy@dev.fr')
+			expect(users.length()).toEqual(2)
 		})
 
 		it('should not find and return emtpy array', async () => {
@@ -107,11 +82,13 @@ describe(`MongORM class`, () => {
 				clean: true,
 			})
 
-			const goodManCursor = await User.find(connection, {
+			await new User().insert(connection)
+
+			const bads = await User.find(connection, {
 				email: 'donal@trump.usa',
 			})
-			const goodMens = await goodManCursor.toArray()
-			expect(goodMens.length).toEqual(0)
+
+			expect(bads.length()).toEqual(0)
 		})
 	})
 
@@ -172,7 +149,8 @@ describe(`MongORM class`, () => {
 				email: 'damien@marchand.fr',
 			})
 
-			expect(user.email).toEqual('damien@marchand.fr')
+			expect(user).not.toBe(null)
+			expect((user as User).email).toEqual('damien@marchand.fr')
 		})
 
 		it('should not find and return null', async () => {

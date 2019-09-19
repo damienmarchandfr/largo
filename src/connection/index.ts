@@ -56,7 +56,26 @@ export class MongORMConnection {
 
 		// Create collections if not exist
 		for (const collectionName of collectionNames) {
-			const collectionCreated = await this.db.createCollection(collectionName)
+			// validator with JSON Schema
+			let validator = {}
+
+			if (mongORMetaDataStorage().mongORMValidationMetas[collectionName]) {
+				validator = {
+					$jsonSchema: {
+						bsonType: 'object',
+						required:
+							mongORMetaDataStorage().mongORMValidationMetas[collectionName]
+								.required || [],
+						properties:
+							mongORMetaDataStorage().mongORMValidationMetas[collectionName]
+								.properties || {},
+					},
+				}
+			}
+
+			const collectionCreated = await this.db.createCollection(collectionName, {
+				validator,
+			})
 			this.collections[collectionName] = collectionCreated
 		}
 
@@ -157,10 +176,8 @@ export function generateCollectionName(object: Object) {
 	return object.constructor.name.toLowerCase()
 }
 
-export function generateCollectionNameForStatic(object: Object) {
-	return object
-		.toString()
-		.split('(' || /s+/)[0]
-		.split(' ' || /s+/)[1]
-		.toLowerCase()
+export function generateCollectionNameForStatic(
+	object: new (...args: any[]) => any
+) {
+	return object.name.toLowerCase()
 }

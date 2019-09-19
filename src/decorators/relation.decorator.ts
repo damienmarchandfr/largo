@@ -3,7 +3,7 @@ import { generateCollectionName } from '../connection'
 
 export interface MongORMRelationOptions {
 	populatedKey: string // userId -> user
-	targetType: Function // User
+	targetType: new (...args: any[]) => any // User
 	targetKey?: string // _id
 }
 

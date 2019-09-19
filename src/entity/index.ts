@@ -15,6 +15,70 @@ import { mongORMetaDataStorage } from '..'
 import format from 'string-template'
 import { errors } from '../messages.const'
 
+export class MongORMEntityArray {
+	private items: any[] = []
+
+	push(item: any) {
+		this.items.push(item)
+	}
+
+	length() {
+		return this.items.length
+	}
+
+	async populate(connect: MongORMConnection) {
+		const collectionName = generateCollectionName(this.items[0])
+
+		if (!connect.checkCollectionExists(collectionName)) {
+			throw new Error(
+				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
+			)
+		}
+
+		const pipeline: object[] = [
+			{ $match: { id: { $in: this.items.map((obj) => obj._id) } } },
+		]
+
+		const relationMetas = mongORMetaDataStorage().mongORMRelationsMetas[
+			collectionName
+		]
+
+		for (const meta of relationMetas) {
+			if ((this as any)[meta.key]) {
+				if (!Array.isArray((this as any)[meta.key])) {
+					pipeline.push({
+						$lookup: {
+							from: generateCollectionNameForStatic(meta.targetType),
+							localField: meta.key,
+							foreignField: meta.targetKey,
+							as: meta.populatedKey,
+						},
+					})
+
+					pipeline.push({
+						$unwind: {
+							path: '$' + meta.populatedKey,
+							// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
+							preserveNullAndEmptyArrays: true,
+						},
+					})
+				} else {
+					pipeline.push({
+						$lookup: {
+							from: generateCollectionNameForStatic(meta.targetType),
+							localField: meta.key,
+							foreignField: meta.targetKey,
+							as: meta.populatedKey,
+						},
+					})
+				}
+			}
+		}
+
+		return connect.collections[collectionName].aggregate(pipeline).next()
+	}
+}
+
 export class MongORMEntity {
 	static async find(
 		connect: MongORMConnection,
@@ -34,7 +98,7 @@ export class MongORMEntity {
 		)
 
 		const mongoElements = await cursor.toArray()
-		const results: MongORMEntity[] = []
+		const results = new MongORMEntityArray()
 
 		for (const mongoElement of mongoElements) {
 			const object = new this()
@@ -45,11 +109,11 @@ export class MongORMEntity {
 		return results
 	}
 
-	static async findOne(
+	static async findOne<A extends MongORMEntity>(
 		connect: MongORMConnection,
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
-	) {
+	): Promise<A | null> {
 		const collectionName = generateCollectionNameForStatic(this)
 
 		if (!connect.checkCollectionExists(collectionName)) {
@@ -68,7 +132,7 @@ export class MongORMEntity {
 			return null
 		}
 
-		const object = new this()
+		const object = new this() as A
 		Object.assign(object, mongoElement)
 
 		return object

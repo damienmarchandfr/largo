@@ -1,5 +1,5 @@
 {
-	"name": "mongorm",
+	"name": "mongodm",
 	"version": "1.0.0",
 	"author": "Damien Marchand",
 	"license": "MIT",
@@ -15,13 +15,11 @@
 	},
 	"engineStrict": true,
 	"scripts": {
-		"start": "ts-node src/index.ts",
-		"dev": "ts-node-dev --respawn --no-notify src/index.ts",
 		"build": "rimraf dist && tsc -p tsconfig.build.json",
 		"prepublishOnly": "yarn build",
 		"release": "standard-version",
 		"release:first": "standard-version --first-release",
-		"test": "jest --detectOpenHandles",
+		"test": "jest",
 		"test:watch": "jest --watch --verbose false",
 		"example": "ts-node-dev examples/index.ts",
 		"bench_populate_orm": "ts-node-dev benchmark/populate/mongorm.ts",
@@ -35,8 +33,6 @@
 		"string-template": "^1.0.0"
 	},
 	"devDependencies": {
-		"@commitlint/cli": "^8.0.0",
-		"@commitlint/config-conventional": "^8.0.0",
 		"@types/faker": "^4.1.5",
 		"@types/jest": "^24.0.17",
 		"@types/lodash": "^4.14.138",
@@ -45,7 +41,6 @@
 		"@types/node": "^12.7.4",
 		"@types/string-template": "^1.0.2",
 		"faker": "^4.1.0",
-		"husky": "^3.0.3",
 		"jest": "^24.8.0",
 		"mongoose": "^5.7.0",
 		"rimraf": "^3.0.0",

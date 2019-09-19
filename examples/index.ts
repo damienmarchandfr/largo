@@ -2,14 +2,9 @@ import { MongORMEntity } from '../src/entity'
 import { MongORMField } from '../src/decorators/field.decorator'
 import { MongORMIndex } from '../src/decorators/index.decorator'
 import { MongORMConnection } from '../src/connection'
-import {
-	FilterQuery,
-	UpdateOneOptions,
-	ObjectID,
-	FindOneOptions,
-} from 'mongodb'
+import { ObjectID } from 'mongodb'
 import { MongORMRelation } from '../src/decorators/relation.decorator'
-// Create a User class will create a collection names 'user'
+import { MongORMValidator } from '../src/decorators/validator.decorator'
 
 class Job extends MongORMEntity {
 	@MongORMField()
@@ -126,7 +121,7 @@ new MongORMConnection({
 			console.log('Event before insert user')
 		})
 
-		user.events.afterInsert.subscribe((u) => {
+		user.events.afterInsert.subscribe(() => {
 			console.log('Event after insert user.')
 		})
 
@@ -141,17 +136,26 @@ new MongORMConnection({
 			{ email: 'damien@dev.fr' }
 		)
 		// Find with new email
-		const updatedUser = await User.findOne(connection, {
+		const updatedUser = await User.findOne<User>(connection, {
 			email: 'toto@toto.com',
 		})
+
+		if (!updatedUser) {
+			throw new Error()
+		}
+
 		console.log('New email = ' + updatedUser.email)
 
 		// Create a job
 		const job = new Job('Lead dev !!')
-		const inserted = await job.insert(connection)
 
-		user.setJob(inserted)
-		await user.update(connection)
+		try {
+			const inserted = await job.insert(connection)
+			user.setJob(inserted)
+			await user.update(connection)
+		} catch (error) {
+			console.error(JSON.stringify(error))
+		}
 
 		// Create hooby
 		const hobby = new Hobby('Make JS great again !')
@@ -161,17 +165,16 @@ new MongORMConnection({
 		await user.update(connection)
 
 		const jobsSavedIds: ObjectID[] = []
-		// Create jobs
-		for (let i = 0; i < 200; i++) {
-			const jobForList = new Job('Dev JS number ' + i)
-			jobsSavedIds.push(await jobForList.insert(connection))
-		}
-		// Add jobs to user
-		user.setJobs(jobsSavedIds)
+		// // Create jobs
+		// for (let i = 0; i < 200; i++) {
+		// 	const jobForList = new Job('Dev JS number ' + i)
+		// 	jobsSavedIds.push(await jobForList.insert(connection))
+		// }
+		// // Add jobs to user
+		// user.setJobs(jobsSavedIds)
 		await user.update(connection)
 
 		const populated = await user.populate(connection)
-		console.log(populated)
 
 		console.log('Script executed :)')
 	})
