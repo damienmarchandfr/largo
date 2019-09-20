@@ -1,9 +1,4 @@
-import {
-	MongORMConnection,
-	generateCollectionName,
-	generateCollectionNameForStatic,
-	getMongORMPartial,
-} from '../connection'
+import { MongODMConnection, getMongODMPartial } from '../connection'
 import {
 	FilterQuery,
 	UpdateOneOptions,
@@ -11,11 +6,11 @@ import {
 	FindOneOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
-import { mongORMetaDataStorage } from '..'
+import { mongODMetaDataStorage } from '..'
 import format from 'string-template'
 import { errors } from '../messages.const'
 
-export class MongORMEntityArray {
+export class MongODMEntityArray {
 	private items: any[] = []
 
 	push(item: any) {
@@ -26,8 +21,8 @@ export class MongORMEntityArray {
 		return this.items.length
 	}
 
-	async populate(connect: MongORMConnection) {
-		const collectionName = generateCollectionName(this.items[0])
+	async populate(connect: MongODMConnection) {
+		const collectionName = this.items[0].getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -39,7 +34,7 @@ export class MongORMEntityArray {
 			{ $match: { id: { $in: this.items.map((obj) => obj._id) } } },
 		]
 
-		const relationMetas = mongORMetaDataStorage().mongORMRelationsMetas[
+		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
 			collectionName
 		]
 
@@ -48,7 +43,7 @@ export class MongORMEntityArray {
 				if (!Array.isArray((this as any)[meta.key])) {
 					pipeline.push({
 						$lookup: {
-							from: generateCollectionNameForStatic(meta.targetType),
+							from: (meta.targetType as any).getCollectionName(),
 							localField: meta.key,
 							foreignField: meta.targetKey,
 							as: meta.populatedKey,
@@ -65,7 +60,7 @@ export class MongORMEntityArray {
 				} else {
 					pipeline.push({
 						$lookup: {
-							from: generateCollectionNameForStatic(meta.targetType),
+							from: (meta.targetType as any).getCollectionName(),
 							localField: meta.key,
 							foreignField: meta.targetKey,
 							as: meta.populatedKey,
@@ -79,13 +74,20 @@ export class MongORMEntityArray {
 	}
 }
 
-export class MongORMEntity {
+export class MongODMEntity {
+	/**
+	 * Get MongoDB collection name for the current class
+	 */
+	static getCollectionName() {
+		return this.name.toLowerCase()
+	}
+
 	static async find(
-		connect: MongORMConnection,
+		connect: MongODMConnection,
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
 	) {
-		const collectionName = generateCollectionNameForStatic(this)
+		const collectionName = this.getCollectionName()
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
 				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
@@ -98,7 +100,7 @@ export class MongORMEntity {
 		)
 
 		const mongoElements = await cursor.toArray()
-		const results = new MongORMEntityArray()
+		const results = new MongODMEntityArray()
 
 		for (const mongoElement of mongoElements) {
 			const object = new this()
@@ -109,12 +111,12 @@ export class MongORMEntity {
 		return results
 	}
 
-	static async findOne<A extends MongORMEntity>(
-		connect: MongORMConnection,
+	static async findOne<A extends MongODMEntity>(
+		connect: MongODMConnection,
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
 	): Promise<A | null> {
-		const collectionName = generateCollectionNameForStatic(this)
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -146,12 +148,12 @@ export class MongORMEntity {
 	 * @param options
 	 */
 	static async update(
-		connect: MongORMConnection,
+		connect: MongODMConnection,
 		partial: Object,
 		filter: FilterQuery<any> = {},
 		options?: UpdateOneOptions
 	) {
-		const collectionName = generateCollectionNameForStatic(this)
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -159,7 +161,7 @@ export class MongORMEntity {
 			)
 		}
 
-		const toUpdate = getMongORMPartial(partial, collectionName)
+		const toUpdate = getMongODMPartial(partial, collectionName)
 
 		return connect.collections[collectionName].updateMany(
 			filter,
@@ -176,10 +178,10 @@ export class MongORMEntity {
 	 * @param filter
 	 */
 	static async delete<T>(
-		connect: MongORMConnection,
+		connect: MongODMConnection,
 		filter: FilterQuery<T> = {}
 	) {
-		const collectionName = generateCollectionNameForStatic(this)
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -191,10 +193,10 @@ export class MongORMEntity {
 	}
 
 	static async countDocuments(
-		connect: MongORMConnection,
+		connect: MongODMConnection,
 		filter: FilterQuery<any> = {}
 	) {
-		const collectionName = generateCollectionNameForStatic(this)
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -233,11 +235,18 @@ export class MongORMEntity {
 	}
 
 	/**
+	 * Get MongoDB collection name for the current object
+	 */
+	getCollectionName(): string {
+		return this.constructor.name.toLowerCase()
+	}
+
+	/**
 	 * Insert in database
 	 * @param connect
 	 */
-	async insert(connect: MongORMConnection) {
-		const collectionName = generateCollectionName(this)
+	async insert(connect: MongODMConnection) {
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -245,7 +254,7 @@ export class MongORMEntity {
 			)
 		}
 
-		const toInsert = getMongORMPartial(this, collectionName)
+		const toInsert = getMongODMPartial(this, collectionName)
 
 		this.events.beforeInsert.next(this)
 
@@ -264,8 +273,8 @@ export class MongORMEntity {
 	 * @param connect
 	 * @param options
 	 */
-	async update(connect: MongORMConnection, options?: UpdateOneOptions) {
-		const collectionName = generateCollectionName(this)
+	async update(connect: MongODMConnection, options?: UpdateOneOptions) {
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -273,7 +282,7 @@ export class MongORMEntity {
 			)
 		}
 
-		const toUpdate = getMongORMPartial(this, collectionName)
+		const toUpdate = getMongODMPartial(this, collectionName)
 
 		// Search old values
 		const savedVersion = await connect.collections[collectionName].findOne({
@@ -307,10 +316,10 @@ export class MongORMEntity {
 	 * Delete current object
 	 * @param connect
 	 */
-	async delete(connect: MongORMConnection) {
+	async delete(connect: MongODMConnection) {
 		this.events.beforeDelete.next(this)
 
-		const collectionName = generateCollectionName(this)
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -322,8 +331,8 @@ export class MongORMEntity {
 		this.events.afterDelete.next(this)
 	}
 
-	async populate(connect: MongORMConnection) {
-		const collectionName = generateCollectionName(this)
+	async populate(connect: MongODMConnection) {
+		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -331,7 +340,7 @@ export class MongORMEntity {
 			)
 		}
 
-		const relationMetas = mongORMetaDataStorage().mongORMRelationsMetas[
+		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
 			collectionName
 		]
 
@@ -348,7 +357,7 @@ export class MongORMEntity {
 				if (!Array.isArray((this as any)[meta.key])) {
 					pipeline.push({
 						$lookup: {
-							from: generateCollectionNameForStatic(meta.targetType),
+							from: (meta.targetType as any).getCollectionName(),
 							localField: meta.key,
 							foreignField: meta.targetKey,
 							as: meta.populatedKey,
@@ -365,7 +374,7 @@ export class MongORMEntity {
 				} else {
 					pipeline.push({
 						$lookup: {
-							from: generateCollectionNameForStatic(meta.targetType),
+							from: (meta.targetType as any).getCollectionName(),
 							localField: meta.key,
 							foreignField: meta.targetKey,
 							as: meta.populatedKey,

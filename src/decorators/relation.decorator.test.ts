@@ -1,36 +1,39 @@
-import { MongORMRelation } from './relation.decorator'
-import { MongORMField } from './field.decorator'
-import { mongORMetaDataStorage } from '..'
-import { MongORMIndex } from './index.decorator'
+import { MongODMRelation } from './relation.decorator'
+import { MongODMField } from './field.decorator'
+import { mongODMetaDataStorage } from '..'
+import { MongODMIndex } from './index.decorator'
 import { ObjectID } from 'mongodb'
+import { MongODMEntity } from '../entity'
 
 describe('Relation decorator', () => {
 	it('should add meta data', () => {
-		class JobRelationDecorator {
-			@MongORMField()
+		class JobRelationDecorator extends MongODMEntity {
+			@MongODMField()
 			companyName: string
 
 			constructor() {
+				super()
 				this.companyName = 'yolo company'
 			}
 		}
 
-		class UserRelationDecorator {
-			@MongORMField()
+		class UserRelationDecorator extends MongODMEntity {
+			@MongODMField()
 			email: string
 
-			@MongORMRelation({
+			@MongODMRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecorator,
 			})
 			jobId: Object | null = null
 
 			constructor() {
+				super()
 				this.email = 'damien@mail.com'
 			}
 		}
 
-		const relationMeta = mongORMetaDataStorage().mongORMRelationsMetas
+		const relationMeta = mongODMetaDataStorage().mongODMRelationsMetas
 			.userrelationdecorator
 
 		expect(relationMeta.length).toEqual(1)
@@ -43,56 +46,59 @@ describe('Relation decorator', () => {
 	})
 
 	it('should set _id as relation key by default', () => {
-		class JobRelationDecoratorIdNotSet {
-			@MongORMField()
+		class JobRelationDecoratorIdNotSet extends MongODMEntity {
+			@MongODMField()
 			companyName: string
 
 			constructor() {
+				super()
 				this.companyName = 'yolo company'
 			}
 		}
 
-		class UserRelationDecoratorIdNotSet {
-			@MongORMField()
+		class UserRelationDecoratorIdNotSet extends MongODMEntity {
+			@MongODMField()
 			email: string
 
-			@MongORMRelation({
+			@MongODMRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecoratorIdNotSet,
 			})
 			jobId: Object | null = null
 
 			constructor() {
+				super()
 				this.email = 'damien@mail.com'
 			}
 		}
 
 		expect(
-			mongORMetaDataStorage().mongORMRelationsMetas
+			mongODMetaDataStorage().mongODMRelationsMetas
 				.userrelationdecoratoridnotset[0].targetKey
 		).toEqual('_id')
 	})
 
 	it('should set other relation key if set by user', () => {
-		class JobRelationDecoratorIdSet {
-			@MongORMField()
+		class JobRelationDecoratorIdSet extends MongODMEntity {
+			@MongODMField()
 			companyName: string
 
-			@MongORMIndex({
+			@MongODMIndex({
 				unique: true,
 			})
 			id: ObjectID | null = null
 
 			constructor() {
+				super()
 				this.companyName = 'yolo company'
 			}
 		}
 
-		class UserRelationDecoratorIdSet {
-			@MongORMField()
+		class UserRelationDecoratorIdSet extends MongODMEntity {
+			@MongODMField()
 			email: string
 
-			@MongORMRelation({
+			@MongODMRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecoratorIdSet,
 				targetKey: 'id',
@@ -100,12 +106,13 @@ describe('Relation decorator', () => {
 			jobId: Object | null = null
 
 			constructor() {
+				super()
 				this.email = 'damien@mail.com'
 			}
 		}
 
 		expect(
-			mongORMetaDataStorage().mongORMRelationsMetas
+			mongODMetaDataStorage().mongODMRelationsMetas
 				.userrelationdecoratoridset[0].targetKey
 		).toEqual('id')
 	})

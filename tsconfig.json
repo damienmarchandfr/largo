@@ -66,5 +66,9 @@
 				"configFile": "tslint.json"
 			}
 		]
+	},
+	"typedocOptions": {
+		"mode": "modules",
+		"out": "docs"
 	}
 }

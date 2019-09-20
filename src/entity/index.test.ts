@@ -1,20 +1,20 @@
-import { MongORMConnection, generateCollectionName } from '../connection'
-import { MongORMEntity } from '.'
-import { MongORMField } from '../decorators/field.decorator'
+import { MongODMConnection } from '../connection'
+import { MongODMEntity } from '.'
+import { MongODMField } from '../decorators/field.decorator'
 import { ObjectID } from 'mongodb'
 
 const databaseName = 'entitytest'
 
-describe(`MongORM class`, () => {
+describe(`MongODM class`, () => {
 	describe('find static method', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -30,9 +30,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -40,8 +38,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should find all with empty filter', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -50,7 +48,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -66,8 +64,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should not find and return emtpy array', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor() {
@@ -76,7 +74,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -94,13 +92,13 @@ describe(`MongORM class`, () => {
 
 	describe('findOne static method', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -116,9 +114,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -126,8 +122,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should findOne', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor() {
@@ -136,7 +132,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -154,8 +150,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should not find and return null', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor() {
@@ -164,7 +160,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -183,13 +179,13 @@ describe(`MongORM class`, () => {
 
 	describe(`update static method`, () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -209,9 +205,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -219,8 +213,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should update one element with query filter', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -229,7 +223,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -265,13 +259,13 @@ describe(`MongORM class`, () => {
 
 	describe('delete static method', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -287,9 +281,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -297,8 +289,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('shoud delete with query filter', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -307,7 +299,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -331,8 +323,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should delete all if no query filter', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -341,7 +333,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -365,13 +357,13 @@ describe(`MongORM class`, () => {
 
 	describe('countDocuments static method', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -389,9 +381,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -399,8 +389,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should count all documents', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -409,7 +399,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -427,8 +417,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should count documents with query filter', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -437,7 +427,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -462,13 +452,13 @@ describe(`MongORM class`, () => {
 
 	describe('insert method', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -484,9 +474,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -494,8 +482,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should insert', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -504,7 +492,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -528,8 +516,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should not insert fields without decorator', async () => {
-			class NoDecoratorSaved extends MongORMEntity {
-				@MongORMField()
+			class NoDecoratorSaved extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				personal: string
@@ -541,7 +529,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -551,9 +539,9 @@ describe(`MongORM class`, () => {
 
 			const id = await obj.insert(connection)
 
-			const saved = await connection.collections[
-				generateCollectionName(new NoDecoratorSaved('toto'))
-			].findOne({ _id: id })
+			const saved = await connection.collections.nodecoratorsaved.findOne({
+				_id: id,
+			})
 
 			expect(saved).toStrictEqual({
 				_id: id,
@@ -562,8 +550,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should trigger beforeInsert', async (done) => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				firstname: string
 
 				constructor() {
@@ -572,7 +560,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -590,8 +578,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should trigger afterInsert', async (done) => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				firstname: string
 
 				constructor() {
@@ -600,7 +588,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -620,13 +608,13 @@ describe(`MongORM class`, () => {
 
 	describe('update methode', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -647,9 +635,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -657,8 +643,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should update', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -667,7 +653,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -693,8 +679,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should not update prop without decorator', async () => {
-			class UserUpdateNotDecorator extends MongORMEntity {
-				@MongORMField()
+			class UserUpdateNotDecorator extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				age: number
@@ -706,7 +692,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -718,34 +704,33 @@ describe(`MongORM class`, () => {
 			const userCopy = { ...user }
 			delete userCopy.age
 
-			const collectionName = generateCollectionName(
-				new UserUpdateNotDecorator('toto')
+			const insertResult = await connection.collections.userupdatenotdecorator.insertOne(
+				userCopy
 			)
-			const insertResult = await connection.collections[
-				collectionName
-			].insertOne(userCopy)
 
 			// Update
 			user.age = 18
 			await user.update(connection)
 
 			// Get user in db
-			const saved = await connection.collections[collectionName].findOne({
-				_id: insertResult.insertedId,
-			})
+			const saved = await connection.collections.userupdatenotdecorator.findOne(
+				{
+					_id: insertResult.insertedId,
+				}
+			)
 
 			expect(saved.age).toBeUndefined()
 		})
 
 		it('should trigger beforeUpdate', async (done) => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
 			})
 
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				firstname: string
 
 				constructor(firstname: string) {
@@ -780,14 +765,14 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should trigger afterUpdate', async (done) => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
 			})
 
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				firstname: string
 
 				constructor(firstname: string) {
@@ -824,13 +809,13 @@ describe(`MongORM class`, () => {
 
 	describe('delete methode', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongORMEntity {
+			class RandomClassWithoutDecorator extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -850,9 +835,7 @@ describe(`MongORM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection ${generateCollectionName(
-						new RandomClassWithoutDecorator()
-					)} does not exist.`
+					`Collection randomclasswithoutdecorator does not exist.`
 				)
 			}
 
@@ -860,8 +843,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should delete', async () => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -870,7 +853,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -894,8 +877,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should trigger beforeDelete', async (done) => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -904,7 +887,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,
@@ -926,8 +909,8 @@ describe(`MongORM class`, () => {
 		})
 
 		it('should trigger afterDelete', async (done) => {
-			class User extends MongORMEntity {
-				@MongORMField()
+			class User extends MongODMEntity {
+				@MongODMField()
 				email: string
 
 				constructor(email: string) {
@@ -936,7 +919,7 @@ describe(`MongORM class`, () => {
 				}
 			}
 
-			const connection = await new MongORMConnection({
+			const connection = await new MongODMConnection({
 				databaseName,
 			}).connect({
 				clean: true,

@@ -4,7 +4,12 @@
 	"author": "Damien Marchand",
 	"license": "MIT",
 	"repository": "",
-	"keywords": [],
+	"keywords": [
+		"mongodb",
+		"odm",
+		"typescript",
+		"validation"
+	],
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
 	"files": [
@@ -19,11 +24,12 @@
 		"prepublishOnly": "yarn build",
 		"release": "standard-version",
 		"release:first": "standard-version --first-release",
-		"test": "jest --detectOpenHandles",
+		"test": "jest",
 		"test:watch": "jest --watch --verbose false",
 		"example": "ts-node-dev examples/index.ts",
 		"bench_populate_orm": "ts-node-dev benchmark/populate/mongorm.ts",
-		"bench_populate_mongoose": "ts-node-dev benchmark/populate/mongoose.ts"
+		"bench_populate_mongoose": "ts-node-dev benchmark/populate/mongoose.ts",
+		"doc": "typedoc"
 	},
 	"dependencies": {
 		"lodash": "^4.17.15",
@@ -50,6 +56,7 @@
 		"ts-node-dev": "^1.0.0-pre.40",
 		"tslint": "^5.19.0",
 		"tslint-config-prettier": "^1.18.0",
+		"typedoc": "^0.15.0",
 		"typescript": "^3.5.3",
 		"typescript-tslint-plugin": "^0.5.4"
 	}

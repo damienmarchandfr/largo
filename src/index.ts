@@ -1,7 +1,7 @@
 import 'reflect-metadata'
 import {
-	MongORMValidatorOptionsEnum,
-	MongORMValidatorOptionsBson,
+	MongODMValidatorOptionsEnum,
+	MongODMValidatorOptionsBson,
 } from './decorators/validator.decorator'
 
 // Meta field
@@ -37,24 +37,24 @@ type DataStorageValidation = {
 		// Collection name
 		required: string[] // Keys required
 		properties: {
-			[key: string]: MongORMValidatorOptionsBson | MongORMValidatorOptionsEnum
+			[key: string]: MongODMValidatorOptionsBson | MongODMValidatorOptionsEnum
 		}
 	}
 }
 
 interface CustomGlobal extends NodeJS.Global {
-	mongORMFieldMetas: DataStorageFieldMeta
-	mongORMIndexMetas: DataStorageIndexMeta
-	mongORMRelationsMetas: DataStorageFielRelation
-	mongORMValidationMetas: DataStorageValidation
+	mongODMFieldMetas: DataStorageFieldMeta
+	mongODMIndexMetas: DataStorageIndexMeta
+	mongODMRelationsMetas: DataStorageFielRelation
+	mongODMValidationMetas: DataStorageValidation
 }
 
-export function mongORMetaDataStorage() {
-	if (!(global as CustomGlobal).mongORMFieldMetas) {
-		;(global as CustomGlobal).mongORMFieldMetas = {}
-		;(global as CustomGlobal).mongORMIndexMetas = {}
-		;(global as CustomGlobal).mongORMRelationsMetas = {}
-		;(global as CustomGlobal).mongORMValidationMetas = {}
+export function mongODMetaDataStorage() {
+	if (!(global as CustomGlobal).mongODMFieldMetas) {
+		;(global as CustomGlobal).mongODMFieldMetas = {}
+		;(global as CustomGlobal).mongODMIndexMetas = {}
+		;(global as CustomGlobal).mongODMRelationsMetas = {}
+		;(global as CustomGlobal).mongODMValidationMetas = {}
 	}
 	return global as CustomGlobal
 }

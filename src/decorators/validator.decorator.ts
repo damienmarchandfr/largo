@@ -1,5 +1,4 @@
-import { mongORMetaDataStorage } from '..'
-import { generateCollectionName } from '../connection'
+import { mongODMetaDataStorage } from '..'
 
 // https://docs.mongodb.com/manual/reference/operator/query/type/#document-type-available-types
 type simpleBsonType =
@@ -24,25 +23,25 @@ type simpleBsonType =
 
 type bsonType = simpleBsonType | simpleBsonType[]
 
-export interface MongORMValidatorOptionsBson {
+export interface MongODMValidatorOptionsBson {
 	bsonType: bsonType
 	required?: boolean
 	minimum?: number
 	maximum?: number
 	description?: string
 }
-export interface MongORMValidatorOptionsEnum {
+export interface MongODMValidatorOptionsEnum {
 	enum: string[]
 	description?: string
 	required?: boolean
 }
 
-export function MongORMValidator(
-	options: MongORMValidatorOptionsBson | MongORMValidatorOptionsEnum
+export function MongODMValidator(
+	options: MongODMValidatorOptionsBson | MongODMValidatorOptionsEnum
 ) {
 	return (object: Object, key: string) => {
-		const metas = mongORMetaDataStorage().mongORMValidationMetas
-		const collectionName = generateCollectionName(object)
+		const metas = mongODMetaDataStorage().mongODMValidationMetas
+		const collectionName = (object as any).getCollectionName()
 
 		// Set with reference
 		if (!metas[collectionName]) {
@@ -53,35 +52,35 @@ export function MongORMValidator(
 		}
 
 		// BSON
-		if ((options as MongORMValidatorOptionsBson).bsonType) {
+		if ((options as MongODMValidatorOptionsBson).bsonType) {
 			metas[collectionName].properties[key] = {
-				bsonType: (options as MongORMValidatorOptionsBson).bsonType,
+				bsonType: (options as MongODMValidatorOptionsBson).bsonType,
 				description: options.description || undefined,
 			}
 
 			// !== undefined because can equal 0
 			if (
-				typeof (options as MongORMValidatorOptionsBson).maximum !== 'undefined'
+				typeof (options as MongODMValidatorOptionsBson).maximum !== 'undefined'
 			) {
 				;(metas[collectionName].properties[
 					key
-				] as MongORMValidatorOptionsBson).maximum = (options as MongORMValidatorOptionsBson).maximum
+				] as MongODMValidatorOptionsBson).maximum = (options as MongODMValidatorOptionsBson).maximum
 			}
 
 			// !== undefined because can equal 0
 			if (
-				typeof (options as MongORMValidatorOptionsBson).minimum !== 'undefined'
+				typeof (options as MongODMValidatorOptionsBson).minimum !== 'undefined'
 			) {
 				;(metas[collectionName].properties[
 					key
-				] as MongORMValidatorOptionsBson).minimum = (options as MongORMValidatorOptionsBson).minimum
+				] as MongODMValidatorOptionsBson).minimum = (options as MongODMValidatorOptionsBson).minimum
 			}
 		}
 
 		// ENUM
-		if ((options as MongORMValidatorOptionsEnum).enum) {
+		if ((options as MongODMValidatorOptionsEnum).enum) {
 			metas[collectionName].properties[key] = {
-				enum: (options as MongORMValidatorOptionsEnum).enum,
+				enum: (options as MongODMValidatorOptionsEnum).enum,
 				description: options.description || undefined,
 			}
 		}

@@ -1,9 +1,14 @@
 import { Db, MongoClient, Collection } from 'mongodb'
-import { mongORMetaDataStorage } from '..'
+import { mongODMetaDataStorage } from '..'
 import { errors } from '../messages.const'
 import { pick } from 'lodash'
+import format from 'string-template'
 
-export interface ConnectionOptions {
+// MongoDB databases protected
+const protectedCDatabaseNames = ['admin', 'local', 'config']
+
+// MongoDB options to create connection
+interface ConnectionOptions {
 	databaseName: string
 	username?: string
 	password?: string
@@ -11,11 +16,16 @@ export interface ConnectionOptions {
 	port?: number
 }
 
-export interface ConnectOptions {
-	clean: boolean
+interface ConnectOptions {
+	clean: boolean // Clean all collections
 }
 
-export class MongORMConnection {
+/**
+ * Use it to connect to MongoDB.
+ *
+ * const connection = await new MongODMConnection({databaseName : 'dbName' }).connect({clean : false})
+ */
+export class MongODMConnection {
 	// Native Mongo collections
 	public collections: {
 		[key: string]: Collection
@@ -26,19 +36,35 @@ export class MongORMConnection {
 	private db: Db | null
 
 	constructor(options: ConnectionOptions) {
+		// Check if database name is not protected
+		if (protectedCDatabaseNames.includes(options.databaseName)) {
+			throw new Error(
+				format(errors.DATABASE_NAME_PROTECTED, {
+					databaseName: options.databaseName,
+				})
+			)
+		}
+
 		this.options = options
 		this.db = null
 		this.mongoClient = null
 		this.collections = {}
 	}
 
+	/**
+	 * Check if a mongo collection is created
+	 */
 	public checkCollectionExists(collectionName: string): boolean {
 		return !!this.collections[collectionName]
 	}
 
+	/**
+	 * Connect to database and create collections / indexes / validations
+	 * @param options
+	 */
 	public async connect(
 		options: ConnectOptions = { clean: false }
-	): Promise<MongORMConnection> {
+	): Promise<MongODMConnection> {
 		// Check if already connected
 		if (this.mongoClient) {
 			throw new Error(errors.ALREADY_CONNECTED)
@@ -52,22 +78,22 @@ export class MongORMConnection {
 		this.db = this.mongoClient.db(this.options.databaseName)
 
 		// Sync collections
-		let collectionNames = Object.keys(mongORMetaDataStorage().mongORMFieldMetas)
+		let collectionNames = Object.keys(mongODMetaDataStorage().mongODMFieldMetas)
 
 		// Create collections if not exist
 		for (const collectionName of collectionNames) {
 			// validator with JSON Schema
 			let validator = {}
 
-			if (mongORMetaDataStorage().mongORMValidationMetas[collectionName]) {
+			if (mongODMetaDataStorage().mongODMValidationMetas[collectionName]) {
 				validator = {
 					$jsonSchema: {
 						bsonType: 'object',
 						required:
-							mongORMetaDataStorage().mongORMValidationMetas[collectionName]
+							mongODMetaDataStorage().mongODMValidationMetas[collectionName]
 								.required || [],
 						properties:
-							mongORMetaDataStorage().mongORMValidationMetas[collectionName]
+							mongODMetaDataStorage().mongODMValidationMetas[collectionName]
 								.properties || {},
 					},
 				}
@@ -79,7 +105,7 @@ export class MongORMConnection {
 			this.collections[collectionName] = collectionCreated
 		}
 
-		collectionNames = Object.keys(mongORMetaDataStorage().mongORMIndexMetas)
+		collectionNames = Object.keys(mongODMetaDataStorage().mongODMIndexMetas)
 
 		for (const collectionName of collectionNames) {
 			if (!this.collections[collectionName]) {
@@ -87,7 +113,7 @@ export class MongORMConnection {
 				this.collections[collectionName] = collectionCreated
 			}
 			await this.collections[collectionName].dropIndexes()
-			const collectionIndexMetas = mongORMetaDataStorage().mongORMIndexMetas[
+			const collectionIndexMetas = mongODMetaDataStorage().mongODMIndexMetas[
 				collectionName
 			]
 			for (const indexMeta of collectionIndexMetas) {
@@ -106,6 +132,9 @@ export class MongORMConnection {
 		return this
 	}
 
+	/**
+	 * Close connection to MongoDB
+	 */
 	public async disconnect() {
 		if (!this.mongoClient) {
 			throw new Error(errors.CLIENT_NOT_CONNECTED_CANNOT_DISCONNECT)
@@ -116,6 +145,9 @@ export class MongORMConnection {
 		this.collections = {}
 	}
 
+	/**
+	 * Clean all collections
+	 */
 	public async clean() {
 		if (!this.mongoClient) {
 			throw new Error(errors.NOT_CONNECTED)
@@ -128,17 +160,17 @@ export class MongORMConnection {
 	}
 }
 
-export function getMongORMPartial(
+export function getMongODMPartial(
 	obj: Object,
 	collectionName: string
 ): Partial<Object> {
 	// Select fields and indexes
 	const fieldKeys =
-		mongORMetaDataStorage().mongORMFieldMetas[collectionName] || []
+		mongODMetaDataStorage().mongODMFieldMetas[collectionName] || []
 
 	let indexKeys: string[] = []
-	if (mongORMetaDataStorage().mongORMIndexMetas[collectionName]) {
-		indexKeys = mongORMetaDataStorage().mongORMIndexMetas[collectionName].map(
+	if (mongODMetaDataStorage().mongODMIndexMetas[collectionName]) {
+		indexKeys = mongODMetaDataStorage().mongODMIndexMetas[collectionName].map(
 			(indexMeta) => {
 				return indexMeta.key
 			}
@@ -146,8 +178,8 @@ export function getMongORMPartial(
 	}
 
 	let relationKeys: string[] = []
-	if (mongORMetaDataStorage().mongORMRelationsMetas[collectionName]) {
-		relationKeys = mongORMetaDataStorage().mongORMRelationsMetas[
+	if (mongODMetaDataStorage().mongODMRelationsMetas[collectionName]) {
+		relationKeys = mongODMetaDataStorage().mongODMRelationsMetas[
 			collectionName
 		].map((relationMeta) => {
 			return relationMeta.key
@@ -170,14 +202,4 @@ export function createConnectionString(options: ConnectionOptions): string {
 
 	return `mongodb://${userAuthURL}${options.host ||
 		`localhost`}:${options.port || 27017}/${options.databaseName}`
-}
-
-export function generateCollectionName(object: Object) {
-	return object.constructor.name.toLowerCase()
-}
-
-export function generateCollectionNameForStatic(
-	object: new (...args: any[]) => any
-) {
-	return object.name.toLowerCase()
 }

@@ -1,13 +1,13 @@
-import { MongORMEntity } from '../src/entity'
-import { MongORMField } from '../src/decorators/field.decorator'
-import { MongORMIndex } from '../src/decorators/index.decorator'
-import { MongORMConnection } from '../src/connection'
+import { MongODMEntity } from '../src/entity'
+import { MongODMField } from '../src/decorators/field.decorator'
+import { MongODMIndex } from '../src/decorators/index.decorator'
+import { MongODMConnection } from '../src/connection'
 import { ObjectID } from 'mongodb'
-import { MongORMRelation } from '../src/decorators/relation.decorator'
-import { MongORMValidator } from '../src/decorators/validator.decorator'
+import { MongODMRelation } from '../src/decorators/relation.decorator'
+import { MongODMValidator } from '../src/decorators/validator.decorator'
 
-class Job extends MongORMEntity {
-	@MongORMField()
+class Job extends MongODMEntity {
+	@MongODMField()
 	name: string
 
 	constructor(name: string) {
@@ -16,11 +16,11 @@ class Job extends MongORMEntity {
 	}
 }
 
-class Hobby extends MongORMEntity {
-	@MongORMField()
+class Hobby extends MongODMEntity {
+	@MongODMField()
 	customId: ObjectID
 
-	@MongORMField()
+	@MongODMField()
 	name: string
 
 	constructor(name: string) {
@@ -30,27 +30,27 @@ class Hobby extends MongORMEntity {
 	}
 }
 
-class User extends MongORMEntity {
+class User extends MongODMEntity {
 	// Email is indexed and must be unique
-	@MongORMIndex({
+	@MongODMIndex({
 		unique: true,
 	})
 	email: string
 
 	// First name is indexed
-	@MongORMIndex({
+	@MongODMIndex({
 		unique: false,
 	})
 	firstname: string
 
 	// Is not an index and will be saved
-	@MongORMField()
+	@MongODMField()
 	passwordNotHashedLOL: string
 
 	// Not decorator, will not be saved
 	age: number
 
-	@MongORMRelation({
+	@MongODMRelation({
 		populatedKey: 'job',
 		targetType: Job,
 		targetKey: '_id',
@@ -58,7 +58,7 @@ class User extends MongORMEntity {
 	jobId?: ObjectID
 	job?: Job
 
-	@MongORMRelation({
+	@MongODMRelation({
 		populatedKey: 'jobs',
 		targetKey: '_id',
 		targetType: Job,
@@ -66,7 +66,7 @@ class User extends MongORMEntity {
 	jobIds?: ObjectID[]
 	jobs?: Job[]
 
-	@MongORMRelation({
+	@MongODMRelation({
 		populatedKey: 'hobby',
 		targetType: Hobby,
 		targetKey: 'customId',
@@ -96,9 +96,9 @@ class User extends MongORMEntity {
 }
 
 // Connect to Mongo
-const databaseName = 'mongORMexample'
+const databaseName = 'mongODMexample'
 
-new MongORMConnection({
+new MongODMConnection({
 	databaseName,
 })
 	.connect({

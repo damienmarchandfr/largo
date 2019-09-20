@@ -1,32 +1,32 @@
-import { MongORMEntity } from '../../src/entity'
-import { MongORMField } from '../../src/decorators/field.decorator'
-import { MongORMRelation } from '../../src/decorators/relation.decorator'
-import { UserORM } from './User.orm'
+import { MongODMEntity } from '../../src/entity'
+import { MongODMField } from '../../src/decorators/field.decorator'
+import { MongODMRelation } from '../../src/decorators/relation.decorator'
+import { UserODM } from './User.odm'
 import { ObjectID } from 'mongodb'
 import { Job } from '../data'
 
-export class JobORM extends MongORMEntity {
-	@MongORMField()
+export class JobODM extends MongODMEntity {
+	@MongODMField()
 	name: string
 
-	@MongORMField()
+	@MongODMField()
 	years: number
 
-	@MongORMField()
+	@MongODMField()
 	description: string
 
-	@MongORMField()
+	@MongODMField()
 	companyName: string
 
-	@MongORMField()
+	@MongODMField()
 	numberOfEmployes: number
 
-	@MongORMRelation({
+	@MongODMRelation({
 		populatedKey: 'employees',
-		targetType: UserORM,
+		targetType: UserODM,
 	})
 	employesIds: ObjectID[] = []
-	employees?: UserORM[]
+	employees?: UserODM[]
 
 	constructor() {
 		super()

@@ -1,31 +1,32 @@
-import { mongORMetaDataStorage } from '..'
-import { generateCollectionName, MongORMConnection } from '../connection'
-import { MongORMIndex } from './index.decorator'
+import { mongODMetaDataStorage } from '..'
+import { MongODMIndex } from './index.decorator'
+import { MongODMConnection } from '../connection'
+import { MongODMEntity } from '../entity'
 
 const databaseName = 'indexDecorator'
 
-describe('MongORMIndex decorator', () => {
-	it('should add index meta to mongORMetaDataStorage', () => {
-		class MongORMIndexClass {
-			@MongORMIndex({
+describe('MongODMIndex decorator', () => {
+	it('should add index meta to mongODMetaDataStorage', () => {
+		class MongODMIndexClass extends MongODMEntity {
+			@MongODMIndex({
 				unique: true,
 			})
 			hello: string
 
-			@MongORMIndex({
+			@MongODMIndex({
 				unique: false,
 			})
 			world: string
 
 			constructor() {
+				super()
 				this.hello = 'world'
 				this.world = 'hello'
 			}
 		}
 
-		const classIndexMetas = mongORMetaDataStorage().mongORMIndexMetas[
-			generateCollectionName(new MongORMIndexClass())
-		]
+		const classIndexMetas = mongODMetaDataStorage().mongODMIndexMetas
+			.mongodmindexclass
 		expect(classIndexMetas.length).toEqual(2)
 
 		expect(classIndexMetas[0]).toStrictEqual({
@@ -40,31 +41,31 @@ describe('MongORMIndex decorator', () => {
 	})
 
 	it('should create a unique index', async () => {
-		class UniqueIndex {
-			@MongORMIndex({
+		class UniqueIndex extends MongODMEntity {
+			@MongODMIndex({
 				unique: true,
 			})
 			id: string
 
 			constructor() {
+				super()
 				this.id = 'hello'
 			}
 		}
 
-		const connexion = await new MongORMConnection({
+		const connexion = await new MongODMConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
 		// No error for the first object saved with id = hello
-		const collectionName = generateCollectionName(new UniqueIndex())
-		await connexion.collections[collectionName].insertOne(new UniqueIndex())
+		await connexion.collections.uniqueindex.insertOne(new UniqueIndex())
 
 		let hasError = false
 
 		try {
-			await connexion.collections[collectionName].insertOne(new UniqueIndex())
+			await connexion.collections.uniqueindex.insertOne(new UniqueIndex())
 		} catch (error) {
 			hasError = true
 		}

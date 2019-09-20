@@ -1,16 +1,15 @@
-import { mongORMetaDataStorage } from '..'
-import { generateCollectionName } from '../connection'
+import { mongODMetaDataStorage } from '..'
 
-export interface MongORMRelationOptions {
+export interface MongODMRelationOptions {
 	populatedKey: string // userId -> user
 	targetType: new (...args: any[]) => any // User
 	targetKey?: string // _id
 }
 
-export function MongORMRelation(options: MongORMRelationOptions) {
+export function MongODMRelation(options: MongODMRelationOptions) {
 	return (object: Object, key: string) => {
-		const metas = mongORMetaDataStorage().mongORMRelationsMetas
-		const collectionName = generateCollectionName(object)
+		const metas = mongODMetaDataStorage().mongODMRelationsMetas
+		const collectionName = (object as any).getCollectionName()
 		if (!metas[collectionName]) {
 			metas[collectionName] = []
 		}

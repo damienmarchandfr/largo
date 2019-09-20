@@ -1,18 +1,18 @@
-import { MongORMEntity } from '../../src/entity'
-import { MongORMField } from '../../src/decorators/field.decorator'
+import { MongODMEntity } from '../../src/entity'
+import { MongODMField } from '../../src/decorators/field.decorator'
 import { Hobby } from '../data'
 
-export class HobbyORM extends MongORMEntity {
-	@MongORMField()
+export class HobbyODM extends MongODMEntity {
+	@MongODMField()
 	name: string
 
-	@MongORMField()
+	@MongODMField()
 	from: Date
 
-	@MongORMField()
+	@MongODMField()
 	to: Date
 
-	@MongORMField()
+	@MongODMField()
 	level: number
 
 	constructor() {

@@ -1,18 +1,13 @@
-import {
-	createConnectionString,
-	generateCollectionName,
-	generateCollectionNameForStatic,
-	MongORMConnection,
-	getMongORMPartial,
-} from '.'
-import { MongORMField } from '../decorators/field.decorator'
+import { createConnectionString, MongODMConnection, getMongODMPartial } from '.'
+import { MongODMField } from '../decorators/field.decorator'
 import { errors } from '../messages.const'
-import { MongORMIndex } from '../decorators/index.decorator'
+import { MongODMIndex } from '../decorators/index.decorator'
+import { MongODMEntity } from '../entity'
 
 const databaseName = 'connectiontest'
 
 describe('createConnectionString function', () => {
-	test('must return a valid connection string with all parameters', () => {
+	it('must return a valid connection string with all parameters', () => {
 		const url = createConnectionString({
 			username: 'damien',
 			password: 'toto',
@@ -24,7 +19,7 @@ describe('createConnectionString function', () => {
 		expect(url).toEqual('mongodb://damien:toto@localhost:8080/' + databaseName)
 	})
 
-	test(`must return a valid connection string with just database name set`, () => {
+	it(`must return a valid connection string with just database name set`, () => {
 		const url = createConnectionString({
 			databaseName,
 		})
@@ -33,51 +28,55 @@ describe('createConnectionString function', () => {
 	})
 })
 
-describe('generateCollectionName function', () => {
-	test('must return a valid collection name', () => {
-		class User {}
+describe('MongODM class', () => {
+	it('should throw an error if database name is protected', () => {
+		let hasError = false
+		try {
+			const connection = new MongODMConnection({
+				databaseName: 'admin',
+			})
+		} catch (error) {
+			hasError = true
+			expect(error.message).toEqual(`Database name 'admin' is protected.`)
+		}
 
-		const collectionName = generateCollectionName(new User())
-		expect(collectionName).toEqual('user')
+		expect(hasError).toEqual(true)
 	})
 })
 
-describe('generateCollectionNameForStatic function', () => {
-	test('must return a valid collection name for static', () => {
-		class User {
-			static test() {
-				return this
-			}
-		}
+describe('function getCollectionName', () => {
+	class User extends MongODMEntity {}
+	const user = new User()
+	expect(user.getCollectionName()).toEqual('user')
+})
 
-		const collectionName = generateCollectionNameForStatic(User.test())
-		expect(collectionName).toEqual('user')
-	})
+describe('static function getCollectionName', () => {
+	class User extends MongODMEntity {}
+	expect(User.getCollectionName()).toEqual('user')
 })
 
 describe('connect function', () => {
-	test('must have collections if models loaded', async () => {
-		class ConnexionUser {
-			@MongORMField()
+	it('must have collections if models loaded', async () => {
+		class ConnexionUser extends MongODMEntity {
+			@MongODMField()
 			field: string
 
 			constructor() {
+				super()
 				this.field = 'toto'
 			}
 		}
 
-		const mongORM = new MongORMConnection({
+		const mongODM = new MongODMConnection({
 			databaseName,
 		})
-		await mongORM.connect()
+		await mongODM.connect()
 
-		expect(
-			mongORM.collections[generateCollectionName(new ConnexionUser())]
-		).toBeDefined()
+		expect(mongODM.collections.connexionuser).toBeDefined()
 	})
 
-	test('must throw error if already connected', async () => {
-		const connection = new MongORMConnection({
+	it('must throw error if already connected', async () => {
+		const connection = new MongODMConnection({
 			databaseName,
 		})
 
@@ -96,18 +95,19 @@ describe('connect function', () => {
 	})
 
 	it('must create index', async () => {
-		class Indexed {
-			@MongORMIndex({
+		class Indexed extends MongODMEntity {
+			@MongODMIndex({
 				unique: false,
 			})
 			firstname: string
 
 			constructor() {
+				super()
 				this.firstname = 'Damien'
 			}
 		}
 
-		const connection = new MongORMConnection({
+		const connection = new MongODMConnection({
 			databaseName,
 		})
 
@@ -118,16 +118,17 @@ describe('connect function', () => {
 	})
 
 	it('must clean collections if clean = true', async () => {
-		class Cleaned {
-			@MongORMField()
+		class Cleaned extends MongODMEntity {
+			@MongODMField()
 			field: string
 
 			constructor() {
+				super()
 				this.field = 'value'
 			}
 		}
 
-		const connection = await new MongORMConnection({
+		const connection = await new MongODMConnection({
 			databaseName,
 		}).connect()
 
@@ -136,7 +137,7 @@ describe('connect function', () => {
 		await connection.collections.cleaned.insertOne(new Cleaned())
 
 		// Create new connection with clean = true
-		const secondConnection = await new MongORMConnection({
+		const secondConnection = await new MongODMConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -149,15 +150,15 @@ describe('connect function', () => {
 })
 
 describe('disconnect function', () => {
-	test('must throw an error if not connected', async () => {
-		const mongORM = new MongORMConnection({
+	it('must throw an error if not connected', async () => {
+		const mongODM = new MongODMConnection({
 			databaseName,
 		})
 
 		let hasError = false
 
 		try {
-			await mongORM.disconnect()
+			await mongODM.disconnect()
 		} catch (error) {
 			expect(error.message).toEqual(
 				errors.CLIENT_NOT_CONNECTED_CANNOT_DISCONNECT
@@ -169,16 +170,17 @@ describe('disconnect function', () => {
 	})
 
 	it('must accept disconnect after a connection', async () => {
-		class City {
-			@MongORMField()
+		class City extends MongODMEntity {
+			@MongODMField()
 			name: string
 
 			constructor() {
+				super()
 				this.name = 'Aix en Provence'
 			}
 		}
 
-		const connection = new MongORMConnection({
+		const connection = new MongODMConnection({
 			databaseName,
 		})
 
@@ -191,8 +193,8 @@ describe('disconnect function', () => {
 })
 
 describe('clean function', () => {
-	test('must throw error if not connected', async () => {
-		const connection = new MongORMConnection({
+	it('must throw error if not connected', async () => {
+		const connection = new MongODMConnection({
 			databaseName,
 		})
 
@@ -208,26 +210,28 @@ describe('clean function', () => {
 		expect(hasError).toBe(true)
 	})
 
-	test('should clean all collections', async () => {
-		class User {
-			@MongORMField()
+	it('should clean all collections', async () => {
+		class User extends MongODMEntity {
+			@MongODMField()
 			firstname: string
 
 			constructor() {
+				super()
 				this.firstname = 'Damien'
 			}
 		}
 
-		class Job {
-			@MongORMField()
+		class Job extends MongODMEntity {
+			@MongODMField()
 			name: string
 
 			constructor() {
+				super()
 				this.name = 'clown'
 			}
 		}
 
-		const connection = await new MongORMConnection({
+		const connection = await new MongODMConnection({
 			databaseName,
 		}).connect()
 
@@ -246,30 +250,28 @@ describe('clean function', () => {
 	})
 })
 
-describe('getMongORMPartial function', () => {
+describe('getMongODMPartial function', () => {
 	it('should not return field without decorator', () => {
-		class Full {
-			@MongORMIndex({
+		class Full extends MongODMEntity {
+			@MongODMIndex({
 				unique: false,
 			})
 			firstname: string
 
-			@MongORMField()
+			@MongODMField()
 			lastname: string
 
 			age: number
 
 			constructor() {
+				super()
 				this.firstname = 'Damien'
 				this.lastname = 'Marchand'
 				this.age = 18
 			}
 		}
 
-		const partial = getMongORMPartial(
-			new Full(),
-			generateCollectionName(new Full())
-		)
+		const partial = getMongODMPartial(new Full(), 'full')
 
 		expect(partial).toStrictEqual({
 			lastname: 'Marchand',
@@ -278,22 +280,20 @@ describe('getMongORMPartial function', () => {
 	})
 
 	it('should not return empty field', () => {
-		class Full {
-			@MongORMField()
+		class Full extends MongODMEntity {
+			@MongODMField()
 			firstname: string
 
-			@MongORMField()
+			@MongODMField()
 			age?: number
 
 			constructor() {
+				super()
 				this.firstname = 'Damien'
 			}
 		}
 
-		const partial = getMongORMPartial(
-			new Full(),
-			generateCollectionName(new Full())
-		)
+		const partial = getMongODMPartial(new Full(), 'full')
 
 		expect(partial).toStrictEqual({
 			firstname: 'Damien',
@@ -303,7 +303,7 @@ describe('getMongORMPartial function', () => {
 
 describe('checkCollectionExists function', () => {
 	it('should return false if connection does not exist', async () => {
-		const connection = await new MongORMConnection({
+		const connection = await new MongODMConnection({
 			databaseName,
 		}).connect({
 			clean: false,
@@ -315,16 +315,17 @@ describe('checkCollectionExists function', () => {
 	})
 
 	it('should return true if collection exists', async () => {
-		class User {
-			@MongORMField()
+		class User extends MongODMEntity {
+			@MongODMField()
 			firstname: string
 
 			constructor() {
+				super()
 				this.firstname = 'Damien'
 			}
 		}
 
-		const connection = await new MongORMConnection({
+		const connection = await new MongODMConnection({
 			databaseName,
 		}).connect({
 			clean: false,

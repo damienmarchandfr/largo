@@ -1,10 +1,9 @@
-import { mongORMetaDataStorage } from '..'
-import { generateCollectionName } from '../connection'
+import { mongODMetaDataStorage } from '..'
 
-export function MongORMField() {
+export function MongODMField() {
 	return (object: Object, key: string) => {
-		const metas = mongORMetaDataStorage().mongORMFieldMetas
-		const collectionName = generateCollectionName(object)
+		const metas = mongODMetaDataStorage().mongODMFieldMetas
+		const collectionName = (object as any).getCollectionName()
 		if (!metas[collectionName]) {
 			metas[collectionName] = []
 		}

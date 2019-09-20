@@ -1,19 +1,18 @@
-import { mongORMetaDataStorage } from '..'
-import { generateCollectionName } from '../connection'
+import { mongODMetaDataStorage } from '..'
 
-export interface MongORMIndexOptions {
+export interface MongODMIndexOptions {
 	unique: boolean
 }
 
-export function MongORMIndex(options: MongORMIndexOptions) {
+export function MongODMIndex(options: MongODMIndexOptions) {
 	return (object: Object, key: string) => {
-		const collectionName = generateCollectionName(object)
+		const collectionName = (object as any).getCollectionName()
 
-		if (!mongORMetaDataStorage().mongORMIndexMetas[collectionName]) {
-			mongORMetaDataStorage().mongORMIndexMetas[collectionName] = []
+		if (!mongODMetaDataStorage().mongODMIndexMetas[collectionName]) {
+			mongODMetaDataStorage().mongODMIndexMetas[collectionName] = []
 		}
 
-		mongORMetaDataStorage().mongORMIndexMetas[collectionName].push({
+		mongODMetaDataStorage().mongODMIndexMetas[collectionName].push({
 			key,
 			unique: options.unique,
 		})
