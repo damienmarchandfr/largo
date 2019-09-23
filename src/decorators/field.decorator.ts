@@ -1,9 +1,10 @@
 import { mongODMetaDataStorage } from '..'
+import { MongODMEntity } from '../entity'
 
-export function MongODMField() {
-	return (object: Object, key: string) => {
+export function MongODMField<T extends MongODMEntity>() {
+	return (object: T, key: string) => {
 		const metas = mongODMetaDataStorage().mongODMFieldMetas
-		const collectionName = (object as any).getCollectionName()
+		const collectionName = object.getCollectionName()
 		if (!metas[collectionName]) {
 			metas[collectionName] = []
 		}

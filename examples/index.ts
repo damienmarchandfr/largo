@@ -4,7 +4,6 @@ import { MongODMIndex } from '../src/decorators/index.decorator'
 import { MongODMConnection } from '../src/connection'
 import { ObjectID } from 'mongodb'
 import { MongODMRelation } from '../src/decorators/relation.decorator'
-import { MongODMValidator } from '../src/decorators/validator.decorator'
 
 class Job extends MongODMEntity {
 	@MongODMField()

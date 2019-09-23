@@ -1,8 +1,4 @@
 import 'reflect-metadata'
-import {
-	MongODMValidatorOptionsEnum,
-	MongODMValidatorOptionsBson,
-} from './decorators/validator.decorator'
 
 // Meta field
 // user : ['id','email'] for User class with 2 fields saved
@@ -12,12 +8,6 @@ import {
 
 // Meta relation
 // user : [{ key : companyId ,populatedKey : company, targetType : Company, targetKey : id}]
-
-// Meta validation
-// user : {
-//    required : ['keys','required'],
-//    properties : { keys : {validation},required : {validation}}
-// }
 
 type DataStorageFieldMeta = { [key: string]: string[] }
 type DataStorageIndexMeta = {
@@ -32,21 +22,10 @@ type DataStorageFielRelation = {
 	}>
 }
 
-type DataStorageValidation = {
-	[key: string]: {
-		// Collection name
-		required: string[] // Keys required
-		properties: {
-			[key: string]: MongODMValidatorOptionsBson | MongODMValidatorOptionsEnum
-		}
-	}
-}
-
 interface CustomGlobal extends NodeJS.Global {
 	mongODMFieldMetas: DataStorageFieldMeta
 	mongODMIndexMetas: DataStorageIndexMeta
 	mongODMRelationsMetas: DataStorageFielRelation
-	mongODMValidationMetas: DataStorageValidation
 }
 
 export function mongODMetaDataStorage() {
@@ -54,7 +33,6 @@ export function mongODMetaDataStorage() {
 		;(global as CustomGlobal).mongODMFieldMetas = {}
 		;(global as CustomGlobal).mongODMIndexMetas = {}
 		;(global as CustomGlobal).mongODMRelationsMetas = {}
-		;(global as CustomGlobal).mongODMValidationMetas = {}
 	}
 	return global as CustomGlobal
 }

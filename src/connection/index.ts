@@ -3,6 +3,7 @@ import { mongODMetaDataStorage } from '..'
 import { errors } from '../messages.const'
 import { pick } from 'lodash'
 import format from 'string-template'
+import { MongODMEntity } from '../entity'
 
 // MongoDB databases protected
 const protectedCDatabaseNames = ['admin', 'local', 'config']
@@ -82,26 +83,7 @@ export class MongODMConnection {
 
 		// Create collections if not exist
 		for (const collectionName of collectionNames) {
-			// validator with JSON Schema
-			let validator = {}
-
-			if (mongODMetaDataStorage().mongODMValidationMetas[collectionName]) {
-				validator = {
-					$jsonSchema: {
-						bsonType: 'object',
-						required:
-							mongODMetaDataStorage().mongODMValidationMetas[collectionName]
-								.required || [],
-						properties:
-							mongODMetaDataStorage().mongODMValidationMetas[collectionName]
-								.properties || {},
-					},
-				}
-			}
-
-			const collectionCreated = await this.db.createCollection(collectionName, {
-				validator,
-			})
+			const collectionCreated = await this.db.createCollection(collectionName)
 			this.collections[collectionName] = collectionCreated
 		}
 
@@ -160,10 +142,10 @@ export class MongODMConnection {
 	}
 }
 
-export function getMongODMPartial(
-	obj: Object,
+export function getMongODMPartial<T extends MongODMEntity>(
+	obj: Partial<T>,
 	collectionName: string
-): Partial<Object> {
+): Partial<T> {
 	// Select fields and indexes
 	const fieldKeys =
 		mongODMetaDataStorage().mongODMFieldMetas[collectionName] || []
@@ -186,7 +168,12 @@ export function getMongODMPartial(
 		})
 	}
 
-	return pick(obj, fieldKeys.concat(indexKeys).concat(relationKeys))
+	return pick(
+		obj,
+		fieldKeys // Fields
+			.concat(indexKeys) // Index
+			.concat(relationKeys) // Relation
+	)
 }
 
 /**

@@ -26,7 +26,10 @@ describe(`MongODM class`, () => {
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.find(connection, { name: 'toto' })
+				await RandomClassWithoutDecorator.find<RandomClassWithoutDecorator>(
+					connection,
+					{ name: 'toto' }
+				)
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
@@ -197,11 +200,9 @@ describe(`MongODM class`, () => {
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.update(
-					connection,
-					{ name: 'titi' },
-					{ name: 'toto' }
-				)
+				await RandomClassWithoutDecorator.updateMany<
+					RandomClassWithoutDecorator
+				>(connection, { name: 'titi' }, { name: 'toto' })
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
@@ -236,7 +237,7 @@ describe(`MongODM class`, () => {
 			])
 
 			// Update
-			await User.update(
+			await User.updateMany<User>(
 				connection,
 				{ email: 'barack@obama.usa' },
 				{ email: 'donald@trump.usa' }
@@ -277,7 +278,9 @@ describe(`MongODM class`, () => {
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.delete(connection, { name: 'toto' })
+				await RandomClassWithoutDecorator.deleteMany(connection, {
+					name: 'toto',
+				})
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
@@ -312,7 +315,7 @@ describe(`MongODM class`, () => {
 			])
 
 			// Delete donald
-			await User.delete(connection, { email: 'donald@trump.usa' })
+			await User.deleteMany<User>(connection, { email: 'donald@trump.usa' })
 
 			// Searhc for donald
 			const donald = await connection.collections.user.findOne({
@@ -346,7 +349,7 @@ describe(`MongODM class`, () => {
 			])
 
 			// Delete all users
-			await User.delete(connection)
+			await User.deleteMany(connection)
 
 			// Searhc for donald
 			const countUser = await connection.collections.user.countDocuments()

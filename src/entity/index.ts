@@ -10,11 +10,16 @@ import { mongODMetaDataStorage } from '..'
 import format from 'string-template'
 import { errors } from '../messages.const'
 
-export class MongODMEntityArray {
-	private items: any[] = []
+export class MongODMEntityArray<T extends MongODMEntity> {
+	private items: T[] = []
 
-	push(item: any) {
+	constructor() {
+		this.items = []
+	}
+
+	push(item: T): T[] {
 		this.items.push(item)
+		return this.items
 	}
 
 	length() {
@@ -70,7 +75,9 @@ export class MongODMEntityArray {
 			}
 		}
 
-		return connect.collections[collectionName].aggregate(pipeline).next()
+		return connect.collections[collectionName]
+			.aggregate(pipeline)
+			.next() as Promise<T[]>
 	}
 }
 
@@ -82,11 +89,11 @@ export class MongODMEntity {
 		return this.name.toLowerCase()
 	}
 
-	static async find(
+	static async find<T extends MongODMEntity>(
 		connect: MongODMConnection,
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
-	) {
+	): Promise<MongODMEntityArray<T>> {
 		const collectionName = this.getCollectionName()
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new Error(
@@ -108,14 +115,14 @@ export class MongODMEntity {
 			results.push(object)
 		}
 
-		return results
+		return results as MongODMEntityArray<T>
 	}
 
-	static async findOne<A extends MongODMEntity>(
+	static async findOne<T extends MongODMEntity>(
 		connect: MongODMConnection,
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
-	): Promise<A | null> {
+	): Promise<T | null> {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
@@ -134,22 +141,15 @@ export class MongODMEntity {
 			return null
 		}
 
-		const object = new this() as A
+		const object = new this() as T
 		Object.assign(object, mongoElement)
 
 		return object
 	}
 
-	/**
-	 * Update many objects with query filter
-	 * @param connect
-	 * @param partial
-	 * @param filter
-	 * @param options
-	 */
-	static async update(
+	static async updateMany<T extends MongODMEntity>(
 		connect: MongODMConnection,
-		partial: Object,
+		partial: Partial<T>,
 		filter: FilterQuery<any> = {},
 		options?: UpdateOneOptions
 	) {
@@ -172,12 +172,7 @@ export class MongODMEntity {
 		)
 	}
 
-	/**
-	 * Delete objects in a collection. If no filter collection will be cleaned
-	 * @param connect
-	 * @param filter
-	 */
-	static async delete<T>(
+	static async deleteMany<T extends MongODMEntity>(
 		connect: MongODMConnection,
 		filter: FilterQuery<T> = {}
 	) {
@@ -208,6 +203,7 @@ export class MongODMEntity {
 	}
 
 	public _id?: ObjectID
+
 	public events: {
 		beforeInsert: Subject<any>
 		afterInsert: Subject<any>
@@ -254,7 +250,7 @@ export class MongODMEntity {
 			)
 		}
 
-		const toInsert = getMongODMPartial(this, collectionName)
+		const toInsert = getMongODMPartial<this>(this, collectionName)
 
 		this.events.beforeInsert.next(this)
 
