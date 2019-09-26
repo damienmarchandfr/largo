@@ -1,4 +1,4 @@
-import { MongODMConnection, getMongODMPartial } from '../connection'
+import { MongODMConnection, getMongODMPartial } from './connection'
 import {
 	FilterQuery,
 	UpdateOneOptions,
@@ -6,9 +6,12 @@ import {
 	FindOneOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
-import { mongODMetaDataStorage } from '..'
+import { mongODMetaDataStorage } from '.'
 import format from 'string-template'
-import { errors } from '../messages.const'
+import {
+	MongODMCollectionDoesNotExistError,
+	MongODMRelationError,
+} from './errors'
 
 export class MongODMEntityArray<T extends MongODMEntity> {
 	private items: T[] = []
@@ -28,15 +31,14 @@ export class MongODMEntityArray<T extends MongODMEntity> {
 
 	async populate(connect: MongODMConnection) {
 		const collectionName = this.items[0].getCollectionName()
+		// TODO check if all items on the same collection
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		const pipeline: object[] = [
-			{ $match: { id: { $in: this.items.map((obj) => obj._id) } } },
+			{ $match: { _id: { $in: this.items.map((obj) => obj._id) } } },
 		]
 
 		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
@@ -96,9 +98,7 @@ export class MongODMEntity {
 	): Promise<MongODMEntityArray<T>> {
 		const collectionName = this.getCollectionName()
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		const cursor = await connect.collections[collectionName].find(
@@ -126,9 +126,7 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		const mongoElement = await connect.collections[collectionName].findOne(
@@ -156,9 +154,7 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		const toUpdate = getMongODMPartial(partial, collectionName)
@@ -179,9 +175,7 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		return connect.collections[collectionName].deleteMany(filter)
@@ -194,9 +188,7 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		return connect.collections[collectionName].countDocuments(filter)
@@ -219,6 +211,9 @@ export class MongODMEntity {
 		afterDelete: Subject<any>
 	}
 
+	// Used to check if relations are changed
+	private copy: this
+
 	constructor() {
 		this.events = {
 			beforeInsert: new Subject(),
@@ -228,6 +223,7 @@ export class MongODMEntity {
 			beforeDelete: new Subject(),
 			afterDelete: new Subject(),
 		}
+		this.copy = Object.assign({}, this)
 	}
 
 	/**
@@ -245,19 +241,46 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		const toInsert = getMongODMPartial<this>(this, collectionName)
 
 		this.events.beforeInsert.next(this)
 
+		// Check if all relations works
+		const relations = mongODMetaDataStorage().mongODMRelationsMetas[
+			collectionName
+		]
+
+		if (relations) {
+			// Question pour utiliser la méthode static
+			for (const relation of relations) {
+				if ((this as any)[relation.key]) {
+					const relationCollectioName = relation.targetType.name.toLowerCase()
+					const relationQueryResult = await connect.collections[
+						relationCollectioName
+					].findOne({
+						[relation.targetKey]: (this as any)[relation.key],
+					})
+
+					if (!relationQueryResult) {
+						throw new MongODMRelationError(
+							this,
+							relation.key,
+							new relation.targetType(),
+							relation.targetKey
+						)
+					}
+				}
+			}
+		}
+
 		const inserted = await connect.collections[collectionName].insertOne(
 			toInsert
 		)
 		this._id = inserted.insertedId
+		this.copy._id = this._id
 
 		this.events.afterInsert.next(this)
 
@@ -273,9 +296,7 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		const toUpdate = getMongODMPartial(this, collectionName)
@@ -318,22 +339,18 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		await connect.collections[collectionName].deleteOne({ _id: this._id })
 		this.events.afterDelete.next(this)
 	}
 
-	async populate(connect: MongODMConnection) {
+	async populate<T extends MongODMEntity>(connect: MongODMConnection) {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new Error(
-				format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-			)
+			throw new MongODMCollectionDoesNotExistError(collectionName)
 		}
 
 		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
@@ -380,6 +397,8 @@ export class MongODMEntity {
 			}
 		}
 
-		return connect.collections[collectionName].aggregate(pipeline).next()
+		return (await connect.collections[collectionName]
+			.aggregate(pipeline)
+			.next()) as T
 	}
 }

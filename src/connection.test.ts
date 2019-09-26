@@ -1,8 +1,12 @@
-import { createConnectionString, MongODMConnection, getMongODMPartial } from '.'
-import { MongODMField } from '../decorators/field.decorator'
-import { errors } from '../messages.const'
-import { MongODMIndex } from '../decorators/index.decorator'
-import { MongODMEntity } from '../entity'
+import {
+	createConnectionString,
+	MongODMConnection,
+	getMongODMPartial,
+} from './connection'
+import { MongODMField } from './decorators/field.decorator'
+import { MongODMIndex } from './decorators/index.decorator'
+import { MongODMEntity } from './entity'
+import { errorCode, MongODMConnectionError } from './errors'
 
 const databaseName = 'connectiontest'
 
@@ -38,6 +42,7 @@ describe('MongODM class', () => {
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(`Database name 'admin' is protected.`)
+			expect(error.code).toEqual('MONGODM_ERROR_403')
 		}
 
 		expect(hasError).toEqual(true)
@@ -87,7 +92,8 @@ describe('connect function', () => {
 		try {
 			await connection.connect()
 		} catch (error) {
-			expect(error.message).toEqual(errors.ALREADY_CONNECTED)
+			expect(error.message).toEqual(`Already connected to Mongo database.`)
+			expect(error.code).toEqual('MONGODM_ERROR_500')
 			hasError = true
 		}
 
@@ -161,8 +167,9 @@ describe('disconnect function', () => {
 			await mongODM.disconnect()
 		} catch (error) {
 			expect(error.message).toEqual(
-				errors.CLIENT_NOT_CONNECTED_CANNOT_DISCONNECT
+				'Mongo client not conected. You cannot disconnect.'
 			)
+			expect(error.code).toEqual('MONGODM_ERROR_500')
 			hasError = true
 		}
 
@@ -203,7 +210,10 @@ describe('clean function', () => {
 		try {
 			await connection.clean()
 		} catch (error) {
-			expect(error.message).toEqual(errors.NOT_CONNECTED)
+			expect(error.message).toEqual(
+				`You are not connected to a Mongo database.`
+			)
+			expect(error.code).toEqual('MONGODM_ERROR_500')
 			hasError = true
 		}
 

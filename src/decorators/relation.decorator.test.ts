@@ -4,6 +4,7 @@ import { mongODMetaDataStorage } from '..'
 import { MongODMIndex } from './index.decorator'
 import { ObjectID } from 'mongodb'
 import { MongODMEntity } from '../entity'
+import { connect } from 'http2';
 
 describe('Relation decorator', () => {
 	it('should add meta data', () => {
@@ -103,7 +104,7 @@ describe('Relation decorator', () => {
 				targetType: JobRelationDecoratorIdSet,
 				targetKey: 'id',
 			})
-			jobId: Object | null = null
+			jobId: ObjectID | null = null
 
 			constructor() {
 				super()

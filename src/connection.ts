@@ -1,9 +1,12 @@
 import { Db, MongoClient, Collection } from 'mongodb'
-import { mongODMetaDataStorage } from '..'
-import { errors } from '../messages.const'
+import { mongODMetaDataStorage } from '.'
 import { pick } from 'lodash'
 import format from 'string-template'
-import { MongODMEntity } from '../entity'
+import { MongODMEntity } from './entity'
+import {
+	MongODMConnectionError,
+	MongODMDatabaseNameProtectedError,
+} from './errors'
 
 // MongoDB databases protected
 const protectedCDatabaseNames = ['admin', 'local', 'config']
@@ -39,11 +42,7 @@ export class MongODMConnection {
 	constructor(options: ConnectionOptions) {
 		// Check if database name is not protected
 		if (protectedCDatabaseNames.includes(options.databaseName)) {
-			throw new Error(
-				format(errors.DATABASE_NAME_PROTECTED, {
-					databaseName: options.databaseName,
-				})
-			)
+			throw new MongODMDatabaseNameProtectedError(options.databaseName)
 		}
 
 		this.options = options
@@ -68,7 +67,7 @@ export class MongODMConnection {
 	): Promise<MongODMConnection> {
 		// Check if already connected
 		if (this.mongoClient) {
-			throw new Error(errors.ALREADY_CONNECTED)
+			throw new MongODMConnectionError('ALREADY_CONNECTED')
 		}
 
 		const url = createConnectionString(this.options)
@@ -119,7 +118,7 @@ export class MongODMConnection {
 	 */
 	public async disconnect() {
 		if (!this.mongoClient) {
-			throw new Error(errors.CLIENT_NOT_CONNECTED_CANNOT_DISCONNECT)
+			throw new MongODMConnectionError('NOT_CONNECTED_CANNOT_DISCONNECT')
 		}
 		await this.mongoClient.close()
 		this.mongoClient = null
@@ -132,7 +131,7 @@ export class MongODMConnection {
 	 */
 	public async clean() {
 		if (!this.mongoClient) {
-			throw new Error(errors.NOT_CONNECTED)
+			throw new MongODMConnectionError('NOT_CONNECTED')
 		}
 		const collectionNames = Object.keys(this.collections)
 

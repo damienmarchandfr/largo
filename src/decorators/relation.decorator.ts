@@ -3,7 +3,7 @@ import { MongODMEntity } from '../entity'
 
 export interface MongODMRelationOptions {
 	populatedKey: string // userId -> user
-	targetType: new (...args: any[]) => any // User
+	targetType: new (...args: any[]) => MongODMEntity // User
 	targetKey?: string // _id
 }
 

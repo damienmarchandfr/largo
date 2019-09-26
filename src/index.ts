@@ -1,4 +1,5 @@
 import 'reflect-metadata'
+import { MongODMEntity } from './entity'
 
 // Meta field
 // user : ['id','email'] for User class with 2 fields saved
@@ -17,7 +18,7 @@ type DataStorageFielRelation = {
 	[key: string]: Array<{
 		key: string
 		populatedKey: string
-		targetType: new (...args: any[]) => any
+		targetType: new (...args: any[]) => MongODMEntity
 		targetKey: string
 	}>
 }

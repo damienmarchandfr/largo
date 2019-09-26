@@ -1,7 +1,9 @@
-import { MongODMConnection } from '../connection'
-import { MongODMEntity } from '.'
-import { MongODMField } from '../decorators/field.decorator'
+import { MongODMConnection } from './connection'
+import { MongODMEntity } from './entity'
+import { MongODMField } from './decorators/field.decorator'
 import { ObjectID } from 'mongodb'
+import { MongODMRelation } from './decorators/relation.decorator'
+import { Job } from '../benchmark/data'
 
 const databaseName = 'entitytest'
 
@@ -35,6 +37,7 @@ describe(`MongODM class`, () => {
 				expect(error.message).toEqual(
 					`Collection randomclasswithoutdecorator does not exist.`
 				)
+				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
 
 			expect(hasError).toEqual(true)
@@ -119,6 +122,7 @@ describe(`MongODM class`, () => {
 				expect(error.message).toEqual(
 					`Collection randomclasswithoutdecorator does not exist.`
 				)
+				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
 
 			expect(hasError).toEqual(true)
@@ -208,6 +212,7 @@ describe(`MongODM class`, () => {
 				expect(error.message).toEqual(
 					`Collection randomclasswithoutdecorator does not exist.`
 				)
+				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
 
 			expect(hasError).toEqual(true)
@@ -286,6 +291,7 @@ describe(`MongODM class`, () => {
 				expect(error.message).toEqual(
 					`Collection randomclasswithoutdecorator does not exist.`
 				)
+				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
 
 			expect(hasError).toEqual(true)
@@ -386,6 +392,7 @@ describe(`MongODM class`, () => {
 				expect(error.message).toEqual(
 					`Collection randomclasswithoutdecorator does not exist.`
 				)
+				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
 
 			expect(hasError).toEqual(true)
@@ -479,6 +486,7 @@ describe(`MongODM class`, () => {
 				expect(error.message).toEqual(
 					`Collection randomclasswithoutdecorator does not exist.`
 				)
+				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
 
 			expect(hasError).toEqual(true)
@@ -606,6 +614,59 @@ describe(`MongODM class`, () => {
 			})
 
 			await user.insert(connection)
+		})
+
+		it('should return an error if relations set does not exist', async () => {
+			const objectIDset = new ObjectID()
+			class JobRelationDecoratorInvalidRelation extends MongODMEntity {
+				@MongODMField()
+				companyName: string
+
+				constructor() {
+					super()
+					this.companyName = 'company name'
+				}
+			}
+
+			class UserRelationDecoratorInvalidRelation extends MongODMEntity {
+				@MongODMField()
+				email: string
+
+				@MongODMRelation({
+					populatedKey: 'job',
+					targetType: JobRelationDecoratorInvalidRelation,
+				})
+				jobId: ObjectID | null = null
+				job?: JobRelationDecoratorInvalidRelation | null
+
+				constructor() {
+					super()
+					this.email = 'damien@mail.com'
+					this.jobId = objectIDset // No job with this _id
+				}
+			}
+
+			const connection = await new MongODMConnection({
+				databaseName,
+			}).connect({
+				clean: true,
+			})
+
+			// Insert Job
+			await new JobRelationDecoratorInvalidRelation().insert(connection)
+
+			// Insert User with jobId not in database
+			let hasError = false
+
+			try {
+				await new UserRelationDecoratorInvalidRelation().insert(connection)
+			} catch (error) {
+				const message = `You set jobId : ${objectIDset.toHexString()} on object UserRelationDecoratorInvalidRelation. JobRelationDecoratorInvalidRelation with _id : ${objectIDset.toHexString()} does not exists.`
+				expect(error.message).toEqual(message)
+				hasError = true
+			}
+
+			expect(hasError).toEqual(true)
 		})
 	})
 
@@ -840,6 +901,7 @@ describe(`MongODM class`, () => {
 				expect(error.message).toEqual(
 					`Collection randomclasswithoutdecorator does not exist.`
 				)
+				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
 
 			expect(hasError).toEqual(true)

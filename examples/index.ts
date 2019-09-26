@@ -111,7 +111,7 @@ new MongODMConnection({
 		await connection.clean()
 
 		// Delete all users
-		await User.delete(connection)
+		await User.deleteMany(connection)
 
 		// Create first user
 		const user = new User('damien@dev.fr', 'azerty123')
@@ -129,7 +129,7 @@ new MongODMConnection({
 		console.log('User added. MongoID = ' + userId)
 
 		// Change email
-		User.update(
+		User.updateMany<User>(
 			connection,
 			{ email: 'toto@toto.com' },
 			{ email: 'damien@dev.fr' }
@@ -164,16 +164,36 @@ new MongODMConnection({
 		await user.update(connection)
 
 		const jobsSavedIds: ObjectID[] = []
-		// // Create jobs
-		// for (let i = 0; i < 200; i++) {
-		// 	const jobForList = new Job('Dev JS number ' + i)
-		// 	jobsSavedIds.push(await jobForList.insert(connection))
-		// }
-		// // Add jobs to user
-		// user.setJobs(jobsSavedIds)
+
+		// Create jobs
+		for (let i = 0; i < 2; i++) {
+			const jobForList = new Job('Dev JS number ' + i)
+			jobsSavedIds.push(await jobForList.insert(connection))
+		}
+		// Add jobs to user
+		user.setJobs(jobsSavedIds)
 		await user.update(connection)
 
-		const populated = await user.populate(connection)
+		const populated = await user.populate<User>(connection)
+
+		// Create a second user
+		const user2 = new User('jeremy@dev.fr', 'azerty123')
+		user2.firstname = 'Jeremy'
+
+		await user2.insert(connection)
+
+		// Add a hobby to user 2
+		user2.hobbyId = hobby.customId
+		await user2.update(connection)
+
+		// Add jobs to user
+		user2.setJobs(jobsSavedIds)
+		await user2.update(connection)
+
+		// Populate many
+		const users = await User.find<User>(connection, {})
+
+		// const populatedM = await users.populate(connection)
 
 		console.log('Script executed :)')
 	})
