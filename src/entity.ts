@@ -294,23 +294,43 @@ export class MongODMEntity {
 		]
 
 		if (relations) {
-			// Question pour utiliser la méthode static
 			for (const relation of relations) {
 				if ((this as any)[relation.key]) {
 					const relationCollectioName = relation.targetType.name.toLowerCase()
-					const relationQueryResult = await connect.collections[
-						relationCollectioName
-					].findOne({
-						[relation.targetKey]: (this as any)[relation.key],
-					})
 
-					if (!relationQueryResult) {
-						throw new MongODMRelationError(
-							this,
-							relation.key,
-							new relation.targetType(),
-							relation.targetKey
-						)
+					// Relation with multiple elements
+					if (Array.isArray((this as any)[relation.key])) {
+						const relationQueryResults = await connect.collections[
+							relationCollectioName
+						]
+							.find({
+								[relation.targetKey]: {
+									$in: (this as any)[relation.key],
+								},
+							})
+							.toArray()
+
+						if (
+							relationQueryResults.length !== (this as any)[relation.key].length
+						) {
+							throw new Error('NOP')
+						}
+					} else {
+						// Relation with one element
+						const relationQueryResult = await connect.collections[
+							relationCollectioName
+						].findOne({
+							[relation.targetKey]: (this as any)[relation.key],
+						})
+
+						if (!relationQueryResult) {
+							throw new MongODMRelationError(
+								this,
+								relation.key,
+								new relation.targetType(),
+								relation.targetKey
+							)
+						}
 					}
 				}
 			}
