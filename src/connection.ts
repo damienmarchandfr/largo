@@ -141,7 +141,6 @@ export class MongODMConnection {
 	}
 }
 
-
 /**
  * Tranform connection options to mongo url
  * @param options

@@ -4,7 +4,6 @@ import { mongODMetaDataStorage } from '..'
 import { MongODMIndex } from './index.decorator'
 import { ObjectID } from 'mongodb'
 import { MongODMEntity } from '../entity'
-import { connect } from 'http2';
 
 describe('Relation decorator', () => {
 	it('should add meta data', () => {
@@ -19,9 +18,6 @@ describe('Relation decorator', () => {
 		}
 
 		class UserRelationDecorator extends MongODMEntity {
-			@MongODMField()
-			email: string
-
 			@MongODMRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecorator,
@@ -30,7 +26,6 @@ describe('Relation decorator', () => {
 
 			constructor() {
 				super()
-				this.email = 'damien@mail.com'
 			}
 		}
 

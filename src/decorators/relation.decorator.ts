@@ -1,7 +1,7 @@
 import { mongODMetaDataStorage } from '..'
 import { MongODMEntity } from '../entity'
 
-export interface MongODMRelationOptions {
+interface MongODMRelationOptions {
 	populatedKey: string // userId -> user
 	targetType: new (...args: any[]) => MongODMEntity // User
 	targetKey?: string // _id
@@ -13,6 +13,7 @@ export function MongODMRelation<T extends MongODMEntity>(
 	return (object: T, key: string) => {
 		const metas = mongODMetaDataStorage().mongODMRelationsMetas
 		const collectionName = object.getCollectionName()
+		/* istanbul ignore next */
 		if (!metas[collectionName]) {
 			metas[collectionName] = []
 		}

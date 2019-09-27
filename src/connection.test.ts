@@ -1,7 +1,4 @@
-import {
-	createConnectionString,
-	MongODMConnection,
-} from './connection'
+import { createConnectionString, MongODMConnection } from './connection'
 import { MongODMField } from './decorators/field.decorator'
 import { MongODMIndex } from './decorators/index.decorator'
 import { MongODMEntity } from './entity'
