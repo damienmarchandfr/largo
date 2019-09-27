@@ -1,7 +1,6 @@
 import {
 	createConnectionString,
 	MongODMConnection,
-	getMongODMPartial,
 } from './connection'
 import { MongODMField } from './decorators/field.decorator'
 import { MongODMIndex } from './decorators/index.decorator'
@@ -257,57 +256,6 @@ describe('clean function', () => {
 		// Count all jobs
 		const jobsCount = await connection.collections.job.countDocuments()
 		expect(jobsCount).toEqual(0)
-	})
-})
-
-describe('getMongODMPartial function', () => {
-	it('should not return field without decorator', () => {
-		class Full extends MongODMEntity {
-			@MongODMIndex({
-				unique: false,
-			})
-			firstname: string
-
-			@MongODMField()
-			lastname: string
-
-			age: number
-
-			constructor() {
-				super()
-				this.firstname = 'Damien'
-				this.lastname = 'Marchand'
-				this.age = 18
-			}
-		}
-
-		const partial = getMongODMPartial(new Full(), 'full')
-
-		expect(partial).toStrictEqual({
-			lastname: 'Marchand',
-			firstname: 'Damien',
-		})
-	})
-
-	it('should not return empty field', () => {
-		class Full extends MongODMEntity {
-			@MongODMField()
-			firstname: string
-
-			@MongODMField()
-			age?: number
-
-			constructor() {
-				super()
-				this.firstname = 'Damien'
-			}
-		}
-
-		const partial = getMongODMPartial(new Full(), 'full')
-
-		expect(partial).toStrictEqual({
-			firstname: 'Damien',
-		})
 	})
 })
 

@@ -1,9 +1,9 @@
 import { MongODMConnection } from './connection'
-import { MongODMEntity } from './entity'
+import { MongODMEntity, getMongODMPartial } from './entity'
 import { MongODMField } from './decorators/field.decorator'
 import { ObjectID } from 'mongodb'
 import { MongODMRelation } from './decorators/relation.decorator'
-import { Job } from '../benchmark/data'
+import { MongODMIndex } from './decorators/index.decorator'
 
 const databaseName = 'entitytest'
 
@@ -1011,6 +1011,57 @@ describe(`MongODM class`, () => {
 			})
 
 			await user.delete(connection)
+		})
+	})
+})
+
+describe('getMongODMPartial function', () => {
+	it('should not return field without decorator', () => {
+		class Full extends MongODMEntity {
+			@MongODMIndex({
+				unique: false,
+			})
+			firstname: string
+
+			@MongODMField()
+			lastname: string
+
+			age: number
+
+			constructor() {
+				super()
+				this.firstname = 'Damien'
+				this.lastname = 'Marchand'
+				this.age = 18
+			}
+		}
+
+		const partial = getMongODMPartial(new Full(), 'full')
+
+		expect(partial).toStrictEqual({
+			lastname: 'Marchand',
+			firstname: 'Damien',
+		})
+	})
+
+	it('should not return empty field', () => {
+		class Full extends MongODMEntity {
+			@MongODMField()
+			firstname: string
+
+			@MongODMField()
+			age?: number
+
+			constructor() {
+				super()
+				this.firstname = 'Damien'
+			}
+		}
+
+		const partial = getMongODMPartial(new Full(), 'full')
+
+		expect(partial).toStrictEqual({
+			firstname: 'Damien',
 		})
 	})
 })
