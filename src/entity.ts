@@ -11,6 +11,7 @@ import format from 'string-template'
 import {
 	MongODMCollectionDoesNotExistError,
 	MongODMRelationError,
+	MongODMAlreadyInsertedError,
 } from './errors'
 import { pick } from 'lodash'
 
@@ -69,9 +70,8 @@ export class MongODMEntityArray<T extends MongODMEntity> {
 		return this.items.length
 	}
 
-	async populate(connect: MongODMConnection) {
+	async populate<T extends MongODMEntity>(connect: MongODMConnection) {
 		const collectionName = this.items[0].getCollectionName()
-		// TODO check if all items on the same collection
 
 		if (!connect.checkCollectionExists(collectionName)) {
 			throw new MongODMCollectionDoesNotExistError(collectionName)
@@ -80,46 +80,47 @@ export class MongODMEntityArray<T extends MongODMEntity> {
 		const pipeline: object[] = [
 			{ $match: { _id: { $in: this.items.map((obj) => obj._id) } } },
 		]
-
 		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
 			collectionName
 		]
 
 		for (const meta of relationMetas) {
-			if ((this as any)[meta.key]) {
-				if (!Array.isArray((this as any)[meta.key])) {
-					pipeline.push({
-						$lookup: {
-							from: (meta.targetType as any).getCollectionName(),
-							localField: meta.key,
-							foreignField: meta.targetKey,
-							as: meta.populatedKey,
-						},
-					})
+			for (const item of this.items) {
+				if ((item as any)[meta.key]) {
+					if (!Array.isArray((item as any)[meta.key])) {
+						pipeline.push({
+							$lookup: {
+								from: (meta.targetType as any).getCollectionName(),
+								localField: meta.key,
+								foreignField: meta.targetKey,
+								as: meta.populatedKey,
+							},
+						})
 
-					pipeline.push({
-						$unwind: {
-							path: '$' + meta.populatedKey,
-							// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
-							preserveNullAndEmptyArrays: true,
-						},
-					})
-				} else {
-					pipeline.push({
-						$lookup: {
-							from: (meta.targetType as any).getCollectionName(),
-							localField: meta.key,
-							foreignField: meta.targetKey,
-							as: meta.populatedKey,
-						},
-					})
+						pipeline.push({
+							$unwind: {
+								path: '$' + meta.populatedKey,
+								// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
+								preserveNullAndEmptyArrays: true,
+							},
+						})
+					} else {
+						pipeline.push({
+							$lookup: {
+								from: (meta.targetType as any).getCollectionName(),
+								localField: meta.key,
+								foreignField: meta.targetKey,
+								as: meta.populatedKey,
+							},
+						})
+					}
 				}
 			}
 		}
 
 		return connect.collections[collectionName]
 			.aggregate(pipeline)
-			.next() as Promise<T[]>
+			.toArray() as Promise<T[]>
 	}
 }
 
@@ -278,6 +279,10 @@ export class MongODMEntity {
 	 * @param connect
 	 */
 	async insert(connect: MongODMConnection) {
+		if (this._id) {
+			throw new MongODMAlreadyInsertedError(this._id)
+		}
+
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {

@@ -4,6 +4,7 @@ import {
 	MongODMCollectionDoesNotExistError,
 	MongODMDatabaseNameProtectedError,
 	MongODMRelationError,
+	MongODMAlreadyInsertedError,
 } from './errors'
 import { MongODMEntity } from './entity'
 import { MongODMField } from './decorators/field.decorator'
@@ -53,6 +54,7 @@ describe('MongODM custom errors', () => {
 			],
 			['MONGODM_ERROR_403', new MongODMDatabaseNameProtectedError('admin')],
 			['MONGODM_ERROR_502', new MongODMRelationError(job, 'employeeId', user)],
+			['MONGODM_ERROR_409', new MongODMAlreadyInsertedError(new ObjectID())],
 		]
 
 		for (const error of errors) {
@@ -92,6 +94,8 @@ describe('MongODM custom errors', () => {
 		const user = new UserErrorCustomMessage()
 		const job = new JobErrorCustomMessage()
 
+		const insertedId = new ObjectID()
+
 		const errors: Array<[string, Error]> = [
 			[
 				`Collection yolo does not exist.`,
@@ -104,6 +108,10 @@ describe('MongODM custom errors', () => {
 			[
 				`You set employeeId : ${job.employeeId} on object JobErrorCustomMessage. UserErrorCustomMessage with _id : ${job.employeeId} does not exists.`,
 				new MongODMRelationError(job, 'employeeId', user),
+			],
+			[
+				`You have already inserted this object with _id : ${insertedId.toHexString()} .`,
+				new MongODMAlreadyInsertedError(insertedId),
 			],
 		]
 

@@ -1,4 +1,5 @@
 import format from 'string-template'
+import { ObjectID } from 'mongodb'
 
 import { MongODMEntity } from './entity'
 
@@ -16,6 +17,8 @@ const errors = {
 	COLLECTION_DOES_NOT_EXIST: 'Collection {collectionName} does not exist.',
 	DATABASE_NAME_PROTECTED: `Database name '{databaseName}' is protected.`,
 	RELATION_ERROR: `You set {sourceKey} : {value} on object {className}. {targetType} with {targetKey} : {relationValue} does not exists.`,
+	ALREADY_INSERTED:
+		'You have already inserted this object with _id : {objectId} .',
 }
 
 // Code to detect error type :)
@@ -24,6 +27,7 @@ export type errorCode =
 	| 'MONGODM_ERROR_502' // Relation pb
 	| 'MONGODM_ERROR_404' // Collection pb
 	| 'MONGODM_ERROR_403' // Database protected
+	| 'MONGODM_ERROR_409' // Duplicate insert
 
 // Connection pb
 export class MongODMConnectionError extends Error {
@@ -54,6 +58,23 @@ export class MongODMDatabaseNameProtectedError extends Error {
 		const message = format(errors.DATABASE_NAME_PROTECTED, { databaseName })
 		super(message)
 		this.code = 'MONGODM_ERROR_403'
+	}
+}
+
+/**
+ * When user try to insert the same object a second time
+ */
+export class MongODMAlreadyInsertedError extends Error {
+	code: errorCode
+	duplicateId: ObjectID
+
+	constructor(duplicateId: ObjectID) {
+		const message = format(errors.ALREADY_INSERTED, {
+			objectId: duplicateId.toHexString(),
+		})
+		super(message)
+		this.code = 'MONGODM_ERROR_409'
+		this.duplicateId = duplicateId
 	}
 }
 
