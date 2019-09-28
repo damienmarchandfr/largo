@@ -12,7 +12,7 @@ WIP
 
 - Entity ligne 283
 - Relations check error with array
+- Check relation on update with copy
 - Test poplate many
 - Populate deep
-- Check relation on update with copy
 - Delete cascade

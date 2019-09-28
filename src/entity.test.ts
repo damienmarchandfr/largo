@@ -20,7 +20,7 @@ describe(`MongODM class`, () => {
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorFind extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -28,14 +28,13 @@ describe(`MongODM class`, () => {
 					this.name = 'toto'
 				}
 			}
-
+			0
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.find<RandomClassWithoutDecorator>(
-					connection,
-					{ name: 'toto' }
-				)
+				await RandomClassWithoutDecoratorFind.find<
+					RandomClassWithoutDecoratorFind
+				>(connection, { name: 'toto' })
 			} catch (error) {
 				hasError = true
 				expect(error).toBeInstanceOf(MongODMCollectionDoesNotExistError)
@@ -101,7 +100,6 @@ describe(`MongODM class`, () => {
 		})
 	})
 
-	// WIP TODO CLEAN
 	describe('findOne static method', () => {
 		it('should throw an error if collection does not exist', async () => {
 			const connection = await new MongODMConnection({
@@ -110,7 +108,7 @@ describe(`MongODM class`, () => {
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorFindOne extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -122,11 +120,13 @@ describe(`MongODM class`, () => {
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.findOne(connection, { name: 'toto' })
+				await RandomClassWithoutDecoratorFindOne.findOne<
+					RandomClassWithoutDecoratorFindOne
+				>(connection, { name: 'toto' })
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection randomclasswithoutdecorator does not exist.`
+					`Collection randomclasswithoutdecoratorfindone does not exist.`
 				)
 				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
@@ -135,7 +135,7 @@ describe(`MongODM class`, () => {
 		})
 
 		it('should findOne', async () => {
-			class User extends MongODMEntity {
+			class UserFindOneStatic extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -152,18 +152,23 @@ describe(`MongODM class`, () => {
 			})
 
 			// Insert user with mongodb native lib
-			await connection.collections.user.insertOne(new User())
+			await connection.collections.userfindonestatic.insertOne(
+				new UserFindOneStatic()
+			)
 
-			const user = await User.findOne(connection, {
-				email: 'damien@marchand.fr',
-			})
+			const user = await UserFindOneStatic.findOne<UserFindOneStatic>(
+				connection,
+				{
+					email: 'damien@marchand.fr',
+				}
+			)
 
 			expect(user).not.toBe(null)
-			expect((user as User).email).toEqual('damien@marchand.fr')
+			expect((user as UserFindOneStatic).email).toEqual('damien@marchand.fr')
 		})
 
 		it('should not find and return null', async () => {
-			class User extends MongODMEntity {
+			class UserFindOneStaticNull extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -180,9 +185,11 @@ describe(`MongODM class`, () => {
 			})
 
 			// Insert user with mongodb native lib
-			await connection.collections.user.insertOne(new User())
+			await connection.collections.userfindonestaticnull.insertOne(
+				new UserFindOneStaticNull()
+			)
 
-			const user = await User.findOne(connection, {
+			const user = await UserFindOneStaticNull.findOne(connection, {
 				email: 'donal@trump.usa',
 			})
 
@@ -190,7 +197,7 @@ describe(`MongODM class`, () => {
 		})
 	})
 
-	describe(`update static method`, () => {
+	describe(`updateMany static method`, () => {
 		it('should throw an error if collection does not exist', async () => {
 			const connection = await new MongODMConnection({
 				databaseName,
@@ -198,7 +205,7 @@ describe(`MongODM class`, () => {
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorUpdateMany extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -210,13 +217,13 @@ describe(`MongODM class`, () => {
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.updateMany<
-					RandomClassWithoutDecorator
+				await RandomClassWithoutDecoratorUpdateMany.updateMany<
+					RandomClassWithoutDecoratorUpdateMany
 				>(connection, { name: 'titi' }, { name: 'toto' })
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection randomclasswithoutdecorator does not exist.`
+					`Collection randomclasswithoutdecoratorupdatemany does not exist.`
 				)
 				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
@@ -225,7 +232,7 @@ describe(`MongODM class`, () => {
 		})
 
 		it('should update one element with query filter', async () => {
-			class UserUpdate extends MongODMEntity {
+			class UserUpdateManyOneElement extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -242,34 +249,38 @@ describe(`MongODM class`, () => {
 			})
 
 			// Insert user with mongodb native lib
-			await connection.collections.userupdate.insertMany([
-				new UserUpdate('damien@marchand.fr'),
-				new UserUpdate('donald@trump.usa'),
+			await connection.collections.userupdatemanyoneelement.insertMany([
+				new UserUpdateManyOneElement('damien@marchand.fr'),
+				new UserUpdateManyOneElement('donald@trump.usa'),
 			])
 
 			// Update
-			await UserUpdate.updateMany<UserUpdate>(
+			await UserUpdateManyOneElement.updateMany<UserUpdateManyOneElement>(
 				connection,
 				{ email: 'barack@obama.usa' },
 				{ email: 'donald@trump.usa' }
 			)
 
 			// Search with email
-			const trump = await connection.collections.userupdate.findOne({
-				email: 'donald@trump.usa',
-			})
+			const trump = await connection.collections.userupdatemanyoneelement.findOne(
+				{
+					email: 'donald@trump.usa',
+				}
+			)
 
 			expect(trump).toEqual(null)
 
-			const barack = await connection.collections.userupdate.findOne({
-				email: 'barack@obama.usa',
-			})
+			const barack = await connection.collections.userupdatemanyoneelement.findOne(
+				{
+					email: 'barack@obama.usa',
+				}
+			)
 
 			expect(barack.email).toEqual('barack@obama.usa')
 		})
 	})
 
-	describe('delete static method', () => {
+	describe('deleteMany static method', () => {
 		it('should throw an error if collection does not exist', async () => {
 			const connection = await new MongODMConnection({
 				databaseName,
@@ -277,7 +288,7 @@ describe(`MongODM class`, () => {
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorDeleteManyStatic extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -289,13 +300,16 @@ describe(`MongODM class`, () => {
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.deleteMany(connection, {
-					name: 'toto',
-				})
+				await RandomClassWithoutDecoratorDeleteManyStatic.deleteMany(
+					connection,
+					{
+						name: 'toto',
+					}
+				)
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection randomclasswithoutdecorator does not exist.`
+					`Collection randomclasswithoutdecoratordeletemanystatic does not exist.`
 				)
 				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
@@ -304,7 +318,7 @@ describe(`MongODM class`, () => {
 		})
 
 		it('shoud delete with query filter', async () => {
-			class UserDelete extends MongODMEntity {
+			class UserDeleteManyQueryFilter extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -321,26 +335,31 @@ describe(`MongODM class`, () => {
 			})
 
 			// Add 2 users
-			await connection.collections.userdelete.insertMany([
-				new UserDelete('damien@marchand.fr'),
-				new UserDelete('donald@trump.usa'),
+			await connection.collections.userdeletemanyqueryfilter.insertMany([
+				new UserDeleteManyQueryFilter('damien@marchand.fr'),
+				new UserDeleteManyQueryFilter('donald@trump.usa'),
 			])
 
 			// Delete donald
-			await UserDelete.deleteMany<UserDelete>(connection, {
-				email: 'donald@trump.usa',
-			})
+			await UserDeleteManyQueryFilter.deleteMany<UserDeleteManyQueryFilter>(
+				connection,
+				{
+					email: 'donald@trump.usa',
+				}
+			)
 
 			// Searhc for donald
-			const donald = await connection.collections.userdelete.findOne({
-				email: 'donald@trump.usa',
-			})
+			const donald = await connection.collections.userdeletemanyqueryfilter.findOne(
+				{
+					email: 'donald@trump.usa',
+				}
+			)
 
 			expect(donald).toEqual(null)
 		})
 
 		it('should delete all if no query filter', async () => {
-			class UserDeleteAll extends MongODMEntity {
+			class UserDeleteManyDeleteAll extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -357,14 +376,14 @@ describe(`MongODM class`, () => {
 			})
 
 			// Add 2 users
-			await connection.collections.userdeleteall.insertMany([
-				new UserDeleteAll('damien@marchand.fr'),
-				new UserDeleteAll('donald@trump.usa'),
+			await connection.collections.userdeletemanydeleteall.insertMany([
+				new UserDeleteManyDeleteAll('damien@marchand.fr'),
+				new UserDeleteManyDeleteAll('donald@trump.usa'),
 			])
 
 			// Delete all users
-			await UserDeleteAll.deleteMany(connection)
-			const countUser = await connection.collections.userdeleteall.countDocuments()
+			await UserDeleteManyDeleteAll.deleteMany(connection)
+			const countUser = await connection.collections.userdeletemanydeleteall.countDocuments()
 
 			expect(countUser).toEqual(0)
 		})
@@ -372,13 +391,7 @@ describe(`MongODM class`, () => {
 
 	describe('countDocuments static method', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongODMConnection({
-				databaseName,
-			}).connect({
-				clean: false,
-			})
-
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorCountDocumentsStatic extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -387,16 +400,25 @@ describe(`MongODM class`, () => {
 				}
 			}
 
+			const connection = await new MongODMConnection({
+				databaseName,
+			}).connect({
+				clean: false,
+			})
+
 			let hasError = false
 
 			try {
-				await RandomClassWithoutDecorator.countDocuments(connection, {
-					name: 'toto',
-				})
+				await RandomClassWithoutDecoratorCountDocumentsStatic.countDocuments(
+					connection,
+					{
+						name: 'toto',
+					}
+				)
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection randomclasswithoutdecorator does not exist.`
+					`Collection randomclasswithoutdecoratorcountdocumentsstatic does not exist.`
 				)
 				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
@@ -405,7 +427,7 @@ describe(`MongODM class`, () => {
 		})
 
 		it('should count all documents', async () => {
-			class UserCountAll extends MongODMEntity {
+			class UserCountAllStatic extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -421,19 +443,19 @@ describe(`MongODM class`, () => {
 				clean: true,
 			})
 
-			const users: UserCountAll[] = []
+			const users: UserCountAllStatic[] = []
 			// Add 10 users
 			for (let i = 0; i < 10; i++) {
-				users.push(new UserCountAll('damien@dev.fr'))
+				users.push(new UserCountAllStatic('damien@dev.fr'))
 			}
-			await connection.collections.usercountall.insertMany(users)
+			await connection.collections.usercountallstatic.insertMany(users)
 
-			const count = await UserCountAll.countDocuments(connection)
+			const count = await UserCountAllStatic.countDocuments(connection)
 			expect(count).toEqual(10)
 		})
 
 		it('should count documents with query filter', async () => {
-			class UserCountQuery extends MongODMEntity {
+			class UserCountDocumentsQueryFilter extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -449,32 +471,31 @@ describe(`MongODM class`, () => {
 				clean: true,
 			})
 
-			const users: UserCountQuery[] = []
+			const users: UserCountDocumentsQueryFilter[] = []
 			// Add 10 users
 			for (let i = 0; i < 10; i++) {
-				users.push(new UserCountQuery('damien@dev.fr'))
+				users.push(new UserCountDocumentsQueryFilter('damien@dev.fr'))
 			}
 			// User in filter
-			users.push(new UserCountQuery('jeremy@dev.fr'))
+			users.push(new UserCountDocumentsQueryFilter('jeremy@dev.fr'))
 
-			await connection.collections.usercountquery.insertMany(users)
+			await connection.collections.usercountdocumentsqueryfilter.insertMany(
+				users
+			)
 
-			const count = await UserCountQuery.countDocuments(connection, {
-				email: 'jeremy@dev.fr',
-			})
+			const count = await UserCountDocumentsQueryFilter.countDocuments(
+				connection,
+				{
+					email: 'jeremy@dev.fr',
+				}
+			)
 			expect(count).toEqual(1)
 		})
 	})
 
 	describe('insert method', () => {
 		it('should throw an error if collection does not exist', async () => {
-			const connection = await new MongODMConnection({
-				databaseName,
-			}).connect({
-				clean: false,
-			})
-
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorInsert extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -483,14 +504,20 @@ describe(`MongODM class`, () => {
 				}
 			}
 
+			const connection = await new MongODMConnection({
+				databaseName,
+			}).connect({
+				clean: false,
+			})
+
 			let hasError = false
 
 			try {
-				await new RandomClassWithoutDecorator().insert(connection)
+				await new RandomClassWithoutDecoratorInsert().insert(connection)
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection randomclasswithoutdecorator does not exist.`
+					`Collection randomclasswithoutdecoratorinsert does not exist.`
 				)
 				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
@@ -533,7 +560,7 @@ describe(`MongODM class`, () => {
 		})
 
 		it('should not insert fields without decorator', async () => {
-			class NoDecoratorSaved extends MongODMEntity {
+			class UserInsertNoDecoratorFieldSaved extends MongODMEntity {
 				@MongODMField()
 				email: string
 
@@ -552,13 +579,15 @@ describe(`MongODM class`, () => {
 				clean: true,
 			})
 
-			const obj = new NoDecoratorSaved('damien@dev.fr')
+			const obj = new UserInsertNoDecoratorFieldSaved('damien@dev.fr')
 
 			const id = await obj.insert(connection)
 
-			const saved = await connection.collections.nodecoratorsaved.findOne({
-				_id: id,
-			})
+			const saved = await connection.collections.userinsertnodecoratorfieldsaved.findOne(
+				{
+					_id: id,
+				}
+			)
 
 			expect(saved).toStrictEqual({
 				_id: id,
@@ -589,15 +618,16 @@ describe(`MongODM class`, () => {
 			expect(id).toStrictEqual((user as any)._id)
 
 			let hasError = false
-
 			try {
 				await user.insert(connection)
 			} catch (error) {
 				hasError = true
 				expect(error).toBeInstanceOf(MongODMAlreadyInsertedError)
 			}
-
 			expect(hasError).toEqual(true)
+
+			const count = await connection.collections.usersaved2times.countDocuments()
+			expect(count).toEqual(1)
 		})
 
 		it('should trigger beforeInsert', async (done) => {
@@ -718,7 +748,7 @@ describe(`MongODM class`, () => {
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorUpdate extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -731,7 +761,7 @@ describe(`MongODM class`, () => {
 
 			const id = new ObjectID()
 
-			const random = new RandomClassWithoutDecorator()
+			const random = new RandomClassWithoutDecoratorUpdate()
 			random._id = id
 
 			try {
@@ -739,10 +769,9 @@ describe(`MongODM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection randomclasswithoutdecorator does not exist.`
+					`Collection randomclasswithoutdecoratorupdate does not exist.`
 				)
 			}
-
 			expect(hasError).toEqual(true)
 		})
 
@@ -921,7 +950,7 @@ describe(`MongODM class`, () => {
 				clean: false,
 			})
 
-			class RandomClassWithoutDecorator extends MongODMEntity {
+			class RandomClassWithoutDecoratorDelete extends MongODMEntity {
 				name: string
 
 				constructor() {
@@ -932,7 +961,7 @@ describe(`MongODM class`, () => {
 
 			let hasError = false
 
-			const random = new RandomClassWithoutDecorator()
+			const random = new RandomClassWithoutDecoratorDelete()
 			const id = new ObjectID()
 			random._id = id
 
@@ -941,7 +970,7 @@ describe(`MongODM class`, () => {
 			} catch (error) {
 				hasError = true
 				expect(error.message).toEqual(
-					`Collection randomclasswithoutdecorator does not exist.`
+					`Collection randomclasswithoutdecoratordelete does not exist.`
 				)
 				expect(error.code).toEqual('MONGODM_ERROR_404')
 			}
@@ -1062,7 +1091,7 @@ describe(`MongODM class`, () => {
 
 	describe('populate method', () => {
 		it('should populate with _id by default', async () => {
-			class JobPopulate extends MongODMEntity {
+			class JobPopulateDefaultId extends MongODMEntity {
 				@MongODMField()
 				name: string
 
@@ -1072,30 +1101,30 @@ describe(`MongODM class`, () => {
 				}
 			}
 
-			class UserPopulate extends MongODMEntity {
+			class UserPopulateDefaultId extends MongODMEntity {
 				@MongODMField()
 				firstname: string
 
 				@MongODMRelation({
 					populatedKey: 'job',
-					targetType: JobPopulate,
+					targetType: JobPopulateDefaultId,
 				})
 				jobId: ObjectID
-				job?: JobPopulate
+				job?: JobPopulateDefaultId
 
 				@MongODMRelation({
 					populatedKey: 'job2',
-					targetType: JobPopulate,
+					targetType: JobPopulateDefaultId,
 				})
 				jobId2: ObjectID
-				job2?: JobPopulate
+				job2?: JobPopulateDefaultId
 
 				@MongODMRelation({
 					populatedKey: 'jobs',
-					targetType: JobPopulate,
+					targetType: JobPopulateDefaultId,
 				})
 				jobIds: ObjectID[]
-				jobs?: JobPopulate[]
+				jobs?: JobPopulateDefaultId[]
 
 				constructor(savedJobId: ObjectID, savedJobId2: ObjectID) {
 					super()
@@ -1112,16 +1141,18 @@ describe(`MongODM class`, () => {
 				clean: true,
 			})
 
-			const job = new JobPopulate('js dev')
+			const job = new JobPopulateDefaultId('js dev')
 			const jobId = await job.insert(connection)
 
-			const job2 = new JobPopulate('php dev')
+			const job2 = new JobPopulateDefaultId('php dev')
 			const job2id = await job2.insert(connection)
 
-			const user = new UserPopulate(jobId, job2id)
+			const user = new UserPopulateDefaultId(jobId, job2id)
 			await user.insert(connection)
 
-			const userPopulated = await user.populate<UserPopulate>(connection)
+			const userPopulated = await user.populate<UserPopulateDefaultId>(
+				connection
+			)
 			expect(userPopulated.job).toStrictEqual({
 				_id: jobId,
 				name: 'js dev',
@@ -1131,7 +1162,7 @@ describe(`MongODM class`, () => {
 				name: 'php dev',
 			})
 
-			expect((userPopulated.jobs as JobPopulate[]).length).toEqual(2)
+			expect((userPopulated.jobs as JobPopulateDefaultId[]).length).toEqual(2)
 		})
 
 		it('should populate with other key for relation', async () => {
@@ -1383,7 +1414,7 @@ describe(`MongODM class`, () => {
 
 describe('MongODMEntityArray class', () => {
 	it('should populate many with _id by default', async () => {
-		class JobPopulateMany extends MongODMEntity {
+		class JobPopulateManyDefaultId extends MongODMEntity {
 			@MongODMIndex({
 				unique: true,
 			})
@@ -1395,23 +1426,23 @@ describe('MongODMEntityArray class', () => {
 			}
 		}
 
-		class UserPopulateMany extends MongODMEntity {
+		class UserPopulateManyDefaultId extends MongODMEntity {
 			@MongODMField()
 			firstname: string
 
 			@MongODMRelation({
 				populatedKey: 'job',
-				targetType: JobPopulateMany,
+				targetType: JobPopulateManyDefaultId,
 			})
 			jobId: ObjectID | null
-			job?: JobPopulateMany
+			job?: JobPopulateManyDefaultId
 
 			@MongODMRelation({
 				populatedKey: 'jobs',
-				targetType: JobPopulateMany,
+				targetType: JobPopulateManyDefaultId,
 			})
 			jobIds: ObjectID[]
-			jobs?: JobPopulateMany[]
+			jobs?: JobPopulateManyDefaultId[]
 
 			constructor(jobId: ObjectID) {
 				super()
@@ -1432,24 +1463,26 @@ describe('MongODMEntityArray class', () => {
 		})
 
 		// Insert jobs
-		const job = new JobPopulateMany('Dictator')
+		const job = new JobPopulateManyDefaultId('Dictator')
 		const jobInsertedId = await job.insert(connection)
 
-		const job2 = new JobPopulateMany('President')
+		const job2 = new JobPopulateManyDefaultId('President')
 		const job2InsertedId = await job2.insert(connection)
 
 		// Insert many users
 		const usersPromises = []
 		for (let i = 0; i < 5; i++) {
-			const user = new UserPopulateMany(jobInsertedId)
+			const user = new UserPopulateManyDefaultId(jobInsertedId)
 			user.addJobId(job2InsertedId)
 			usersPromises.push(user.insert(connection))
 		}
 		await Promise.all(usersPromises)
 
 		// Get all users
-		const users = await UserPopulateMany.find(connection, {})
-		const populatedUsers = await users.populate<UserPopulateMany>(connection)
+		const users = await UserPopulateManyDefaultId.find(connection, {})
+		const populatedUsers = await users.populate<UserPopulateManyDefaultId>(
+			connection
+		)
 
 		expect(populatedUsers.length).toEqual(5)
 
@@ -1458,10 +1491,12 @@ describe('MongODMEntityArray class', () => {
 				_id: jobInsertedId,
 				name: 'Dictator',
 			})
-			expect((populatedUser.jobs as JobPopulateMany[]).length).toEqual(2)
-			expect((populatedUser.jobs as JobPopulateMany[])[0]).not.toStrictEqual(
-				(populatedUser.jobs as JobPopulateMany[])[1]
+			expect((populatedUser.jobs as JobPopulateManyDefaultId[]).length).toEqual(
+				2
 			)
+			expect(
+				(populatedUser.jobs as JobPopulateManyDefaultId[])[0]
+			).not.toStrictEqual((populatedUser.jobs as JobPopulateManyDefaultId[])[1])
 		}
 	})
 
@@ -1560,7 +1595,7 @@ describe('MongODMEntityArray class', () => {
 	})
 
 	it('should throw an error if try to populate an unknown collection', async () => {
-		class UserUnknownCollection extends MongODMEntity {
+		class UserPopulateUnknownCollection extends MongODMEntity {
 			firsname: string = 'Damien'
 
 			constructor() {
@@ -1575,7 +1610,7 @@ describe('MongODMEntityArray class', () => {
 			clean: true,
 		})
 
-		const user = new UserUnknownCollection()
+		const user = new UserPopulateUnknownCollection()
 
 		let hasError = false
 		try {
@@ -1583,7 +1618,7 @@ describe('MongODMEntityArray class', () => {
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
-				'Collection userunknowncollection does not exist.'
+				'Collection userpopulateunknowncollection does not exist.'
 			)
 		}
 
@@ -1593,7 +1628,7 @@ describe('MongODMEntityArray class', () => {
 
 describe('getMongODMPartial function', () => {
 	it('should not return field without decorator', () => {
-		class Full extends MongODMEntity {
+		class UserFull extends MongODMEntity {
 			@MongODMIndex({
 				unique: false,
 			})
@@ -1612,7 +1647,7 @@ describe('getMongODMPartial function', () => {
 			}
 		}
 
-		const partial = getMongODMPartial(new Full(), 'full')
+		const partial = getMongODMPartial(new UserFull(), 'userfull')
 
 		expect(partial).toStrictEqual({
 			lastname: 'Marchand',
@@ -1621,7 +1656,7 @@ describe('getMongODMPartial function', () => {
 	})
 
 	it('should not return empty field', () => {
-		class Full extends MongODMEntity {
+		class UserFullEmptyField extends MongODMEntity {
 			@MongODMField()
 			firstname: string
 
@@ -1634,7 +1669,10 @@ describe('getMongODMPartial function', () => {
 			}
 		}
 
-		const partial = getMongODMPartial(new Full(), 'full')
+		const partial = getMongODMPartial(
+			new UserFullEmptyField(),
+			'userfullemptyfield'
+		)
 
 		expect(partial).toStrictEqual({
 			firstname: 'Damien',
