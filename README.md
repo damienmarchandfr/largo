@@ -2,11 +2,11 @@
 
 Develop
 
-[![Build Status](https://travis-ci.com/damienmarchandfr/mongodm.svg?branch=develop)](https://travis-ci.com/damienmarchandfr/mongodm)
+[![Build Status](https://travis-ci.com/damienmarchandfr/legato.svg?branch=develop)](https://travis-ci.com/damienmarchandfr/legato)
 
 Master
 
-[![Build Status](https://travis-ci.com/damienmarchandfr/mongodm.svg?branch=master)](https://travis-ci.com/damienmarchandfr/mongodm)
+[![Build Status](https://travis-ci.com/damienmarchandfr/legato.svg?branch=master)](https://travis-ci.com/damienmarchandfr/legato)
 
 WIP
 
