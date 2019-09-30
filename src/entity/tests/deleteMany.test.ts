@@ -1,0 +1,111 @@
+import { MongODMConnection } from '../../connection/connection'
+import { MongODMEntity } from '../entity'
+import { MongODMField } from '../../decorators/field.decorator'
+
+const databaseName = 'deletemanyTest'
+
+describe('static method deleteMany', () => {
+	it('should throw an error if collection does not exist', async () => {
+		const connection = await new MongODMConnection({
+			databaseName,
+		}).connect({
+			clean: false,
+		})
+
+		class RandomClassWithoutDecoratorDeleteManyStatic extends MongODMEntity {
+			name: string
+
+			constructor() {
+				super()
+				this.name = 'toto'
+			}
+		}
+
+		let hasError = false
+
+		try {
+			await RandomClassWithoutDecoratorDeleteManyStatic.deleteMany(connection, {
+				name: 'toto',
+			})
+		} catch (error) {
+			hasError = true
+			expect(error.message).toEqual(
+				`Collection randomclasswithoutdecoratordeletemanystatic does not exist.`
+			)
+			expect(error.code).toEqual('MONGODM_ERROR_404')
+		}
+
+		expect(hasError).toEqual(true)
+	})
+
+	it('shoud delete with query filter', async () => {
+		class UserDeleteManyQueryFilter extends MongODMEntity {
+			@MongODMField()
+			email: string
+
+			constructor(email: string) {
+				super()
+				this.email = email
+			}
+		}
+
+		const connection = await new MongODMConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Add 2 users
+		await connection.collections.userdeletemanyqueryfilter.insertMany([
+			new UserDeleteManyQueryFilter('damien@marchand.fr'),
+			new UserDeleteManyQueryFilter('donald@trump.usa'),
+		])
+
+		// Delete donald
+		await UserDeleteManyQueryFilter.deleteMany<UserDeleteManyQueryFilter>(
+			connection,
+			{
+				email: 'donald@trump.usa',
+			}
+		)
+
+		// Searhc for donald
+		const donald = await connection.collections.userdeletemanyqueryfilter.findOne(
+			{
+				email: 'donald@trump.usa',
+			}
+		)
+
+		expect(donald).toEqual(null)
+	})
+
+	it('should delete all if no query filter', async () => {
+		class UserDeleteManyDeleteAll extends MongODMEntity {
+			@MongODMField()
+			email: string
+
+			constructor(email: string) {
+				super()
+				this.email = email
+			}
+		}
+
+		const connection = await new MongODMConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Add 2 users
+		await connection.collections.userdeletemanydeleteall.insertMany([
+			new UserDeleteManyDeleteAll('damien@marchand.fr'),
+			new UserDeleteManyDeleteAll('donald@trump.usa'),
+		])
+
+		// Delete all users
+		await UserDeleteManyDeleteAll.deleteMany(connection)
+		const countUser = await connection.collections.userdeletemanydeleteall.countDocuments()
+
+		expect(countUser).toEqual(0)
+	})
+})

@@ -1,12 +1,12 @@
 import { Db, MongoClient, Collection } from 'mongodb'
-import { mongODMetaDataStorage } from '.'
+import { mongODMetaDataStorage } from '..'
 import { pick } from 'lodash'
 import format from 'string-template'
-import { MongODMEntity } from './entity'
+import { MongODMEntity } from '../entity/entity'
 import {
 	MongODMConnectionError,
 	MongODMDatabaseNameProtectedError,
-} from './errors'
+} from '../errors/errors'
 
 // MongoDB databases protected
 const protectedCDatabaseNames = ['admin', 'local', 'config']

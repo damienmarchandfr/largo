@@ -1,7 +1,7 @@
 import { mongODMetaDataStorage } from '..'
 import { MongODMIndex } from './index.decorator'
-import { MongODMConnection } from '../connection'
-import { MongODMEntity } from '../entity'
+import { MongODMConnection } from '../connection/connection'
+import { MongODMEntity } from '../entity/entity'
 
 const databaseName = 'indexDecorator'
 

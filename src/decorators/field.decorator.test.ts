@@ -1,6 +1,6 @@
 import { MongODMField } from './field.decorator'
 import { mongODMetaDataStorage } from '..'
-import { MongODMEntity } from '../entity'
+import { MongODMEntity } from '../entity/entity'
 
 describe('MongODMField decorator', () => {
 	it('should add field meta to mongODMetaDataStorage', () => {

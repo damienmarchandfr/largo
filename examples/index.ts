@@ -1,7 +1,7 @@
-import { MongODMEntity } from '../src/entity'
+import { MongODMEntity } from '../src/entity/entity'
 import { MongODMField } from '../src/decorators/field.decorator'
 import { MongODMIndex } from '../src/decorators/index.decorator'
-import { MongODMConnection } from '../src/connection'
+import { MongODMConnection } from '../src/connection/connection'
 import { ObjectID } from 'mongodb'
 import { MongODMRelation } from '../src/decorators/relation.decorator'
 

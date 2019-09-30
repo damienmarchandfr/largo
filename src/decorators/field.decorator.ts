@@ -1,5 +1,5 @@
 import { mongODMetaDataStorage } from '..'
-import { MongODMEntity } from '../entity'
+import { MongODMEntity } from '../entity/entity'
 
 export function MongODMField<T extends MongODMEntity>() {
 	return (object: T, key: string) => {

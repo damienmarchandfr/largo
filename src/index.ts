@@ -1,5 +1,5 @@
 import 'reflect-metadata'
-import { MongODMEntity } from './entity'
+import { MongODMEntity } from './entity/entity'
 
 // Meta field
 // user : ['id','email'] for User class with 2 fields saved

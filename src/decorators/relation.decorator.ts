@@ -1,5 +1,5 @@
 import { mongODMetaDataStorage } from '..'
-import { MongODMEntity } from '../entity'
+import { MongODMEntity } from '../entity/entity'
 
 interface MongODMRelationOptions {
 	populatedKey: string // userId -> user

@@ -1,7 +1,7 @@
 import format from 'string-template'
 import { ObjectID } from 'mongodb'
 
-import { MongODMEntity } from './entity'
+import { MongODMEntity } from '../entity/entity'
 
 export type errorType =
 	| 'NOT_CONNECTED_CANNOT_DISCONNECT'
@@ -16,7 +16,8 @@ const errors = {
 
 	COLLECTION_DOES_NOT_EXIST: 'Collection {collectionName} does not exist.',
 	DATABASE_NAME_PROTECTED: `Database name '{databaseName}' is protected.`,
-	RELATION_ERROR: `You set {sourceKey} : {value} on object {className}. {targetType} with {targetKey} : {relationValue} does not exists.`,
+	RELATION_ERROR: `You set {sourceKey} : {value} on object {className}. {targetType} with {targetKey} : {relationValue} does not exist.`,
+	RELATIONS_ERROR: `You set {sourceKey} : [{value}] on object {className}. {targetType} with {targetKey} in [{diff}] do not exist.`,
 	ALREADY_INSERTED:
 		'You have already inserted this object with _id : {objectId} .',
 }
@@ -78,7 +79,48 @@ export class MongODMAlreadyInsertedError extends Error {
 	}
 }
 
-// Relations error
+// Relation errors (one to many)
+export class MongODMRelationsError extends Error {
+	code: errorCode
+
+	source: MongODMEntity
+	sourceKey: string
+
+	target: MongODMEntity
+	targetKey: string
+
+	diff: ObjectID[]
+
+	constructor(
+		diff: ObjectID[],
+		source: MongODMEntity,
+		sourceKey: string,
+		target: MongODMEntity,
+		targetKey = '_id'
+	) {
+		const message = format(errors.RELATIONS_ERROR, {
+			sourceKey,
+			diff,
+			className: source.constructor.name,
+			targetType: target.constructor.name,
+			targetKey,
+			value: (source as any)[sourceKey],
+		})
+		super(message)
+
+		this.source = source
+		this.sourceKey = sourceKey
+
+		this.target = target
+		this.targetKey = targetKey
+
+		this.code = 'MONGODM_ERROR_502'
+
+		this.diff = diff
+	}
+}
+
+// Relations error (one to one)
 export class MongODMRelationError extends Error {
 	code: errorCode
 

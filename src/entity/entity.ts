@@ -1,4 +1,4 @@
-import { MongODMConnection } from './connection'
+import { MongODMConnection } from '../connection/connection'
 import {
 	FilterQuery,
 	UpdateOneOptions,
@@ -6,123 +6,16 @@ import {
 	FindOneOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
-import { mongODMetaDataStorage } from '.'
-import format from 'string-template'
+import { mongODMetaDataStorage } from '..'
 import {
 	MongODMCollectionDoesNotExistError,
 	MongODMRelationError,
 	MongODMAlreadyInsertedError,
-} from './errors'
-import { pick } from 'lodash'
-
-/**
- * Get only the properties with decorators
- * @param obj
- * @param collectionName
- */
-export function getMongODMPartial<T extends MongODMEntity>(
-	obj: Partial<T>,
-	collectionName: string
-): Partial<T> {
-	// Select fields and indexes
-	const fieldKeys =
-		mongODMetaDataStorage().mongODMFieldMetas[collectionName] || []
-
-	let indexKeys: string[] = []
-	if (mongODMetaDataStorage().mongODMIndexMetas[collectionName]) {
-		indexKeys = mongODMetaDataStorage().mongODMIndexMetas[collectionName].map(
-			(indexMeta) => {
-				return indexMeta.key
-			}
-		)
-	}
-
-	let relationKeys: string[] = []
-	if (mongODMetaDataStorage().mongODMRelationsMetas[collectionName]) {
-		relationKeys = mongODMetaDataStorage().mongODMRelationsMetas[
-			collectionName
-		].map((relationMeta) => {
-			return relationMeta.key
-		})
-	}
-
-	return pick(
-		obj,
-		fieldKeys // Fields
-			.concat(indexKeys) // Index
-			.concat(relationKeys) // Relation
-	)
-}
-
-export class MongODMEntityArray<T extends MongODMEntity> {
-	private items: T[] = []
-
-	constructor() {
-		this.items = []
-	}
-
-	push(item: T): T[] {
-		this.items.push(item)
-		return this.items
-	}
-
-	length() {
-		return this.items.length
-	}
-
-	async populate<T extends MongODMEntity>(connect: MongODMConnection) {
-		const collectionName = this.items[0].getCollectionName()
-
-		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
-		}
-
-		const pipeline: object[] = [
-			{ $match: { _id: { $in: this.items.map((obj) => obj._id) } } },
-		]
-		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
-			collectionName
-		]
-
-		for (const meta of relationMetas) {
-			for (const item of this.items) {
-				if ((item as any)[meta.key]) {
-					if (!Array.isArray((item as any)[meta.key])) {
-						pipeline.push({
-							$lookup: {
-								from: (meta.targetType as any).getCollectionName(),
-								localField: meta.key,
-								foreignField: meta.targetKey,
-								as: meta.populatedKey,
-							},
-						})
-
-						pipeline.push({
-							$unwind: {
-								path: '$' + meta.populatedKey,
-								// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
-								preserveNullAndEmptyArrays: true,
-							},
-						})
-					} else {
-						pipeline.push({
-							$lookup: {
-								from: (meta.targetType as any).getCollectionName(),
-								localField: meta.key,
-								foreignField: meta.targetKey,
-								as: meta.populatedKey,
-							},
-						})
-					}
-				}
-			}
-		}
-
-		return connect.collections[collectionName]
-			.aggregate(pipeline)
-			.toArray() as Promise<T[]>
-	}
-}
+	MongODMRelationsError,
+} from '../errors/errors'
+import { difference } from 'lodash'
+import { MongODMEntityArray } from '../entityArray/entityArray'
+import { getMongODMPartial } from '../helpers/helpers'
 
 export class MongODMEntity {
 	/**
@@ -318,7 +211,33 @@ export class MongODMEntity {
 						if (
 							relationQueryResults.length !== (this as any)[relation.key].length
 						) {
-							throw new Error('NOP')
+							const resultIds = relationQueryResults.map((result) => {
+								return result._id
+							})
+							const relationIds = (this as any)[relation.key]
+
+							const resultIdsString = (resultIds as ObjectID[]).map((id) => {
+								return id.toHexString()
+							})
+							const relationIdsString = (relationIds as ObjectID[]).map(
+								(id) => {
+									return id.toHexString()
+								}
+							)
+
+							const diff = difference(relationIdsString, resultIdsString).map(
+								(idString) => {
+									return new ObjectID(idString)
+								}
+							)
+
+							throw new MongODMRelationsError(
+								diff,
+								this,
+								relation.key,
+								new relation.targetType(),
+								relation.targetKey
+							)
 						}
 					} else {
 						// Relation with one element

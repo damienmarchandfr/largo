@@ -3,7 +3,7 @@ import { MongODMField } from './field.decorator'
 import { mongODMetaDataStorage } from '..'
 import { MongODMIndex } from './index.decorator'
 import { ObjectID } from 'mongodb'
-import { MongODMEntity } from '../entity'
+import { MongODMEntity } from '../entity/entity'
 
 describe('Relation decorator', () => {
 	it('should add meta data', () => {

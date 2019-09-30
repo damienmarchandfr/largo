@@ -1,5 +1,5 @@
 import { mongODMetaDataStorage } from '..'
-import { MongODMEntity } from '../entity'
+import { MongODMEntity } from '../entity/entity'
 
 export interface MongODMIndexOptions {
 	unique: boolean
