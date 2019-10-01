@@ -1,19 +1,19 @@
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMEntity } from '../entity'
-import { MongODMCollectionDoesNotExistError } from '../../errors/errors'
-import { MongODMField } from '../../decorators/field.decorator'
+import { LegatoConnection } from '../../connection'
+import { LegatoEntity } from '..'
+import { LegatoCollectionDoesNotExistError } from '../../errors'
+import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'findTest'
 
 describe('static method find', () => {
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorFind extends MongODMEntity {
+		class RandomClassWithoutDecoratorFind extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -30,15 +30,15 @@ describe('static method find', () => {
 			>(connection, { name: 'toto' })
 		} catch (error) {
 			hasError = true
-			expect(error).toBeInstanceOf(MongODMCollectionDoesNotExistError)
+			expect(error).toBeInstanceOf(LegatoCollectionDoesNotExistError)
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should find all with empty filter', async () => {
-		class UserFindAllStatic extends MongODMEntity {
-			@MongODMField()
+		class UserFindAllStatic extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -47,7 +47,7 @@ describe('static method find', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -67,8 +67,8 @@ describe('static method find', () => {
 	})
 
 	it('should not find and return emtpy array', async () => {
-		class UserFindAllStaticEmpty extends MongODMEntity {
-			@MongODMField()
+		class UserFindAllStaticEmpty extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor() {
@@ -77,7 +77,7 @@ describe('static method find', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

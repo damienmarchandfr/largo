@@ -1,9 +1,9 @@
-import { MongODMEntity } from '../entity/entity'
-import { MongODMConnection } from '../connection/connection'
-import { MongODMCollectionDoesNotExistError } from '../errors/errors'
-import { mongODMetaDataStorage } from '..'
+import { LegatoEntity } from '../entity'
+import { LegatoConnection } from '../connection'
+import { LegatoCollectionDoesNotExistError } from '../errors'
+import { LegatoMetaDataStorage } from '..'
 
-export class MongODMEntityArray<T extends MongODMEntity> {
+export class LegatoEntityArray<T extends LegatoEntity> {
 	private items: T[] = []
 
 	constructor() {
@@ -19,17 +19,17 @@ export class MongODMEntityArray<T extends MongODMEntity> {
 		return this.items.length
 	}
 
-	async populate<T extends MongODMEntity>(connect: MongODMConnection) {
+	async populate<T extends LegatoEntity>(connect: LegatoConnection) {
 		const collectionName = this.items[0].getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
 		const pipeline: object[] = [
 			{ $match: { _id: { $in: this.items.map((obj) => obj._id) } } },
 		]
-		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
+		const relationMetas = LegatoMetaDataStorage().LegatoRelationsMetas[
 			collectionName
 		]
 

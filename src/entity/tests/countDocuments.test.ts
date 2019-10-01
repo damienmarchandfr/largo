@@ -1,12 +1,12 @@
-import { MongODMEntity } from '../entity'
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMField } from '../../decorators/field.decorator'
+import { LegatoEntity } from '..'
+import { LegatoConnection } from '../../connection'
+import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'countDocumentsTest'
 
 describe('static method countDocuments', () => {
 	it('should throw an error if collection does not exist', async () => {
-		class RandomClassWithoutDecoratorCountDocumentsStatic extends MongODMEntity {
+		class RandomClassWithoutDecoratorCountDocumentsStatic extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -15,7 +15,7 @@ describe('static method countDocuments', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
@@ -35,15 +35,15 @@ describe('static method countDocuments', () => {
 			expect(error.message).toEqual(
 				`Collection randomclasswithoutdecoratorcountdocumentsstatic does not exist.`
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_404')
+			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should count all documents', async () => {
-		class UserCountAllStatic extends MongODMEntity {
-			@MongODMField()
+		class UserCountAllStatic extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -52,7 +52,7 @@ describe('static method countDocuments', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -70,8 +70,8 @@ describe('static method countDocuments', () => {
 	})
 
 	it('should count documents with query filter', async () => {
-		class UserCountDocumentsQueryFilter extends MongODMEntity {
-			@MongODMField()
+		class UserCountDocumentsQueryFilter extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -80,7 +80,7 @@ describe('static method countDocuments', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

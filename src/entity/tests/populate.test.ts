@@ -1,16 +1,16 @@
-import { MongODMEntity } from '../entity'
-import { MongODMField } from '../../decorators/field.decorator'
-import { MongODMRelation } from '../../decorators/relation.decorator'
+import { LegatoEntity } from '..'
+import { LegatoField } from '../../decorators/field.decorator'
+import { LegatoRelation } from '../../decorators/relation.decorator'
 import { ObjectID } from 'mongodb'
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMIndex } from '../../decorators/index.decorator'
+import { LegatoConnection } from '../../connection'
+import { LegatoIndex } from '../../decorators/index.decorator'
 
 const databaseName = 'populateTest'
 
 describe('populate method', () => {
 	it('should populate with _id by default', async () => {
-		class JobPopulateDefaultId extends MongODMEntity {
-			@MongODMField()
+		class JobPopulateDefaultId extends LegatoEntity {
+			@LegatoField()
 			name: string
 
 			constructor(name: string) {
@@ -19,25 +19,25 @@ describe('populate method', () => {
 			}
 		}
 
-		class UserPopulateDefaultId extends MongODMEntity {
-			@MongODMField()
+		class UserPopulateDefaultId extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobPopulateDefaultId,
 			})
 			jobId: ObjectID
 			job?: JobPopulateDefaultId
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job2',
 				targetType: JobPopulateDefaultId,
 			})
 			jobId2: ObjectID
 			job2?: JobPopulateDefaultId
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'jobs',
 				targetType: JobPopulateDefaultId,
 			})
@@ -53,7 +53,7 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -82,11 +82,11 @@ describe('populate method', () => {
 	})
 
 	it('should populate with other key for relation', async () => {
-		class JobPopulateCustomKey extends MongODMEntity {
-			@MongODMField()
+		class JobPopulateCustomKey extends LegatoEntity {
+			@LegatoField()
 			name: string
 
-			@MongODMField()
+			@LegatoField()
 			customJobId: ObjectID
 
 			constructor(name: string) {
@@ -96,11 +96,11 @@ describe('populate method', () => {
 			}
 		}
 
-		class UserPopulateCustomKey extends MongODMEntity {
-			@MongODMField()
+		class UserPopulateCustomKey extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobPopulateCustomKey,
 				targetKey: 'customJobId',
@@ -108,7 +108,7 @@ describe('populate method', () => {
 			jobId: ObjectID
 			job?: JobPopulateCustomKey
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'jobs',
 				targetType: JobPopulateCustomKey,
 				targetKey: 'customJobId',
@@ -128,7 +128,7 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -159,11 +159,11 @@ describe('populate method', () => {
 	})
 
 	it('should populate with string as id', async () => {
-		class JobPopulateIdString extends MongODMEntity {
-			@MongODMField()
+		class JobPopulateIdString extends LegatoEntity {
+			@LegatoField()
 			name: string
 
-			@MongODMIndex({
+			@LegatoIndex({
 				unique: true,
 			})
 			customJobId: string
@@ -179,11 +179,11 @@ describe('populate method', () => {
 			}
 		}
 
-		class UserPopulateIdString extends MongODMEntity {
-			@MongODMField()
+		class UserPopulateIdString extends LegatoEntity {
+			@LegatoField()
 			email: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobPopulateIdString,
 				targetKey: 'customJobId',
@@ -191,7 +191,7 @@ describe('populate method', () => {
 			jobId: string
 			job?: JobPopulateIdString
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'jobs',
 				targetType: JobPopulateIdString,
 				targetKey: 'customJobId',
@@ -211,7 +211,7 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -242,11 +242,11 @@ describe('populate method', () => {
 	})
 
 	it('should populate with number as id', async () => {
-		class JobPopulateIdNumber extends MongODMEntity {
-			@MongODMField()
+		class JobPopulateIdNumber extends LegatoEntity {
+			@LegatoField()
 			name: string
 
-			@MongODMIndex({
+			@LegatoIndex({
 				unique: true,
 			})
 			customJobId: number
@@ -258,11 +258,11 @@ describe('populate method', () => {
 			}
 		}
 
-		class UserPopulateIdNumber extends MongODMEntity {
-			@MongODMField()
+		class UserPopulateIdNumber extends LegatoEntity {
+			@LegatoField()
 			email: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobPopulateIdNumber,
 				targetKey: 'customJobId',
@@ -270,7 +270,7 @@ describe('populate method', () => {
 			jobId: number
 			job?: JobPopulateIdNumber
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'jobs',
 				targetType: JobPopulateIdNumber,
 				targetKey: 'customJobId',
@@ -290,7 +290,7 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

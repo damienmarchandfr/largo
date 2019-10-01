@@ -1,18 +1,18 @@
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMEntity } from '../entity'
-import { MongODMField } from '../../decorators/field.decorator'
+import { LegatoConnection } from '../../connection'
+import { LegatoEntity } from '..'
+import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'deletemanyTest'
 
 describe('static method deleteMany', () => {
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorDeleteManyStatic extends MongODMEntity {
+		class RandomClassWithoutDecoratorDeleteManyStatic extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -32,15 +32,15 @@ describe('static method deleteMany', () => {
 			expect(error.message).toEqual(
 				`Collection randomclasswithoutdecoratordeletemanystatic does not exist.`
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_404')
+			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('shoud delete with query filter', async () => {
-		class UserDeleteManyQueryFilter extends MongODMEntity {
-			@MongODMField()
+		class UserDeleteManyQueryFilter extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -49,7 +49,7 @@ describe('static method deleteMany', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -80,8 +80,8 @@ describe('static method deleteMany', () => {
 	})
 
 	it('should delete all if no query filter', async () => {
-		class UserDeleteManyDeleteAll extends MongODMEntity {
-			@MongODMField()
+		class UserDeleteManyDeleteAll extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -90,7 +90,7 @@ describe('static method deleteMany', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

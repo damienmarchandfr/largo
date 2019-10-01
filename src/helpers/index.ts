@@ -1,5 +1,5 @@
-import { MongODMEntity } from '../entity/entity'
-import { mongODMetaDataStorage } from '..'
+import { LegatoEntity } from '../entity'
+import { LegatoMetaDataStorage } from '..'
 import { pick } from 'lodash'
 
 /**
@@ -7,17 +7,17 @@ import { pick } from 'lodash'
  * @param obj
  * @param collectionName
  */
-export function getMongODMPartial<T extends MongODMEntity>(
+export function getLegatoPartial<T extends LegatoEntity>(
 	obj: Partial<T>,
 	collectionName: string
 ): Partial<T> {
 	// Select fields and indexes
 	const fieldKeys =
-		mongODMetaDataStorage().mongODMFieldMetas[collectionName] || []
+		LegatoMetaDataStorage().LegatoFieldMetas[collectionName] || []
 
 	let indexKeys: string[] = []
-	if (mongODMetaDataStorage().mongODMIndexMetas[collectionName]) {
-		indexKeys = mongODMetaDataStorage().mongODMIndexMetas[collectionName].map(
+	if (LegatoMetaDataStorage().LegatoIndexMetas[collectionName]) {
+		indexKeys = LegatoMetaDataStorage().LegatoIndexMetas[collectionName].map(
 			(indexMeta) => {
 				return indexMeta.key
 			}
@@ -25,8 +25,8 @@ export function getMongODMPartial<T extends MongODMEntity>(
 	}
 
 	let relationKeys: string[] = []
-	if (mongODMetaDataStorage().mongODMRelationsMetas[collectionName]) {
-		relationKeys = mongODMetaDataStorage().mongODMRelationsMetas[
+	if (LegatoMetaDataStorage().LegatoRelationsMetas[collectionName]) {
+		relationKeys = LegatoMetaDataStorage().LegatoRelationsMetas[
 			collectionName
 		].map((relationMeta) => {
 			return relationMeta.key

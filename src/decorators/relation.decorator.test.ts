@@ -1,14 +1,14 @@
-import { MongODMRelation } from './relation.decorator'
-import { MongODMField } from './field.decorator'
-import { mongODMetaDataStorage } from '..'
-import { MongODMIndex } from './index.decorator'
+import { LegatoRelation } from './relation.decorator'
+import { LegatoField } from './field.decorator'
+import { LegatoMetaDataStorage } from '..'
+import { LegatoIndex } from './index.decorator'
 import { ObjectID } from 'mongodb'
-import { MongODMEntity } from '../entity/entity'
+import { LegatoEntity } from '../entity'
 
 describe('Relation decorator', () => {
 	it('should add meta data', () => {
-		class JobRelationDecorator extends MongODMEntity {
-			@MongODMField()
+		class JobRelationDecorator extends LegatoEntity {
+			@LegatoField()
 			companyName: string
 
 			constructor() {
@@ -17,8 +17,8 @@ describe('Relation decorator', () => {
 			}
 		}
 
-		class UserRelationDecorator extends MongODMEntity {
-			@MongODMRelation({
+		class UserRelationDecorator extends LegatoEntity {
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecorator,
 			})
@@ -29,7 +29,7 @@ describe('Relation decorator', () => {
 			}
 		}
 
-		const relationMeta = mongODMetaDataStorage().mongODMRelationsMetas
+		const relationMeta = LegatoMetaDataStorage().LegatoRelationsMetas
 			.userrelationdecorator
 
 		expect(relationMeta.length).toEqual(1)
@@ -42,8 +42,8 @@ describe('Relation decorator', () => {
 	})
 
 	it('should set _id as relation key by default', () => {
-		class JobRelationDecoratorIdNotSet extends MongODMEntity {
-			@MongODMField()
+		class JobRelationDecoratorIdNotSet extends LegatoEntity {
+			@LegatoField()
 			companyName: string
 
 			constructor() {
@@ -52,11 +52,11 @@ describe('Relation decorator', () => {
 			}
 		}
 
-		class UserRelationDecoratorIdNotSet extends MongODMEntity {
-			@MongODMField()
+		class UserRelationDecoratorIdNotSet extends LegatoEntity {
+			@LegatoField()
 			email: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecoratorIdNotSet,
 			})
@@ -69,17 +69,17 @@ describe('Relation decorator', () => {
 		}
 
 		expect(
-			mongODMetaDataStorage().mongODMRelationsMetas
+			LegatoMetaDataStorage().LegatoRelationsMetas
 				.userrelationdecoratoridnotset[0].targetKey
 		).toEqual('_id')
 	})
 
 	it('should set other relation key if set by user', () => {
-		class JobRelationDecoratorIdSet extends MongODMEntity {
-			@MongODMField()
+		class JobRelationDecoratorIdSet extends LegatoEntity {
+			@LegatoField()
 			companyName: string
 
-			@MongODMIndex({
+			@LegatoIndex({
 				unique: true,
 			})
 			id: ObjectID | null = null
@@ -90,11 +90,11 @@ describe('Relation decorator', () => {
 			}
 		}
 
-		class UserRelationDecoratorIdSet extends MongODMEntity {
-			@MongODMField()
+		class UserRelationDecoratorIdSet extends LegatoEntity {
+			@LegatoField()
 			email: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecoratorIdSet,
 				targetKey: 'id',
@@ -108,8 +108,8 @@ describe('Relation decorator', () => {
 		}
 
 		expect(
-			mongODMetaDataStorage().mongODMRelationsMetas
-				.userrelationdecoratoridset[0].targetKey
+			LegatoMetaDataStorage().LegatoRelationsMetas.userrelationdecoratoridset[0]
+				.targetKey
 		).toEqual('id')
 	})
 })

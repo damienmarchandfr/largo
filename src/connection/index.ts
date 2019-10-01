@@ -1,15 +1,13 @@
 import { Db, MongoClient, Collection } from 'mongodb'
-import { mongODMetaDataStorage } from '..'
-import { pick } from 'lodash'
-import format from 'string-template'
-import { MongODMEntity } from '../entity/entity'
+
 import {
-	MongODMConnectionError,
-	MongODMDatabaseNameProtectedError,
-} from '../errors/errors'
+	LegatoConnectionError,
+	LegatoDatabaseNameProtectedError,
+} from '../errors'
+import { LegatoMetaDataStorage } from '..'
 
 // MongoDB databases protected
-const protectedCDatabaseNames = ['admin', 'local', 'config']
+const protectedDatabaseNames = ['admin', 'local', 'config']
 
 // MongoDB options to create connection
 interface ConnectionOptions {
@@ -27,9 +25,9 @@ interface ConnectOptions {
 /**
  * Use it to connect to MongoDB.
  *
- * const connection = await new MongODMConnection({databaseName : 'dbName' }).connect({clean : false})
+ * const connection = await new LegatoConnection({databaseName : 'dbName' }).connect({clean : false})
  */
-export class MongODMConnection {
+export class LegatoConnection {
 	// Native Mongo collections
 	public collections: {
 		[key: string]: Collection
@@ -41,8 +39,8 @@ export class MongODMConnection {
 
 	constructor(options: ConnectionOptions) {
 		// Check if database name is not protected
-		if (protectedCDatabaseNames.includes(options.databaseName)) {
-			throw new MongODMDatabaseNameProtectedError(options.databaseName)
+		if (protectedDatabaseNames.includes(options.databaseName)) {
+			throw new LegatoDatabaseNameProtectedError(options.databaseName)
 		}
 
 		this.options = options
@@ -64,10 +62,10 @@ export class MongODMConnection {
 	 */
 	public async connect(
 		options: ConnectOptions = { clean: false }
-	): Promise<MongODMConnection> {
+	): Promise<LegatoConnection> {
 		// Check if already connected
 		if (this.mongoClient) {
-			throw new MongODMConnectionError('ALREADY_CONNECTED')
+			throw new LegatoConnectionError('ALREADY_CONNECTED')
 		}
 
 		const url = createConnectionString(this.options)
@@ -78,7 +76,7 @@ export class MongODMConnection {
 		this.db = this.mongoClient.db(this.options.databaseName)
 
 		// Sync collections
-		let collectionNames = Object.keys(mongODMetaDataStorage().mongODMFieldMetas)
+		let collectionNames = Object.keys(LegatoMetaDataStorage().LegatoFieldMetas)
 
 		// Create collections if not exist
 		for (const collectionName of collectionNames) {
@@ -86,7 +84,7 @@ export class MongODMConnection {
 			this.collections[collectionName] = collectionCreated
 		}
 
-		collectionNames = Object.keys(mongODMetaDataStorage().mongODMIndexMetas)
+		collectionNames = Object.keys(LegatoMetaDataStorage().LegatoIndexMetas)
 
 		for (const collectionName of collectionNames) {
 			if (!this.collections[collectionName]) {
@@ -94,7 +92,7 @@ export class MongODMConnection {
 				this.collections[collectionName] = collectionCreated
 			}
 			await this.collections[collectionName].dropIndexes()
-			const collectionIndexMetas = mongODMetaDataStorage().mongODMIndexMetas[
+			const collectionIndexMetas = LegatoMetaDataStorage().LegatoIndexMetas[
 				collectionName
 			]
 			for (const indexMeta of collectionIndexMetas) {
@@ -118,7 +116,7 @@ export class MongODMConnection {
 	 */
 	public async disconnect() {
 		if (!this.mongoClient) {
-			throw new MongODMConnectionError('NOT_CONNECTED_CANNOT_DISCONNECT')
+			throw new LegatoConnectionError('NOT_CONNECTED_CANNOT_DISCONNECT')
 		}
 		await this.mongoClient.close()
 		this.mongoClient = null
@@ -131,7 +129,7 @@ export class MongODMConnection {
 	 */
 	public async clean() {
 		if (!this.mongoClient) {
-			throw new MongODMConnectionError('NOT_CONNECTED')
+			throw new LegatoConnectionError('NOT_CONNECTED')
 		}
 		const collectionNames = Object.keys(this.collections)
 

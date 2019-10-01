@@ -1,19 +1,19 @@
-import { mongODMetaDataStorage } from '..'
-import { MongODMIndex } from './index.decorator'
-import { MongODMConnection } from '../connection/connection'
-import { MongODMEntity } from '../entity/entity'
+import { LegatoMetaDataStorage } from '..'
+import { LegatoIndex } from './index.decorator'
+import { LegatoConnection } from '../connection'
+import { LegatoEntity } from '../entity'
 
 const databaseName = 'indexDecorator'
 
-describe('MongODMIndex decorator', () => {
-	it('should add index meta to mongODMetaDataStorage', () => {
-		class MongODMIndexClass extends MongODMEntity {
-			@MongODMIndex({
+describe('LegatoIndex decorator', () => {
+	it('should add index meta to LegatoMetaDataStorage', () => {
+		class LegatoIndexClass extends LegatoEntity {
+			@LegatoIndex({
 				unique: true,
 			})
 			hello: string
 
-			@MongODMIndex({
+			@LegatoIndex({
 				unique: false,
 			})
 			world: string
@@ -25,8 +25,8 @@ describe('MongODMIndex decorator', () => {
 			}
 		}
 
-		const classIndexMetas = mongODMetaDataStorage().mongODMIndexMetas
-			.mongodmindexclass
+		const classIndexMetas = LegatoMetaDataStorage().LegatoIndexMetas
+			.legatoindexclass
 		expect(classIndexMetas.length).toEqual(2)
 
 		expect(classIndexMetas[0]).toStrictEqual({
@@ -41,8 +41,8 @@ describe('MongODMIndex decorator', () => {
 	})
 
 	it('should create a unique index', async () => {
-		class UniqueIndex extends MongODMEntity {
-			@MongODMIndex({
+		class UniqueIndex extends LegatoEntity {
+			@LegatoIndex({
 				unique: true,
 			})
 			id: string
@@ -53,7 +53,7 @@ describe('MongODMIndex decorator', () => {
 			}
 		}
 
-		const connexion = await new MongODMConnection({
+		const connexion = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

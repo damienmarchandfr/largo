@@ -1,21 +1,21 @@
-import { mongODMetaDataStorage } from '..'
-import { MongODMEntity } from '../entity/entity'
+import { LegatoMetaDataStorage } from '..'
+import { LegatoEntity } from '../entity'
 
-export interface MongODMIndexOptions {
+export interface LegatoIndexOptions {
 	unique: boolean
 }
 
-export function MongODMIndex<T extends MongODMEntity>(
-	options: MongODMIndexOptions
+export function LegatoIndex<T extends LegatoEntity>(
+	options: LegatoIndexOptions
 ) {
 	return (object: T, key: string) => {
 		const collectionName = object.getCollectionName()
 
-		if (!mongODMetaDataStorage().mongODMIndexMetas[collectionName]) {
-			mongODMetaDataStorage().mongODMIndexMetas[collectionName] = []
+		if (!LegatoMetaDataStorage().LegatoIndexMetas[collectionName]) {
+			LegatoMetaDataStorage().LegatoIndexMetas[collectionName] = []
 		}
 
-		mongODMetaDataStorage().mongODMIndexMetas[collectionName].push({
+		LegatoMetaDataStorage().LegatoIndexMetas[collectionName].push({
 			key,
 			unique: options.unique,
 		})

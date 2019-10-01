@@ -1,5 +1,6 @@
 import 'reflect-metadata'
-import { MongODMEntity } from './entity/entity'
+import { LegatoEntity } from './entity'
+import { of } from 'rxjs'
 
 // Meta field
 // user : ['id','email'] for User class with 2 fields saved
@@ -18,22 +19,27 @@ type DataStorageFielRelation = {
 	[key: string]: Array<{
 		key: string
 		populatedKey: string
-		targetType: new (...args: any[]) => MongODMEntity
+		targetType: new (...args: any[]) => LegatoEntity
 		targetKey: string
 	}>
 }
 
 interface CustomGlobal extends NodeJS.Global {
-	mongODMFieldMetas: DataStorageFieldMeta
-	mongODMIndexMetas: DataStorageIndexMeta
-	mongODMRelationsMetas: DataStorageFielRelation
+	LegatoFieldMetas: DataStorageFieldMeta
+	LegatoIndexMetas: DataStorageIndexMeta
+	LegatoRelationsMetas: DataStorageFielRelation
 }
 
-export function mongODMetaDataStorage() {
-	if (!(global as CustomGlobal).mongODMFieldMetas) {
-		;(global as CustomGlobal).mongODMFieldMetas = {}
-		;(global as CustomGlobal).mongODMIndexMetas = {}
-		;(global as CustomGlobal).mongODMRelationsMetas = {}
+export function LegatoMetaDataStorage() {
+	if (!(global as CustomGlobal).LegatoFieldMetas) {
+		;(global as CustomGlobal).LegatoFieldMetas = {}
 	}
+	if (!(global as CustomGlobal).LegatoIndexMetas) {
+		;(global as CustomGlobal).LegatoIndexMetas = {}
+	}
+	if (!(global as CustomGlobal).LegatoRelationsMetas) {
+		;(global as CustomGlobal).LegatoRelationsMetas = {}
+	}
+
 	return global as CustomGlobal
 }

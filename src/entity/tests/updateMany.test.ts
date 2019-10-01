@@ -1,18 +1,18 @@
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMEntity } from '../entity'
-import { MongODMField } from '../../decorators/field.decorator'
+import { LegatoConnection } from '../../connection'
+import { LegatoEntity } from '..'
+import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'updatemanyTest'
 
 describe(`static method updateMany`, () => {
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorUpdateMany extends MongODMEntity {
+		class RandomClassWithoutDecoratorUpdateMany extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -32,15 +32,15 @@ describe(`static method updateMany`, () => {
 			expect(error.message).toEqual(
 				`Collection randomclasswithoutdecoratorupdatemany does not exist.`
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_404')
+			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should update one element with query filter', async () => {
-		class UserUpdateManyOneElement extends MongODMEntity {
-			@MongODMField()
+		class UserUpdateManyOneElement extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -49,7 +49,7 @@ describe(`static method updateMany`, () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

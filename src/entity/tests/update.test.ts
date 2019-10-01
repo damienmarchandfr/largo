@@ -1,19 +1,19 @@
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMEntity } from '../entity'
+import { LegatoConnection } from '../../connection'
+import { LegatoEntity } from '..'
 import { ObjectID } from 'mongodb'
-import { MongODMField } from '../../decorators/field.decorator'
+import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'updateTest'
 
 describe('update method', () => {
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorUpdate extends MongODMEntity {
+		class RandomClassWithoutDecoratorUpdate extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -41,8 +41,8 @@ describe('update method', () => {
 	})
 
 	it('should update', async () => {
-		class UserUpdate extends MongODMEntity {
-			@MongODMField()
+		class UserUpdate extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -51,7 +51,7 @@ describe('update method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -77,8 +77,8 @@ describe('update method', () => {
 	})
 
 	it('should not update prop without decorator', async () => {
-		class UserUpdateNotDecorator extends MongODMEntity {
-			@MongODMField()
+		class UserUpdateNotDecorator extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			age: number
@@ -90,7 +90,7 @@ describe('update method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -119,8 +119,8 @@ describe('update method', () => {
 	})
 
 	it('should trigger beforeUpdate', async (done) => {
-		class UserBeforeUpdate extends MongODMEntity {
-			@MongODMField()
+		class UserBeforeUpdate extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
 			constructor(firstname: string) {
@@ -129,7 +129,7 @@ describe('update method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -161,8 +161,8 @@ describe('update method', () => {
 	})
 
 	it('should trigger afterUpdate', async (done) => {
-		class UserAfterUpdate extends MongODMEntity {
-			@MongODMField()
+		class UserAfterUpdate extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
 			constructor(firstname: string) {
@@ -171,7 +171,7 @@ describe('update method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

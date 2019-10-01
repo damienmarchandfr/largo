@@ -1,17 +1,17 @@
-import { mongODMetaDataStorage } from '..'
-import { MongODMEntity } from '../entity/entity'
+import { LegatoMetaDataStorage } from '..'
+import { LegatoEntity } from '../entity'
 
-interface MongODMRelationOptions {
+interface LegatoRelationOptions {
 	populatedKey: string // userId -> user
-	targetType: new (...args: any[]) => MongODMEntity // User
+	targetType: new (...args: any[]) => LegatoEntity // User
 	targetKey?: string // _id
 }
 
-export function MongODMRelation<T extends MongODMEntity>(
-	options: MongODMRelationOptions
+export function LegatoRelation<T extends LegatoEntity>(
+	options: LegatoRelationOptions
 ) {
 	return (object: T, key: string) => {
-		const metas = mongODMetaDataStorage().mongODMRelationsMetas
+		const metas = LegatoMetaDataStorage().LegatoRelationsMetas
 		const collectionName = object.getCollectionName()
 		/* istanbul ignore next */
 		if (!metas[collectionName]) {

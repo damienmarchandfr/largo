@@ -1,19 +1,19 @@
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMEntity } from '../entity'
+import { LegatoConnection } from '../../connection'
+import { LegatoEntity } from '..'
 import { ObjectID } from 'mongodb'
-import { MongODMField } from '../../decorators/field.decorator'
+import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'deleteTest'
 
 describe('delete method', () => {
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorDelete extends MongODMEntity {
+		class RandomClassWithoutDecoratorDelete extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -35,15 +35,15 @@ describe('delete method', () => {
 			expect(error.message).toEqual(
 				`Collection randomclasswithoutdecoratordelete does not exist.`
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_404')
+			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should delete', async () => {
-		class UserDelete extends MongODMEntity {
-			@MongODMField()
+		class UserDelete extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -52,7 +52,7 @@ describe('delete method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -78,8 +78,8 @@ describe('delete method', () => {
 	})
 
 	it('should trigger beforeDelete', async (done) => {
-		class UserBeforeDelete extends MongODMEntity {
-			@MongODMField()
+		class UserBeforeDelete extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -88,7 +88,7 @@ describe('delete method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -110,8 +110,8 @@ describe('delete method', () => {
 	})
 
 	it('should trigger afterDelete', async (done) => {
-		class UserAfterDelete extends MongODMEntity {
-			@MongODMField()
+		class UserAfterDelete extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -120,7 +120,7 @@ describe('delete method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

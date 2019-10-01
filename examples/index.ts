@@ -1,12 +1,12 @@
-import { MongODMEntity } from '../src/entity/entity'
-import { MongODMField } from '../src/decorators/field.decorator'
-import { MongODMIndex } from '../src/decorators/index.decorator'
-import { MongODMConnection } from '../src/connection/connection'
+import { LegatoEntity } from '../src/entity'
+import { LegatoField } from '../src/decorators/field.decorator'
+import { LegatoIndex } from '../src/decorators/index.decorator'
+import { LegatoConnection } from '../src/connection'
 import { ObjectID } from 'mongodb'
-import { MongODMRelation } from '../src/decorators/relation.decorator'
+import { LegatoRelation } from '../src/decorators/relation.decorator'
 
-class Job extends MongODMEntity {
-	@MongODMField()
+class Job extends LegatoEntity {
+	@LegatoField()
 	name: string
 
 	constructor(name: string) {
@@ -15,11 +15,11 @@ class Job extends MongODMEntity {
 	}
 }
 
-class Hobby extends MongODMEntity {
-	@MongODMField()
+class Hobby extends LegatoEntity {
+	@LegatoField()
 	customId: ObjectID
 
-	@MongODMField()
+	@LegatoField()
 	name: string
 
 	constructor(name: string) {
@@ -29,27 +29,27 @@ class Hobby extends MongODMEntity {
 	}
 }
 
-class User extends MongODMEntity {
+class User extends LegatoEntity {
 	// Email is indexed and must be unique
-	@MongODMIndex({
+	@LegatoIndex({
 		unique: true,
 	})
 	email: string
 
 	// First name is indexed
-	@MongODMIndex({
+	@LegatoIndex({
 		unique: false,
 	})
 	firstname: string
 
 	// Is not an index and will be saved
-	@MongODMField()
+	@LegatoField()
 	passwordNotHashedLOL: string
 
 	// Not decorator, will not be saved
 	age: number
 
-	@MongODMRelation({
+	@LegatoRelation({
 		populatedKey: 'job',
 		targetType: Job,
 		targetKey: '_id',
@@ -57,7 +57,7 @@ class User extends MongODMEntity {
 	jobId?: ObjectID
 	job?: Job
 
-	@MongODMRelation({
+	@LegatoRelation({
 		populatedKey: 'jobs',
 		targetKey: '_id',
 		targetType: Job,
@@ -65,7 +65,7 @@ class User extends MongODMEntity {
 	jobIds?: ObjectID[]
 	jobs?: Job[]
 
-	@MongODMRelation({
+	@LegatoRelation({
 		populatedKey: 'hobby',
 		targetType: Hobby,
 		targetKey: 'customId',
@@ -95,9 +95,9 @@ class User extends MongODMEntity {
 }
 
 // Connect to Mongo
-const databaseName = 'mongODMexample'
+const databaseName = 'Legatoexample'
 
-new MongODMConnection({
+new LegatoConnection({
 	databaseName,
 })
 	.connect({

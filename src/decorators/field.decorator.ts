@@ -1,9 +1,9 @@
-import { mongODMetaDataStorage } from '..'
-import { MongODMEntity } from '../entity/entity'
+import { LegatoMetaDataStorage } from '..'
+import { LegatoEntity } from '../entity'
 
-export function MongODMField<T extends MongODMEntity>() {
+export function LegatoField<T extends LegatoEntity>() {
 	return (object: T, key: string) => {
-		const metas = mongODMetaDataStorage().mongODMFieldMetas
+		const metas = LegatoMetaDataStorage().LegatoFieldMetas
 		const collectionName = object.getCollectionName()
 		if (!metas[collectionName]) {
 			metas[collectionName] = []

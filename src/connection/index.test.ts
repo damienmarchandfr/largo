@@ -1,8 +1,8 @@
-import { createConnectionString, MongODMConnection } from './connection'
-import { MongODMField } from '../decorators/field.decorator'
-import { MongODMIndex } from '../decorators/index.decorator'
-import { MongODMEntity } from '../entity/entity'
-import { errorCode, MongODMConnectionError } from '../errors/errors'
+import { createConnectionString, LegatoConnection } from '.'
+import { LegatoField } from '../decorators/field.decorator'
+import { LegatoIndex } from '../decorators/index.decorator'
+import { LegatoEntity } from '../entity'
+import { errorCode, LegatoConnectionError } from '../errors'
 
 const databaseName = 'connectiontest'
 
@@ -28,17 +28,17 @@ describe('createConnectionString function', () => {
 	})
 })
 
-describe('MongODM class', () => {
+describe('Legato class', () => {
 	it('should throw an error if database name is protected', () => {
 		let hasError = false
 		try {
-			const connection = new MongODMConnection({
+			const connection = new LegatoConnection({
 				databaseName: 'admin',
 			})
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(`Database name 'admin' is protected.`)
-			expect(error.code).toEqual('MONGODM_ERROR_403')
+			expect(error.code).toEqual('Legato_ERROR_403')
 		}
 
 		expect(hasError).toEqual(true)
@@ -46,20 +46,20 @@ describe('MongODM class', () => {
 })
 
 describe('function getCollectionName', () => {
-	class User extends MongODMEntity {}
+	class User extends LegatoEntity {}
 	const user = new User()
 	expect(user.getCollectionName()).toEqual('user')
 })
 
 describe('static function getCollectionName', () => {
-	class User extends MongODMEntity {}
+	class User extends LegatoEntity {}
 	expect(User.getCollectionName()).toEqual('user')
 })
 
 describe('connect function', () => {
 	it('must have collections if models loaded', async () => {
-		class ConnexionUser extends MongODMEntity {
-			@MongODMField()
+		class ConnexionUser extends LegatoEntity {
+			@LegatoField()
 			field: string
 
 			constructor() {
@@ -68,16 +68,16 @@ describe('connect function', () => {
 			}
 		}
 
-		const mongODM = new MongODMConnection({
+		const legato = new LegatoConnection({
 			databaseName,
 		})
-		await mongODM.connect()
+		await legato.connect()
 
-		expect(mongODM.collections.connexionuser).toBeDefined()
+		expect(legato.collections.connexionuser).toBeDefined()
 	})
 
 	it('must throw error if already connected', async () => {
-		const connection = new MongODMConnection({
+		const connection = new LegatoConnection({
 			databaseName,
 		})
 
@@ -89,7 +89,7 @@ describe('connect function', () => {
 			await connection.connect()
 		} catch (error) {
 			expect(error.message).toEqual(`Already connected to Mongo database.`)
-			expect(error.code).toEqual('MONGODM_ERROR_500')
+			expect(error.code).toEqual('Legato_ERROR_500')
 			hasError = true
 		}
 
@@ -97,8 +97,8 @@ describe('connect function', () => {
 	})
 
 	it('must create index', async () => {
-		class Indexed extends MongODMEntity {
-			@MongODMIndex({
+		class Indexed extends LegatoEntity {
+			@LegatoIndex({
 				unique: false,
 			})
 			firstname: string
@@ -109,7 +109,7 @@ describe('connect function', () => {
 			}
 		}
 
-		const connection = new MongODMConnection({
+		const connection = new LegatoConnection({
 			databaseName,
 		})
 
@@ -120,8 +120,8 @@ describe('connect function', () => {
 	})
 
 	it('must clean collections if clean = true', async () => {
-		class Cleaned extends MongODMEntity {
-			@MongODMField()
+		class Cleaned extends LegatoEntity {
+			@LegatoField()
 			field: string
 
 			constructor() {
@@ -130,7 +130,7 @@ describe('connect function', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect()
 
@@ -139,7 +139,7 @@ describe('connect function', () => {
 		await connection.collections.cleaned.insertOne(new Cleaned())
 
 		// Create new connection with clean = true
-		const secondConnection = await new MongODMConnection({
+		const secondConnection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -153,19 +153,19 @@ describe('connect function', () => {
 
 describe('disconnect function', () => {
 	it('must throw an error if not connected', async () => {
-		const mongODM = new MongODMConnection({
+		const legato = new LegatoConnection({
 			databaseName,
 		})
 
 		let hasError = false
 
 		try {
-			await mongODM.disconnect()
+			await legato.disconnect()
 		} catch (error) {
 			expect(error.message).toEqual(
 				'Mongo client not conected. You cannot disconnect.'
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_500')
+			expect(error.code).toEqual('Legato_ERROR_500')
 			hasError = true
 		}
 
@@ -173,8 +173,8 @@ describe('disconnect function', () => {
 	})
 
 	it('must accept disconnect after a connection', async () => {
-		class City extends MongODMEntity {
-			@MongODMField()
+		class City extends LegatoEntity {
+			@LegatoField()
 			name: string
 
 			constructor() {
@@ -183,7 +183,7 @@ describe('disconnect function', () => {
 			}
 		}
 
-		const connection = new MongODMConnection({
+		const connection = new LegatoConnection({
 			databaseName,
 		})
 
@@ -197,7 +197,7 @@ describe('disconnect function', () => {
 
 describe('clean function', () => {
 	it('must throw error if not connected', async () => {
-		const connection = new MongODMConnection({
+		const connection = new LegatoConnection({
 			databaseName,
 		})
 
@@ -209,7 +209,7 @@ describe('clean function', () => {
 			expect(error.message).toEqual(
 				`You are not connected to a Mongo database.`
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_500')
+			expect(error.code).toEqual('Legato_ERROR_500')
 			hasError = true
 		}
 
@@ -217,8 +217,8 @@ describe('clean function', () => {
 	})
 
 	it('should clean all collections', async () => {
-		class User extends MongODMEntity {
-			@MongODMField()
+		class User extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
 			constructor() {
@@ -227,8 +227,8 @@ describe('clean function', () => {
 			}
 		}
 
-		class Job extends MongODMEntity {
-			@MongODMField()
+		class Job extends LegatoEntity {
+			@LegatoField()
 			name: string
 
 			constructor() {
@@ -237,7 +237,7 @@ describe('clean function', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect()
 
@@ -258,7 +258,7 @@ describe('clean function', () => {
 
 describe('checkCollectionExists function', () => {
 	it('should return false if connection does not exist', async () => {
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
@@ -270,8 +270,8 @@ describe('checkCollectionExists function', () => {
 	})
 
 	it('should return true if collection exists', async () => {
-		class User extends MongODMEntity {
-			@MongODMField()
+		class User extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
 			constructor() {
@@ -280,7 +280,7 @@ describe('checkCollectionExists function', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,

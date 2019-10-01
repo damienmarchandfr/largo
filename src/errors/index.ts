@@ -1,7 +1,7 @@
 import format from 'string-template'
 import { ObjectID } from 'mongodb'
 
-import { MongODMEntity } from '../entity/entity'
+import { LegatoEntity } from '../entity'
 
 export type errorType =
 	| 'NOT_CONNECTED_CANNOT_DISCONNECT'
@@ -16,7 +16,7 @@ const errors = {
 
 	COLLECTION_DOES_NOT_EXIST: 'Collection {collectionName} does not exist.',
 	DATABASE_NAME_PROTECTED: `Database name '{databaseName}' is protected.`,
-	RELATION_ERROR: `You set {sourceKey} : {value} on object {className}. {targetType} with {targetKey} : {relationValue} does not exist.`,
+	RELATION_ERROR: `You set {sourceKey} : {value} on object {className}. {targetType} with {targetKey} : {value} does not exist.`,
 	RELATIONS_ERROR: `You set {sourceKey} : [{value}] on object {className}. {targetType} with {targetKey} in [{diff}] do not exist.`,
 	ALREADY_INSERTED:
 		'You have already inserted this object with _id : {objectId} .',
@@ -24,48 +24,48 @@ const errors = {
 
 // Code to detect error type :)
 export type errorCode =
-	| 'MONGODM_ERROR_500' // Connection pb
-	| 'MONGODM_ERROR_502' // Relation pb
-	| 'MONGODM_ERROR_404' // Collection pb
-	| 'MONGODM_ERROR_403' // Database protected
-	| 'MONGODM_ERROR_409' // Duplicate insert
+	| 'Legato_ERROR_500' // Connection pb
+	| 'Legato_ERROR_502' // Relation pb
+	| 'Legato_ERROR_404' // Collection pb
+	| 'Legato_ERROR_403' // Database protected
+	| 'Legato_ERROR_409' // Duplicate insert
 
 // Connection pb
-export class MongODMConnectionError extends Error {
+export class LegatoConnectionError extends Error {
 	code: errorCode
 
 	constructor(message: errorType) {
 		super(errors[message])
-		this.code = 'MONGODM_ERROR_500'
+		this.code = 'Legato_ERROR_500'
 	}
 }
 
 // When user try to request on a collection not loaded
-export class MongODMCollectionDoesNotExistError extends Error {
+export class LegatoCollectionDoesNotExistError extends Error {
 	code: errorCode
 
 	constructor(collectionName: string) {
 		const message = format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
 		super(message)
-		this.code = 'MONGODM_ERROR_404'
+		this.code = 'Legato_ERROR_404'
 	}
 }
 
 // When user try to access to protected database
-export class MongODMDatabaseNameProtectedError extends Error {
+export class LegatoDatabaseNameProtectedError extends Error {
 	code: errorCode
 
 	constructor(databaseName: string) {
 		const message = format(errors.DATABASE_NAME_PROTECTED, { databaseName })
 		super(message)
-		this.code = 'MONGODM_ERROR_403'
+		this.code = 'Legato_ERROR_403'
 	}
 }
 
 /**
  * When user try to insert the same object a second time
  */
-export class MongODMAlreadyInsertedError extends Error {
+export class LegatoAlreadyInsertedError extends Error {
 	code: errorCode
 	duplicateId: ObjectID
 
@@ -74,28 +74,28 @@ export class MongODMAlreadyInsertedError extends Error {
 			objectId: duplicateId.toHexString(),
 		})
 		super(message)
-		this.code = 'MONGODM_ERROR_409'
+		this.code = 'Legato_ERROR_409'
 		this.duplicateId = duplicateId
 	}
 }
 
 // Relation errors (one to many)
-export class MongODMRelationsError extends Error {
+export class LegatoRelationsError extends Error {
 	code: errorCode
 
-	source: MongODMEntity
+	source: LegatoEntity
 	sourceKey: string
 
-	target: MongODMEntity
+	target: LegatoEntity
 	targetKey: string
 
 	diff: ObjectID[]
 
 	constructor(
 		diff: ObjectID[],
-		source: MongODMEntity,
+		source: LegatoEntity,
 		sourceKey: string,
-		target: MongODMEntity,
+		target: LegatoEntity,
 		targetKey = '_id'
 	) {
 		const message = format(errors.RELATIONS_ERROR, {
@@ -114,26 +114,28 @@ export class MongODMRelationsError extends Error {
 		this.target = target
 		this.targetKey = targetKey
 
-		this.code = 'MONGODM_ERROR_502'
+		this.code = 'Legato_ERROR_502'
 
 		this.diff = diff
 	}
 }
 
 // Relations error (one to one)
-export class MongODMRelationError extends Error {
+export class LegatoRelationError extends Error {
 	code: errorCode
 
-	source: MongODMEntity
+	source: LegatoEntity
 	sourceKey: string
 
-	target: MongODMEntity
+	value: any
+
+	target: LegatoEntity
 	targetKey: string
 
 	constructor(
-		source: MongODMEntity,
+		source: LegatoEntity,
 		sourceKey: string,
-		target: MongODMEntity,
+		target: LegatoEntity,
 		targetKey = '_id'
 	) {
 		const message = format(errors.RELATION_ERROR, {
@@ -142,16 +144,17 @@ export class MongODMRelationError extends Error {
 			className: source.constructor.name,
 			targetType: target.constructor.name,
 			targetKey,
-			relationValue: (source as any)[sourceKey],
 		})
 
 		super(message)
 		this.source = source
 		this.sourceKey = sourceKey
 
+		this.value = (source as any)[sourceKey]
+
 		this.target = target
 		this.targetKey = targetKey
 
-		this.code = 'MONGODM_ERROR_502'
+		this.code = 'Legato_ERROR_502'
 	}
 }

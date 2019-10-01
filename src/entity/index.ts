@@ -1,4 +1,4 @@
-import { MongODMConnection } from '../connection/connection'
+import { LegatoConnection } from '../connection'
 import {
 	FilterQuery,
 	UpdateOneOptions,
@@ -6,18 +6,18 @@ import {
 	FindOneOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
-import { mongODMetaDataStorage } from '..'
+import { LegatoMetaDataStorage } from '..'
 import {
-	MongODMCollectionDoesNotExistError,
-	MongODMRelationError,
-	MongODMAlreadyInsertedError,
-	MongODMRelationsError,
-} from '../errors/errors'
+	LegatoCollectionDoesNotExistError,
+	LegatoRelationError,
+	LegatoAlreadyInsertedError,
+	LegatoRelationsError,
+} from '../errors'
 import { difference } from 'lodash'
-import { MongODMEntityArray } from '../entityArray/entityArray'
-import { getMongODMPartial } from '../helpers/helpers'
+import { LegatoEntityArray } from '../entityArray'
+import { getLegatoPartial } from '../helpers'
 
-export class MongODMEntity {
+export class LegatoEntity {
 	/**
 	 * Get MongoDB collection name for the current class
 	 */
@@ -25,14 +25,14 @@ export class MongODMEntity {
 		return this.name.toLowerCase()
 	}
 
-	static async find<T extends MongODMEntity>(
-		connect: MongODMConnection,
+	static async find<T extends LegatoEntity>(
+		connect: LegatoConnection,
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
-	): Promise<MongODMEntityArray<T>> {
+	): Promise<LegatoEntityArray<T>> {
 		const collectionName = this.getCollectionName()
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
 		const cursor = await connect.collections[collectionName].find(
@@ -41,7 +41,7 @@ export class MongODMEntity {
 		)
 
 		const mongoElements = await cursor.toArray()
-		const results = new MongODMEntityArray()
+		const results = new LegatoEntityArray()
 
 		for (const mongoElement of mongoElements) {
 			const object = new this()
@@ -49,18 +49,18 @@ export class MongODMEntity {
 			results.push(object)
 		}
 
-		return results as MongODMEntityArray<T>
+		return results as LegatoEntityArray<T>
 	}
 
-	static async findOne<T extends MongODMEntity>(
-		connect: MongODMConnection,
+	static async findOne<T extends LegatoEntity>(
+		connect: LegatoConnection,
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
 	): Promise<T | null> {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
 		const mongoElement = await connect.collections[collectionName].findOne(
@@ -79,8 +79,8 @@ export class MongODMEntity {
 		return object
 	}
 
-	static async updateMany<T extends MongODMEntity>(
-		connect: MongODMConnection,
+	static async updateMany<T extends LegatoEntity>(
+		connect: LegatoConnection,
 		partial: Partial<T>,
 		filter: FilterQuery<any> = {},
 		options?: UpdateOneOptions
@@ -88,10 +88,10 @@ export class MongODMEntity {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
-		const toUpdate = getMongODMPartial(partial, collectionName)
+		const toUpdate = getLegatoPartial(partial, collectionName)
 
 		return connect.collections[collectionName].updateMany(
 			filter,
@@ -102,27 +102,27 @@ export class MongODMEntity {
 		)
 	}
 
-	static async deleteMany<T extends MongODMEntity>(
-		connect: MongODMConnection,
+	static async deleteMany<T extends LegatoEntity>(
+		connect: LegatoConnection,
 		filter: FilterQuery<T> = {}
 	) {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
 		return connect.collections[collectionName].deleteMany(filter)
 	}
 
 	static async countDocuments(
-		connect: MongODMConnection,
+		connect: LegatoConnection,
 		filter: FilterQuery<any> = {}
 	) {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
 		return connect.collections[collectionName].countDocuments(filter)
@@ -171,23 +171,23 @@ export class MongODMEntity {
 	 * Insert in database
 	 * @param connect
 	 */
-	async insert(connect: MongODMConnection) {
+	async insert(connect: LegatoConnection) {
 		if (this._id) {
-			throw new MongODMAlreadyInsertedError(this._id)
+			throw new LegatoAlreadyInsertedError(this._id)
 		}
 
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
-		const toInsert = getMongODMPartial<this>(this, collectionName)
+		const toInsert = getLegatoPartial<this>(this, collectionName)
 
 		this.events.beforeInsert.next(this)
 
 		// Check if all relations works
-		const relations = mongODMetaDataStorage().mongODMRelationsMetas[
+		const relations = LegatoMetaDataStorage().LegatoRelationsMetas[
 			collectionName
 		]
 
@@ -231,7 +231,7 @@ export class MongODMEntity {
 								}
 							)
 
-							throw new MongODMRelationsError(
+							throw new LegatoRelationsError(
 								diff,
 								this,
 								relation.key,
@@ -248,7 +248,7 @@ export class MongODMEntity {
 						})
 
 						if (!relationQueryResult) {
-							throw new MongODMRelationError(
+							throw new LegatoRelationError(
 								this,
 								relation.key,
 								new relation.targetType(),
@@ -276,14 +276,14 @@ export class MongODMEntity {
 	 * @param connect
 	 * @param options
 	 */
-	async update(connect: MongODMConnection, options?: UpdateOneOptions) {
+	async update(connect: LegatoConnection, options?: UpdateOneOptions) {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
-		const toUpdate = getMongODMPartial(this, collectionName)
+		const toUpdate = getLegatoPartial(this, collectionName)
 
 		// Search old values
 		const savedVersion = await connect.collections[collectionName].findOne({
@@ -317,27 +317,27 @@ export class MongODMEntity {
 	 * Delete current object
 	 * @param connect
 	 */
-	async delete(connect: MongODMConnection) {
+	async delete(connect: LegatoConnection) {
 		this.events.beforeDelete.next(this)
 
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
 		await connect.collections[collectionName].deleteOne({ _id: this._id })
 		this.events.afterDelete.next(this)
 	}
 
-	async populate<T extends MongODMEntity>(connect: MongODMConnection) {
+	async populate<T extends LegatoEntity>(connect: LegatoConnection) {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
-			throw new MongODMCollectionDoesNotExistError(collectionName)
+			throw new LegatoCollectionDoesNotExistError(collectionName)
 		}
 
-		const relationMetas = mongODMetaDataStorage().mongODMRelationsMetas[
+		const relationMetas = LegatoMetaDataStorage().LegatoRelationsMetas[
 			collectionName
 		]
 

@@ -1,17 +1,17 @@
-import { MongODMEntity } from '../entity/entity'
-import { MongODMField } from '../decorators/field.decorator'
-import { MongODMIndex } from '../decorators/index.decorator'
-import { getMongODMPartial } from './helpers'
+import { LegatoEntity } from '../entity'
+import { LegatoField } from '../decorators/field.decorator'
+import { LegatoIndex } from '../decorators/index.decorator'
+import { getLegatoPartial } from '.'
 
-describe('getMongODMPartial function', () => {
+describe('getLegatoPartial function', () => {
 	it('should not return field without decorator', () => {
-		class UserFull extends MongODMEntity {
-			@MongODMIndex({
+		class UserFull extends LegatoEntity {
+			@LegatoIndex({
 				unique: false,
 			})
 			firstname: string
 
-			@MongODMField()
+			@LegatoField()
 			lastname: string
 
 			age: number
@@ -24,7 +24,7 @@ describe('getMongODMPartial function', () => {
 			}
 		}
 
-		const partial = getMongODMPartial(new UserFull(), 'userfull')
+		const partial = getLegatoPartial(new UserFull(), 'userfull')
 
 		expect(partial).toStrictEqual({
 			lastname: 'Marchand',
@@ -33,11 +33,11 @@ describe('getMongODMPartial function', () => {
 	})
 
 	it('should not return empty field', () => {
-		class UserFullEmptyField extends MongODMEntity {
-			@MongODMField()
+		class UserFullEmptyField extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
-			@MongODMField()
+			@LegatoField()
 			age?: number
 
 			constructor() {
@@ -46,7 +46,7 @@ describe('getMongODMPartial function', () => {
 			}
 		}
 
-		const partial = getMongODMPartial(
+		const partial = getLegatoPartial(
 			new UserFullEmptyField(),
 			'userfullemptyfield'
 		)

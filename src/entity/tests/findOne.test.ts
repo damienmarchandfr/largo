@@ -1,18 +1,18 @@
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMEntity } from '../entity'
-import { MongODMField } from '../../decorators/field.decorator'
+import { LegatoConnection } from '../../connection'
+import { LegatoEntity } from '..'
+import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'findoneTest'
 
 describe('static method findOne', () => {
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorFindOne extends MongODMEntity {
+		class RandomClassWithoutDecoratorFindOne extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -32,15 +32,15 @@ describe('static method findOne', () => {
 			expect(error.message).toEqual(
 				`Collection randomclasswithoutdecoratorfindone does not exist.`
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_404')
+			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should findOne', async () => {
-		class UserFindOneStatic extends MongODMEntity {
-			@MongODMField()
+		class UserFindOneStatic extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor() {
@@ -49,7 +49,7 @@ describe('static method findOne', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -72,8 +72,8 @@ describe('static method findOne', () => {
 	})
 
 	it('should not find and return null', async () => {
-		class UserFindOneStaticNull extends MongODMEntity {
-			@MongODMField()
+		class UserFindOneStaticNull extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor() {
@@ -82,7 +82,7 @@ describe('static method findOne', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,

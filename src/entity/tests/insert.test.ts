@@ -1,15 +1,15 @@
-import { MongODMEntity } from '../entity'
-import { MongODMConnection } from '../../connection/connection'
-import { MongODMField } from '../../decorators/field.decorator'
-import { MongODMAlreadyInsertedError } from '../../errors/errors'
+import { LegatoEntity } from '..'
+import { LegatoConnection } from '../../connection'
+import { LegatoField } from '../../decorators/field.decorator'
+import { LegatoAlreadyInsertedError } from '../../errors'
 import { ObjectID } from 'mongodb'
-import { MongODMRelation } from '../../decorators/relation.decorator'
+import { LegatoRelation } from '../../decorators/relation.decorator'
 
 const databaseName = 'insertTest'
 
 describe('insert method', () => {
 	it('should throw an error if collection does not exist', async () => {
-		class RandomClassWithoutDecoratorInsert extends MongODMEntity {
+		class RandomClassWithoutDecoratorInsert extends LegatoEntity {
 			name: string
 
 			constructor() {
@@ -18,7 +18,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
@@ -33,15 +33,15 @@ describe('insert method', () => {
 			expect(error.message).toEqual(
 				`Collection randomclasswithoutdecoratorinsert does not exist.`
 			)
-			expect(error.code).toEqual('MONGODM_ERROR_404')
+			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should insert', async () => {
-		class UserInsert extends MongODMEntity {
-			@MongODMField()
+		class UserInsert extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			constructor(email: string) {
@@ -50,7 +50,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -74,8 +74,8 @@ describe('insert method', () => {
 	})
 
 	it('should not insert fields without decorator', async () => {
-		class UserInsertNoDecoratorFieldSaved extends MongODMEntity {
-			@MongODMField()
+		class UserInsertNoDecoratorFieldSaved extends LegatoEntity {
+			@LegatoField()
 			email: string
 
 			personal: string
@@ -87,7 +87,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -110,8 +110,8 @@ describe('insert method', () => {
 	})
 
 	it('should not insert the same object 2 times', async () => {
-		class UserSaved2Times extends MongODMEntity {
-			@MongODMField()
+		class UserSaved2Times extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
 			constructor() {
@@ -120,7 +120,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -136,7 +136,7 @@ describe('insert method', () => {
 			await user.insert(connection)
 		} catch (error) {
 			hasError = true
-			expect(error).toBeInstanceOf(MongODMAlreadyInsertedError)
+			expect(error).toBeInstanceOf(LegatoAlreadyInsertedError)
 		}
 		expect(hasError).toEqual(true)
 
@@ -145,8 +145,8 @@ describe('insert method', () => {
 	})
 
 	it('should trigger beforeInsert', async (done) => {
-		class UserBeforeInsert extends MongODMEntity {
-			@MongODMField()
+		class UserBeforeInsert extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
 			constructor() {
@@ -155,7 +155,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -173,8 +173,8 @@ describe('insert method', () => {
 	})
 
 	it('should trigger afterInsert', async (done) => {
-		class UserAfterInsert extends MongODMEntity {
-			@MongODMField()
+		class UserAfterInsert extends LegatoEntity {
+			@LegatoField()
 			firstname: string
 
 			constructor() {
@@ -183,7 +183,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -202,8 +202,8 @@ describe('insert method', () => {
 
 	it('should return an error if relation set does not exist', async () => {
 		const objectIDset = new ObjectID()
-		class JobRelationDecoratorInvalidRelation extends MongODMEntity {
-			@MongODMField()
+		class JobRelationDecoratorInvalidRelation extends LegatoEntity {
+			@LegatoField()
 			companyName: string
 
 			constructor() {
@@ -212,11 +212,11 @@ describe('insert method', () => {
 			}
 		}
 
-		class UserRelationDecoratorInvalidRelation extends MongODMEntity {
-			@MongODMField()
+		class UserRelationDecoratorInvalidRelation extends LegatoEntity {
+			@LegatoField()
 			email: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecoratorInvalidRelation,
 			})
@@ -230,7 +230,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -255,8 +255,8 @@ describe('insert method', () => {
 
 	it('should throw error if one element does not exist in one to many relation', async () => {
 		const objectIDNotUsed = new ObjectID()
-		class JobRelationDecoratorInvalidRelations extends MongODMEntity {
-			@MongODMField()
+		class JobRelationDecoratorInvalidRelations extends LegatoEntity {
+			@LegatoField()
 			companyName: string
 
 			constructor(index: number) {
@@ -265,11 +265,11 @@ describe('insert method', () => {
 			}
 		}
 
-		class UserRelationDecoratorInvalidRelations extends MongODMEntity {
-			@MongODMField()
+		class UserRelationDecoratorInvalidRelations extends LegatoEntity {
+			@LegatoField()
 			email: string
 
-			@MongODMRelation({
+			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecoratorInvalidRelations,
 			})
@@ -287,7 +287,7 @@ describe('insert method', () => {
 			}
 		}
 
-		const connection = await new MongODMConnection({
+		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
