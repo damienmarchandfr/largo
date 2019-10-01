@@ -165,7 +165,7 @@ describe('Legato custom errors', () => {
 		}
 	})
 
-	it('should return relation errors', async () => {
+	it('should return relation error', async () => {
 		// Use _id a relation key
 		class JobRelationError extends LegatoEntity {
 			@LegatoField()
@@ -240,6 +240,7 @@ describe('Legato custom errors', () => {
 			await user.insert(connection)
 		} catch (error) {
 			const err = error as LegatoRelationError
+			expect(err).toBeInstanceOf(LegatoRelationError)
 			expect(err.source).toStrictEqual(user)
 			expect(err.sourceKey).toEqual('jobId')
 			expect(err.target).toBeInstanceOf(JobRelationError)
@@ -254,10 +255,110 @@ describe('Legato custom errors', () => {
 			await user2.insert(connection)
 		} catch (error) {
 			const err = error as LegatoRelationError
+			expect(err).toBeInstanceOf(LegatoRelationError)
 			expect(err.source).toStrictEqual(user2)
 			expect(err.sourceKey).toEqual('hobbyId')
 			expect(err.target).toBeInstanceOf(HobbyRelationError)
 			expect(err.value).toStrictEqual(user2.hobbyId as ObjectID)
+			expect(err.targetKey).toEqual('customId')
+		}
+	})
+
+	it('should return relations error', async () => {
+		// Use _id a relation key
+		class JobRelationsError extends LegatoEntity {
+			@LegatoField()
+			name: string
+
+			constructor(name: string) {
+				super()
+				this.name = name
+			}
+		}
+
+		class HobbyRelationsError extends LegatoEntity {
+			@LegatoField()
+			name: string
+
+			@LegatoIndex({
+				unique: true,
+			})
+			customId: ObjectID
+
+			constructor(name: string) {
+				super()
+				this.name = name
+				this.customId = new ObjectID()
+			}
+		}
+
+		// User has a job
+		class UserRelationsError extends LegatoEntity {
+			@LegatoField()
+			firstname: string
+
+			@LegatoRelation({
+				populatedKey: 'jobs',
+				targetType: JobRelationsError,
+			})
+			jobIds: ObjectID[] = []
+			jobs?: JobRelationsError[]
+
+			@LegatoRelation({
+				populatedKey: 'hobbies',
+				targetType: HobbyRelationsError,
+				targetKey: 'customId',
+			})
+			hobbyIds: ObjectID[] = []
+			hobbies?: HobbyRelationsError[]
+
+			constructor(firstname: string) {
+				super()
+				this.firstname = firstname
+			}
+
+			addHobby() {
+				this.hobbyIds.push(new ObjectID())
+			}
+
+			addJob() {
+				this.jobIds.push(new ObjectID())
+			}
+		}
+
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const user = new UserRelationsError('damien')
+		user.addJob()
+
+		try {
+			await user.insert(connection)
+		} catch (error) {
+			const err = error as LegatoRelationsError
+			expect(err).toBeInstanceOf(LegatoRelationsError)
+			expect(err.source).toStrictEqual(user)
+			expect(err.sourceKey).toEqual('jobIds')
+			expect(err.diff).toStrictEqual(user.jobIds)
+			expect(err.target).toBeInstanceOf(JobRelationsError)
+			expect(err.targetKey).toEqual('_id')
+		}
+
+		const user2 = new UserRelationsError('jeremy')
+		user2.addHobby()
+
+		try {
+			await user2.insert(connection)
+		} catch (error) {
+			const err = error as LegatoRelationsError
+			expect(err).toBeInstanceOf(LegatoRelationsError)
+			expect(err.source).toStrictEqual(user2)
+			expect(err.sourceKey).toEqual('hobbyIds')
+			expect(err.diff).toStrictEqual(user2.hobbyIds)
+			expect(err.target).toBeInstanceOf(HobbyRelationsError)
 			expect(err.targetKey).toEqual('customId')
 		}
 	})
