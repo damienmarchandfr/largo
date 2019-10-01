@@ -4,7 +4,7 @@ import { LegatoCollectionDoesNotExistError } from '../errors'
 import { LegatoMetaDataStorage } from '..'
 
 export class LegatoEntityArray<T extends LegatoEntity> {
-	private items: T[] = []
+	public items: T[] = []
 
 	constructor() {
 		this.items = []

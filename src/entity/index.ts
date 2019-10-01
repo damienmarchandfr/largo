@@ -46,6 +46,7 @@ export class LegatoEntity {
 		for (const mongoElement of mongoElements) {
 			const object = new this()
 			Object.assign(object, mongoElement)
+			object.copy = object.toPlainObj()
 			results.push(object)
 		}
 
@@ -75,6 +76,7 @@ export class LegatoEntity {
 
 		const object = new this() as T
 		Object.assign(object, mongoElement)
+		object.copy = object.toPlainObj()
 
 		return object
 	}
@@ -146,7 +148,7 @@ export class LegatoEntity {
 	}
 
 	// Used to check if relations are changed
-	private copy: this
+	private copy: any
 
 	constructor() {
 		this.events = {
@@ -157,7 +159,7 @@ export class LegatoEntity {
 			beforeDelete: new Subject(),
 			afterDelete: new Subject(),
 		}
-		this.copy = Object.assign({}, this)
+		this.copy = this.toPlainObj()
 	}
 
 	/**
@@ -165,6 +167,17 @@ export class LegatoEntity {
 	 */
 	getCollectionName(): string {
 		return this.constructor.name.toLowerCase()
+	}
+
+	toPlainObj() {
+		const obj = Object.assign({}, this)
+		delete obj.events
+		delete obj.copy
+		return obj
+	}
+
+	getCopy() {
+		return this.copy
 	}
 
 	/**
@@ -264,7 +277,7 @@ export class LegatoEntity {
 			toInsert
 		)
 		this._id = inserted.insertedId
-		this.copy._id = this._id
+		this.copy = this.toPlainObj()
 
 		this.events.afterInsert.next(this)
 
@@ -302,6 +315,8 @@ export class LegatoEntity {
 			},
 			options || undefined
 		)
+
+		Object.assign(this.copy, this)
 
 		const saved = await connect.collections[collectionName].findOne({
 			_id: this._id,
