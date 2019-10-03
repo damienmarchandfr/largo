@@ -19,7 +19,7 @@ export class LegatoEntityArray<T extends LegatoEntity> {
 		return this.items.length
 	}
 
-	async populate<T extends LegatoEntity>(connect: LegatoConnection) {
+	async populate(connect: LegatoConnection): Promise<any[]> {
 		const collectionName = this.items[0].getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
@@ -67,8 +67,6 @@ export class LegatoEntityArray<T extends LegatoEntity> {
 			}
 		}
 
-		return connect.collections[collectionName]
-			.aggregate(pipeline)
-			.toArray() as Promise<T[]>
+		return connect.collections[collectionName].aggregate(pipeline).toArray()
 	}
 }

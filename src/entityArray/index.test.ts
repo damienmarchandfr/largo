@@ -75,9 +75,7 @@ describe('LegatoEntityArray class', () => {
 
 		// Get all users
 		const users = await UserPopulateManyDefaultId.find(connection, {})
-		const populatedUsers = await users.populate<UserPopulateManyDefaultId>(
-			connection
-		)
+		const populatedUsers = await users.populate(connection)
 
 		expect(populatedUsers.length).toEqual(5)
 
@@ -154,7 +152,7 @@ describe('LegatoEntityArray class', () => {
 		const job1Id = await job1.insert(connection)
 
 		const job2 = new JobPopulateIdCustomRelationKey('php dev')
-		const job2Id = await job2.insert(connection)
+		await job2.insert(connection)
 
 		for (let i = 0; i < 5; i++) {
 			const user = new UserPopulateManyCustomRelationKey(
@@ -166,9 +164,7 @@ describe('LegatoEntityArray class', () => {
 		}
 
 		const users = await UserPopulateManyCustomRelationKey.find(connection, {})
-		const populatedUsers = await users.populate<
-			UserPopulateManyCustomRelationKey
-		>(connection)
+		const populatedUsers = await users.populate(connection)
 
 		expect(populatedUsers.length).toEqual(5)
 
