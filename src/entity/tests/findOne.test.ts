@@ -67,8 +67,15 @@ describe('static method findOne', () => {
 			}
 		)
 
+		const userResult = user as UserFindOneStatic
+
 		expect(user).not.toBe(null)
-		expect((user as UserFindOneStatic).email).toEqual('damien@marchand.fr')
+		expect(userResult.email).toEqual('damien@marchand.fr')
+
+		expect(userResult.getCopy()).toEqual({
+			_id: userResult._id,
+			email: 'damien@marchand.fr',
+		})
 	})
 
 	it('should not find and return null', async () => {

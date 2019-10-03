@@ -68,7 +68,7 @@ describe('populate method', () => {
 		const user = new UserPopulateDefaultId(jobId, job2id)
 		await user.insert(connection)
 
-		const userPopulated = await user.populate<UserPopulateDefaultId>(connection)
+		const userPopulated = await user.populate(connection)
 		expect(userPopulated.job).toStrictEqual({
 			_id: jobId,
 			name: 'js dev',
@@ -146,7 +146,7 @@ describe('populate method', () => {
 		user.addJob(job2Id)
 		await user.insert(connection)
 
-		const userPopulated = await user.populate<UserPopulateCustomKey>(connection)
+		const userPopulated = await user.populate(connection)
 
 		expect(userPopulated.job).toStrictEqual({
 			_id: generatedJobId,
@@ -228,7 +228,7 @@ describe('populate method', () => {
 		user.addCustomJobId(job2.customJobId)
 		await user.insert(connection)
 
-		const userPopulated = await user.populate<UserPopulateIdString>(connection)
+		const userPopulated = await user.populate(connection)
 
 		expect(userPopulated.job).toStrictEqual({
 			_id: jobIdCreated,
@@ -307,7 +307,7 @@ describe('populate method', () => {
 		user.addJobId(job2.customJobId)
 		await user.insert(connection)
 
-		const userPopulated = await user.populate<UserPopulateIdNumber>(connection)
+		const userPopulated = await user.populate(connection)
 
 		expect(userPopulated.job).toStrictEqual({
 			_id: jobIdCreated,
@@ -318,5 +318,30 @@ describe('populate method', () => {
 		expect(userPopulated.jobId).toEqual(job.customJobId)
 
 		expect((userPopulated.jobs as JobPopulateIdNumber[]).length).toEqual(2)
+	})
+
+	it('should return object if no relation', async () => {
+		class UserPopulateNoRelation extends LegatoEntity {
+			@LegatoField()
+			firstname: string
+
+			constructor() {
+				super()
+				this.firstname = 'Damien'
+			}
+		}
+
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const user = new UserPopulateNoRelation()
+		await user.insert(connection)
+
+		const populated = await user.populate(connection)
+
+		expect(user.toPlainObj()).toStrictEqual(populated)
 	})
 })

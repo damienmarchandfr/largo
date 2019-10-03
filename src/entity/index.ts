@@ -345,7 +345,7 @@ export class LegatoEntity {
 		this.events.afterDelete.next(this)
 	}
 
-	async populate<T extends LegatoEntity>(connect: LegatoConnection) {
+	async populate(connect: LegatoConnection): Promise<any> {
 		const collectionName = this.getCollectionName()
 
 		if (!connect.checkCollectionExists(collectionName)) {
@@ -364,40 +364,44 @@ export class LegatoEntity {
 			},
 		]
 
-		for (const meta of relationMetas) {
-			if ((this as any)[meta.key]) {
-				if (!Array.isArray((this as any)[meta.key])) {
-					pipeline.push({
-						$lookup: {
-							from: (meta.targetType as any).getCollectionName(),
-							localField: meta.key,
-							foreignField: meta.targetKey,
-							as: meta.populatedKey,
-						},
-					})
+		if (relationMetas) {
+			for (const meta of relationMetas) {
+				if ((this as any)[meta.key]) {
+					if (!Array.isArray((this as any)[meta.key])) {
+						pipeline.push({
+							$lookup: {
+								from: (meta.targetType as any).getCollectionName(),
+								localField: meta.key,
+								foreignField: meta.targetKey,
+								as: meta.populatedKey,
+							},
+						})
 
-					pipeline.push({
-						$unwind: {
-							path: '$' + meta.populatedKey,
-							// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
-							preserveNullAndEmptyArrays: true,
-						},
-					})
-				} else {
-					pipeline.push({
-						$lookup: {
-							from: (meta.targetType as any).getCollectionName(),
-							localField: meta.key,
-							foreignField: meta.targetKey,
-							as: meta.populatedKey,
-						},
-					})
+						pipeline.push({
+							$unwind: {
+								path: '$' + meta.populatedKey,
+								// Si la relation ne pointe pas on retourne quand même le document (vérifié  avec le check relation)
+								preserveNullAndEmptyArrays: true,
+							},
+						})
+					} else {
+						pipeline.push({
+							$lookup: {
+								from: (meta.targetType as any).getCollectionName(),
+								localField: meta.key,
+								foreignField: meta.targetKey,
+								as: meta.populatedKey,
+							},
+						})
+					}
 				}
 			}
 		}
 
-		return (await connect.collections[collectionName]
+		const mongoObj = await connect.collections[collectionName]
 			.aggregate(pipeline)
-			.next()) as T
+			.next()
+
+		return mongoObj
 	}
 }

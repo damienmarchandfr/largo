@@ -69,20 +69,21 @@ describe(`static method updateMany`, () => {
 		)
 
 		// Search with email
-		const trump = await connection.collections.userupdatemanyoneelement.findOne(
-			{
-				email: 'donald@trump.usa',
-			}
-		)
+		const trump = await connection.collections.userupdatemanyoneelement.findOne<
+			UserUpdateManyOneElement
+		>({
+			email: 'donald@trump.usa',
+		})
 
 		expect(trump).toEqual(null)
 
-		const barack = await connection.collections.userupdatemanyoneelement.findOne(
-			{
-				email: 'barack@obama.usa',
-			}
-		)
+		const barack = await connection.collections.userupdatemanyoneelement.findOne<
+			UserUpdateManyOneElement
+		>({
+			email: 'barack@obama.usa',
+		})
 
-		expect(barack.email).toEqual('barack@obama.usa')
+		const barackResult = barack as UserUpdateManyOneElement
+		expect(barackResult.email).toEqual('barack@obama.usa')
 	})
 })
