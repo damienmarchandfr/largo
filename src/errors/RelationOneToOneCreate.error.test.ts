@@ -1,19 +1,12 @@
 import { LegatoErrorRelationOneToOneCreate } from './RelationOneToOneCreate.error'
 import { ObjectID } from 'mongodb'
 import { LegatoEntity } from '../entity'
-import { LegatoRelation } from '../decorators/relation.decorator'
-import { EPERM } from 'constants'
 import { errorCodes } from '.'
 
 describe('RelationOneToOneCreate error', () => {
 	it('should be valid', () => {
 		class LegatoErrorRelationOneToOneCreateClass extends LegatoEntity {
-			@LegatoRelation({
-				populatedKey: 'relation',
-				targetType: LegatoErrorRelationOneToOneCreateClass,
-			})
 			relationId: ObjectID
-			relation?: LegatoErrorRelationOneToOneCreate
 
 			constructor() {
 				super()

@@ -8,11 +8,12 @@ describe('ObjectAlreadyInserted error', () => {
 		class LegatoErrorObjectAlreadyInsertedTestClass extends LegatoEntity {}
 
 		const obj = new LegatoErrorObjectAlreadyInsertedTestClass()
+		// When inserted _id is set
 		obj._id = new ObjectId()
 		const error = new LegatoErrorObjectAlreadyInserted(obj)
 		expect(error.code).toEqual(errorCodes.OBJECT_ALREADY_INSERTED)
 		expect(error.message).toEqual(
-			`LegatoErrorObjectAlreadyInsertedTestClass already in database with _id : ${obj._id}`
+			`LegatoErrorObjectAlreadyInsertedTestClass already in database with _id : ${obj._id}.`
 		)
 	})
 })

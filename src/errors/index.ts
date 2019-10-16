@@ -43,7 +43,7 @@ export const errorMessages = {
 	OBJECT_ALREADY_INSERTED: (objectInserted: LegatoEntity) => {
 		return `${objectInserted.getCollectionName()} already in database with _id : ${
 			objectInserted._id
-		}`
+		}.`
 	},
 	// RELATION ONE TO ONE
 	RELATION_ONE_TO_ONE_CREATE: (args: {
@@ -72,7 +72,7 @@ export const errorMessages = {
 			args.toDelete._id
 		}. ${args.parent.getCollectionName()} with _id : ${
 			args.parent._id
-		} is linked with ${args.parent.getCollectionName()}.${args.parentKey}`
+		} is linked with ${args.parent.getCollectionName()}.${args.parentKey}.`
 	},
 
 	// RELATION ONE TO MANY
@@ -108,7 +108,7 @@ export const errorMessages = {
 			args.toDelete._id
 		}. ${args.parent.getCollectionName()} with _id : ${
 			args.parent._id
-		} is linked with ${args.parent.getCollectionName()}.${args.parentKey}`
+		} is linked with ${args.parent.getCollectionName()}.${args.parentKey}.`
 	},
 }
 
