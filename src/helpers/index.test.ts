@@ -48,7 +48,7 @@ describe('getLegatoPartial function', () => {
 
 		const partial = getLegatoPartial(
 			new UserFullEmptyField(),
-			'userfullemptyfield'
+			'userfullemptyfields'
 		)
 
 		expect(partial).toStrictEqual({

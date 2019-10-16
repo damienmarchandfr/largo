@@ -110,9 +110,6 @@ new LegatoConnection({
 		// Clean all collections
 		await connection.clean()
 
-		// Delete all users
-		await User.deleteMany(connection)
-
 		// Create first user
 		const user = new User('damien@dev.fr', 'azerty123')
 
@@ -124,6 +121,7 @@ new LegatoConnection({
 			console.log('Event after insert user.')
 		})
 
+		console.log('User will be saved')
 		const userId = await user.insert(connection)
 		// User added
 		console.log('User added. MongoID = ' + userId)
@@ -148,13 +146,9 @@ new LegatoConnection({
 		// Create a job
 		const job = new Job('Lead dev !!')
 
-		try {
-			const inserted = await job.insert(connection)
-			user.setJob(inserted)
-			await user.update(connection)
-		} catch (error) {
-			console.error(JSON.stringify(error))
-		}
+		const inserted = await job.insert(connection)
+		user.setJob(inserted)
+		await user.update(connection)
 
 		// Create hooby
 		const hobby = new Hobby('Make JS great again !')
@@ -174,7 +168,7 @@ new LegatoConnection({
 		user.setJobs(jobsSavedIds)
 		await user.update(connection)
 
-		const populated = await user.populate<User>(connection)
+		const populated = await user.populate(connection)
 
 		// Create a second user
 		const user2 = new User('jeremy@dev.fr', 'azerty123')

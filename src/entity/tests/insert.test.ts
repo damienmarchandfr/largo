@@ -1,7 +1,6 @@
 import { LegatoEntity } from '..'
 import { LegatoConnection } from '../../connection'
 import { LegatoField } from '../../decorators/field.decorator'
-import { LegatoAlreadyInsertedError } from '../../errors'
 import { ObjectID } from 'mongodb'
 import { LegatoRelation } from '../../decorators/relation.decorator'
 
@@ -27,7 +26,7 @@ describe('insert method', () => {
 		let hasError = false
 
 		try {
-			await new RandomClassWithoutDecoratorInsert().insert(connection)
+			await new RandomClassWithoutDecoratorInsert().insert()
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -61,7 +60,7 @@ describe('insert method', () => {
 		expect(count).toEqual(0)
 
 		const user = new UserInsert('damien@dev.fr')
-		const userId = await user.insert(connection)
+		const userId = await user.insert()
 
 		// One user created
 		expect(userId).toStrictEqual(user._id as {})
@@ -95,7 +94,7 @@ describe('insert method', () => {
 
 		const obj = new UserInsertNoDecoratorFieldSaved('damien@dev.fr')
 
-		const id = await obj.insert(connection)
+		const id = await obj.insert()
 
 		const saved = await connection.collections.userinsertnodecoratorfieldsaved.findOne(
 			{
@@ -127,13 +126,13 @@ describe('insert method', () => {
 		})
 
 		const user = new UserSaved2Times()
-		const id = await user.insert(connection)
+		const id = await user.insert()
 
 		expect(id).toStrictEqual((user as any)._id)
 
 		let hasError = false
 		try {
-			await user.insert(connection)
+			await user.insert()
 		} catch (error) {
 			hasError = true
 			expect(error).toBeInstanceOf(LegatoAlreadyInsertedError)
@@ -169,7 +168,7 @@ describe('insert method', () => {
 			done()
 		})
 
-		await user.insert(connection)
+		await user.insert()
 	})
 
 	it('should trigger afterInsert', async (done) => {
@@ -197,7 +196,7 @@ describe('insert method', () => {
 			done()
 		})
 
-		await user.insert(connection)
+		await user.insert()
 	})
 
 	it('should return an error if relation set does not exist', async () => {
@@ -237,13 +236,13 @@ describe('insert method', () => {
 		})
 
 		// Insert Job
-		await new JobRelationDecoratorInvalidRelation().insert(connection)
+		await new JobRelationDecoratorInvalidRelation().insert()
 
 		// Insert User with jobId not in database
 		let hasError = false
 
 		try {
-			await new UserRelationDecoratorInvalidRelation().insert(connection)
+			await new UserRelationDecoratorInvalidRelation().insert()
 		} catch (error) {
 			const message = `You set jobId : ${objectIDset.toHexString()} on object UserRelationDecoratorInvalidRelation. JobRelationDecoratorInvalidRelation with _id : ${objectIDset.toHexString()} does not exist.`
 			expect(error.message).toEqual(message)
@@ -295,7 +294,7 @@ describe('insert method', () => {
 
 		// Create a job
 		const job = new JobRelationDecoratorInvalidRelations(0)
-		const jobId = await job.insert(connection)
+		const jobId = await job.insert()
 
 		// Create user linked to the job saved before
 		const user = new UserRelationDecoratorInvalidRelations(jobId)
@@ -305,7 +304,7 @@ describe('insert method', () => {
 		let hasError = false
 
 		try {
-			await user.insert(connection)
+			await user.insert()
 		} catch (error) {
 			hasError = true
 		}

@@ -1,160 +1,124 @@
-import format from 'string-template'
-import { ObjectID } from 'mongodb'
-
 import { LegatoEntity } from '../entity'
 
 export type errorType =
 	| 'NOT_CONNECTED_CANNOT_DISCONNECT'
 	| 'NOT_CONNECTED'
-	| 'ALREADY_CONNECTED'
+	| 'COLLECTION_DOES_NOT_EXIST'
+	| 'OBJECT_ALREADY_INSERTED'
+	| 'RELATION_ONE_TO_ONE_CREATE'
+	| 'RELATION_ONE_TO_ONE_UPDATE'
+	| 'RELATION_ONE_TO_ONE_DELETE'
+	| 'RELATION_ONE_TO_MANY_CREATE'
+	| 'RELATION_ONE_TO_MANY_UPDATE'
+	| 'RELATION_ONE_TO_MANY_DELETE'
 
-const errors = {
-	NOT_CONNECTED_CANNOT_DISCONNECT:
-		'Mongo client not conected. You cannot disconnect.',
-	NOT_CONNECTED: 'You are not connected to a Mongo database.',
-	ALREADY_CONNECTED: 'Already connected to Mongo database.',
+export const errorCodes: { [key in errorType]: number } = {
+	NOT_CONNECTED: 0, // Not connected to database cannot do everything
+	NOT_CONNECTED_CANNOT_DISCONNECT: 1, // Cannot call disconnect cause no connection etablished
+	COLLECTION_DOES_NOT_EXIST: 3, // Collection not created
+	OBJECT_ALREADY_INSERTED: 4, // When object is inserted _id is set and cannot be inserted another time
 
-	COLLECTION_DOES_NOT_EXIST: 'Collection {collectionName} does not exist.',
-	DATABASE_NAME_PROTECTED: `Database name '{databaseName}' is protected.`,
-	RELATION_ERROR: `You set {sourceKey} : {value} on object {className}. {targetType} with {targetKey} : {value} does not exist.`,
-	RELATIONS_ERROR: `You set {sourceKey} : [{value}] on object {className}. {targetType} with {targetKey} in [{diff}] do not exist.`,
-	ALREADY_INSERTED:
-		'You have already inserted this object with _id : {objectId} .',
+	// RELATIONS ONE TO ONE
+	RELATION_ONE_TO_ONE_CREATE: 5, // When save an object with invalid relation
+	RELATION_ONE_TO_ONE_UPDATE: 6, // When change relation value to object not inserted
+	RELATION_ONE_TO_ONE_DELETE: 7, // When delete object linked to a parent in one to one
+
+	// RELATION ONE TO MANY
+	RELATION_ONE_TO_MANY_CREATE: 8, // When save an object with invalid relation in array
+	RELATION_ONE_TO_MANY_UPDATE: 9, // When set an invalid relation in array on update
+	RELATION_ONE_TO_MANY_DELETE: 10, // When delete object linked to a parent in one to many
 }
 
-// Code to detect error type :)
-export type errorCode =
-	| 'Legato_ERROR_500' // Connection pb
-	| 'Legato_ERROR_502' // Relation pb
-	| 'Legato_ERROR_404' // Collection pb
-	| 'Legato_ERROR_403' // Database protected
-	| 'Legato_ERROR_409' // Duplicate insert
+export const errorMessages = {
+	NOT_CONNECTED: () => {
+		return `You are not connected to MongoDB.`
+	},
+	NOT_CONNECTED_CANNOT_DISCONNECT: () => {
+		return `Cannot disconnect cause not connected to MongoDB.`
+	},
+	COLLECTION_DOES_NOT_EXIST: (collectionName: string) => {
+		return `Collection ${collectionName} does not exist.`
+	},
+	// Insert
+	OBJECT_ALREADY_INSERTED: (objectInserted: LegatoEntity) => {
+		return `${objectInserted.getCollectionName()} already in database with _id : ${
+			objectInserted._id
+		}`
+	},
+	// RELATION ONE TO ONE
+	RELATION_ONE_TO_ONE_CREATE: (args: {
+		source: LegatoEntity
+		sourceKey: string
+	}) => {
+		return `You set ${args.source.getCollectionName()}.${args.sourceKey} : ${
+			(args.source as any)[args.sourceKey]
+		}. This target does not exist.`
+	},
+	RELATION_ONE_TO_ONE_UPDATE: (args: {
+		source: LegatoEntity
+		sourceKey: string
+	}) => {
+		return `You set ${args.source.getCollectionName()}.${args.sourceKey} : ${
+			(args.source as any)[args.sourceKey]
+		} for object with _id : ${args.source._id}. This target does not exist.`
+	},
+	// Cannot delete Job with _id : ''. User with _id : '' is linked with User.jobId
+	RELATION_ONE_TO_ONE_DELETE: (args: {
+		toDelete: LegatoEntity // Job
+		parent: LegatoEntity // User
+		parentKey: string // jobId
+	}) => {
+		return `Cannot delete ${args.toDelete.getCollectionName()} with _id : ${
+			args.toDelete._id
+		}. ${args.parent.getCollectionName()} with _id : ${
+			args.parent._id
+		} is linked with ${args.parent.getCollectionName()}.${args.parentKey}`
+	},
 
-// Connection pb
-export class LegatoConnectionError extends Error {
-	code: errorCode
-
-	constructor(message: errorType) {
-		super(errors[message])
-		this.code = 'Legato_ERROR_500'
-	}
+	// RELATION ONE TO MANY
+	// If an id is set in array and not linked to an object on create
+	RELATION_ONE_TO_MANY_CREATE: (args: {
+		source: LegatoEntity
+		sourceKey: string
+		sourceKeyValue: any
+	}) => {
+		return `You set ${args.source.getCollectionName()}.${args.sourceKey} : ${
+			(args.source as any)[args.sourceKey]
+		}. ${args.sourceKeyValue} does not exist.`
+	},
+	// If an id is set in array and not linked to an object on update
+	RELATION_ONE_TO_MANY_UPDATE: (args: {
+		source: LegatoEntity
+		sourceKey: string
+		sourceKeyValue: any
+	}) => {
+		return `You set ${args.source.getCollectionName()}.${args.sourceKey} : ${
+			(args.source as any)[args.sourceKey]
+		} for object with _id : ${args.source._id}.${
+			args.sourceKeyValue
+		} does not exist.`
+	},
+	// If an object is linked to a parent and try to delete parent
+	RELATION_ONE_TO_MANY_DELETE: (args: {
+		toDelete: LegatoEntity // Job
+		parent: LegatoEntity // User
+		parentKey: string // jobIds[]
+	}) => {
+		return `Cannot delete ${args.toDelete.getCollectionName()} with _id : ${
+			args.toDelete._id
+		}. ${args.parent.getCollectionName()} with _id : ${
+			args.parent._id
+		} is linked with ${args.parent.getCollectionName()}.${args.parentKey}`
+	},
 }
 
-// When user try to request on a collection not loaded
-export class LegatoCollectionDoesNotExistError extends Error {
-	code: errorCode
+export class LegatoError extends Error {
+	type: errorType
+	code: number
 
-	constructor(collectionName: string) {
-		const message = format(errors.COLLECTION_DOES_NOT_EXIST, { collectionName })
-		super(message)
-		this.code = 'Legato_ERROR_404'
-	}
-}
-
-// When user try to access to protected database
-export class LegatoDatabaseNameProtectedError extends Error {
-	code: errorCode
-
-	constructor(databaseName: string) {
-		const message = format(errors.DATABASE_NAME_PROTECTED, { databaseName })
-		super(message)
-		this.code = 'Legato_ERROR_403'
-	}
-}
-
-/**
- * When user try to insert the same object a second time
- */
-export class LegatoAlreadyInsertedError extends Error {
-	code: errorCode
-	duplicateId: ObjectID
-
-	constructor(duplicateId: ObjectID) {
-		const message = format(errors.ALREADY_INSERTED, {
-			objectId: duplicateId.toHexString(),
-		})
-		super(message)
-		this.code = 'Legato_ERROR_409'
-		this.duplicateId = duplicateId
-	}
-}
-
-// Relation errors (one to many)
-export class LegatoRelationsError extends Error {
-	code: errorCode
-
-	source: LegatoEntity
-	sourceKey: string
-
-	target: LegatoEntity
-	targetKey: string
-
-	diff: ObjectID[]
-
-	constructor(
-		diff: ObjectID[],
-		source: LegatoEntity,
-		sourceKey: string,
-		target: LegatoEntity,
-		targetKey = '_id'
-	) {
-		const message = format(errors.RELATIONS_ERROR, {
-			sourceKey,
-			diff,
-			className: source.constructor.name,
-			targetType: target.constructor.name,
-			targetKey,
-			value: (source as any)[sourceKey],
-		})
-		super(message)
-
-		this.source = source
-		this.sourceKey = sourceKey
-
-		this.target = target
-		this.targetKey = targetKey
-
-		this.code = 'Legato_ERROR_502'
-
-		this.diff = diff
-	}
-}
-
-// Relations error (one to one)
-export class LegatoRelationError extends Error {
-	code: errorCode
-
-	source: LegatoEntity
-	sourceKey: string
-
-	value: any
-
-	target: LegatoEntity
-	targetKey: string
-
-	constructor(
-		source: LegatoEntity,
-		sourceKey: string,
-		target: LegatoEntity,
-		targetKey = '_id'
-	) {
-		const message = format(errors.RELATION_ERROR, {
-			sourceKey,
-			value: (source as any)[sourceKey],
-			className: source.constructor.name,
-			targetType: target.constructor.name,
-			targetKey,
-		})
-
-		super(message)
-		this.source = source
-		this.sourceKey = sourceKey
-
-		this.value = (source as any)[sourceKey]
-
-		this.target = target
-		this.targetKey = targetKey
-
-		this.code = 'Legato_ERROR_502'
+	constructor(type: errorType) {
+		super()
+		this.type = type
+		this.code = errorCodes[this.type]
 	}
 }

@@ -15,7 +15,7 @@ describe('static method countDocuments', () => {
 			}
 		}
 
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
@@ -24,12 +24,9 @@ describe('static method countDocuments', () => {
 		let hasError = false
 
 		try {
-			await RandomClassWithoutDecoratorCountDocumentsStatic.countDocuments(
-				connection,
-				{
-					name: 'toto',
-				}
-			)
+			await RandomClassWithoutDecoratorCountDocumentsStatic.countDocuments({
+				name: 'toto',
+			})
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -96,12 +93,9 @@ describe('static method countDocuments', () => {
 
 		await connection.collections.usercountdocumentsqueryfilter.insertMany(users)
 
-		const count = await UserCountDocumentsQueryFilter.countDocuments(
-			connection,
-			{
-				email: 'jeremy@dev.fr',
-			}
-		)
+		const count = await UserCountDocumentsQueryFilter.countDocuments({
+			email: 'jeremy@dev.fr',
+		})
 		expect(count).toEqual(1)
 	})
 })

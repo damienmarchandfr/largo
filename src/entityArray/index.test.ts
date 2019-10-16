@@ -59,23 +59,23 @@ describe('LegatoEntityArray class', () => {
 
 		// Insert jobs
 		const job = new JobPopulateManyDefaultId('Dictator')
-		const jobInsertedId = await job.insert(connection)
+		const jobInsertedId = await job.insert()
 
 		const job2 = new JobPopulateManyDefaultId('President')
-		const job2InsertedId = await job2.insert(connection)
+		const job2InsertedId = await job2.insert()
 
 		// Insert many users
 		const usersPromises = []
 		for (let i = 0; i < 5; i++) {
 			const user = new UserPopulateManyDefaultId(jobInsertedId)
 			user.addJobId(job2InsertedId)
-			usersPromises.push(user.insert(connection))
+			usersPromises.push(user.insert())
 		}
 		await Promise.all(usersPromises)
 
 		// Get all users
-		const users = await UserPopulateManyDefaultId.find(connection, {})
-		const populatedUsers = await users.populate(connection)
+		const users = await UserPopulateManyDefaultId.find({})
+		const populatedUsers = await users.populate()
 
 		expect(populatedUsers.length).toEqual(5)
 
@@ -149,10 +149,10 @@ describe('LegatoEntityArray class', () => {
 		})
 
 		const job1 = new JobPopulateIdCustomRelationKey('js dev')
-		const job1Id = await job1.insert(connection)
+		const job1Id = await job1.insert()
 
 		const job2 = new JobPopulateIdCustomRelationKey('php dev')
-		await job2.insert(connection)
+		await job2.insert()
 
 		for (let i = 0; i < 5; i++) {
 			const user = new UserPopulateManyCustomRelationKey(
@@ -160,11 +160,11 @@ describe('LegatoEntityArray class', () => {
 				job1.customId
 			)
 			user.addJobId(job2.customId)
-			await user.insert(connection)
+			await user.insert()
 		}
 
 		const users = await UserPopulateManyCustomRelationKey.find(connection, {})
-		const populatedUsers = await users.populate(connection)
+		const populatedUsers = await users.populate()
 
 		expect(populatedUsers.length).toEqual(5)
 
@@ -205,7 +205,7 @@ describe('LegatoEntityArray class', () => {
 
 		let hasError = false
 		try {
-			await user.populate(connection)
+			await user.populate()
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(

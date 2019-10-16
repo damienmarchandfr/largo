@@ -2,6 +2,10 @@ import { LegatoConnection } from '../../connection'
 import { LegatoEntity } from '..'
 import { ObjectID } from 'mongodb'
 import { LegatoField } from '../../decorators/field.decorator'
+import { LegatoRelation } from '../../decorators/relation.decorator'
+import { exec } from 'child_process'
+import { LegatoMetaDataStorage } from '../..'
+import { async } from 'rxjs/internal/scheduler/async'
 
 const databaseName = 'deleteTest'
 
@@ -29,7 +33,7 @@ describe('delete method', () => {
 		random._id = id
 
 		try {
-			await random.delete(connection)
+			await random.delete()
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -70,7 +74,7 @@ describe('delete method', () => {
 		expect(check.email).toEqual(user.email)
 
 		// Delete
-		await user.delete(connection)
+		await user.delete()
 		const checkDeleted = await connection.collections.userdelete.findOne({
 			_id: user._id,
 		})
@@ -106,7 +110,7 @@ describe('delete method', () => {
 			done()
 		})
 
-		await user.delete(connection)
+		await user.delete()
 	})
 
 	it('should trigger afterDelete', async (done) => {
@@ -146,6 +150,124 @@ describe('delete method', () => {
 			done()
 		})
 
-		await user.delete(connection)
+		await user.delete()
+	})
+
+	it('should be forbidden to delete an object with relation', async () => {
+		class JobDeleteWithRelation extends LegatoEntity {
+			@LegatoField()
+			name: string
+
+			constructor(name: string) {
+				super()
+				this.name = name
+			}
+		}
+
+		class UserDeleteWithRelation extends LegatoEntity {
+			@LegatoRelation({
+				populatedKey: 'job',
+				targetType: JobDeleteWithRelation,
+			})
+			jobId: ObjectID
+
+			constructor(jId: ObjectID) {
+				super()
+				this.jobId = jId
+			}
+		}
+
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Create job
+		const job = new JobDeleteWithRelation('js dev')
+		const jobId = await job.insert()
+
+		// Inset a user linked to a job
+		const user = new UserDeleteWithRelation(jobId)
+		const userId = await user.insert()
+
+		let hasError = false
+
+		try {
+			await user.delete()
+		} catch (error) {
+			expect(error.message).toEqual(
+				`You can't delete UserDeleteWithRelation with _id : ${userId}. It's linked to JobDeleteWithRelation with jobId.`
+			)
+			hasError = true
+		}
+
+		expect(hasError).toEqual(true)
+
+		// Check user not deleted
+		const userNotDeleted = await connection.collections.userdeletewithrelation.findOne(
+			{ _id: userId }
+		)
+
+		expect(userNotDeleted._id).toStrictEqual(userId)
+	})
+
+	it('should accept delete object with relation if element is deleted before', async () => {
+		class JobDeleteWithRelation extends LegatoEntity {
+			@LegatoField()
+			name: string
+
+			constructor(name: string) {
+				super()
+				this.name = name
+			}
+		}
+
+		class UserDeleteWithRelation extends LegatoEntity {
+			@LegatoRelation({
+				populatedKey: 'job',
+				targetType: JobDeleteWithRelation,
+			})
+			jobId: ObjectID
+
+			constructor(jId: ObjectID) {
+				super()
+				this.jobId = jId
+			}
+		}
+
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Create job
+		const job = new JobDeleteWithRelation('js dev')
+		const jobId = await job.insert()
+
+		// Inset a user linked to a job
+		const user = new UserDeleteWithRelation(jobId)
+		const userId = await user.insert()
+
+		// Delete job
+		await job.delete()
+
+		let hasError = false
+
+		try {
+			await user.delete()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toEqual(false)
+
+		// Check user not deleted
+		const userNotDeleted = await connection.collections.userdeletewithrelation.findOne(
+			{ _id: userId }
+		)
+
+		expect(userNotDeleted._id).toStrictEqual(userId)
 	})
 })

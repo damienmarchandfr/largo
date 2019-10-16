@@ -14,7 +14,8 @@ describe('LegatoField decorator', () => {
 			}
 		}
 
-		const classMeta = LegatoMetaDataStorage().LegatoFieldMetas.legatofieldclass
+		const classMeta = LegatoMetaDataStorage().LegatoFieldMetas
+			.legatofieldclasses
 
 		expect(classMeta.length).toEqual(1)
 		expect(classMeta[0]).toEqual('hello')

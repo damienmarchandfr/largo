@@ -26,7 +26,7 @@ describe('static method findOne', () => {
 		try {
 			await RandomClassWithoutDecoratorFindOne.findOne<
 				RandomClassWithoutDecoratorFindOne
-			>(connection, { name: 'toto' })
+			>({ name: 'toto' })
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -60,12 +60,9 @@ describe('static method findOne', () => {
 			new UserFindOneStatic()
 		)
 
-		const user = await UserFindOneStatic.findOne<UserFindOneStatic>(
-			connection,
-			{
-				email: 'damien@marchand.fr',
-			}
-		)
+		const user = await UserFindOneStatic.findOne<UserFindOneStatic>({
+			email: 'damien@marchand.fr',
+		})
 
 		const userResult = user as UserFindOneStatic
 
@@ -100,7 +97,7 @@ describe('static method findOne', () => {
 			new UserFindOneStaticNull()
 		)
 
-		const user = await UserFindOneStaticNull.findOne(connection, {
+		const user = await UserFindOneStaticNull.findOne({
 			email: 'donal@trump.usa',
 		})
 

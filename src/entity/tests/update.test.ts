@@ -30,7 +30,7 @@ describe('update method', () => {
 		random._id = id
 
 		try {
-			await random.update(connection)
+			await random.update()
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -66,7 +66,7 @@ describe('update method', () => {
 
 		// Update email
 		user.email = 'jeremy@dev.fr'
-		await user.update(connection)
+		await user.update()
 
 		// Find user
 		const updated = await connection.collections.userupdate.findOne({
@@ -108,7 +108,7 @@ describe('update method', () => {
 
 		// Update
 		user.age = 18
-		await user.update(connection)
+		await user.update()
 
 		// Get user in db
 		const saved = await connection.collections.userupdatenotdecorator.findOne({
@@ -157,7 +157,7 @@ describe('update method', () => {
 		})
 
 		updateUser.firstname = 'Jeremy'
-		await updateUser.update(connection)
+		await updateUser.update()
 	})
 
 	it('should trigger afterUpdate', async (done) => {
@@ -199,6 +199,6 @@ describe('update method', () => {
 		})
 
 		updateUser.firstname = 'Jeremy'
-		await updateUser.update(connection)
+		await updateUser.update()
 	})
 })

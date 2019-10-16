@@ -1,7 +1,7 @@
 import { LegatoEntity } from '../entity'
-import { LegatoConnection } from '../connection'
-import { LegatoCollectionDoesNotExistError } from '../errors'
-import { LegatoMetaDataStorage } from '..'
+import { LegatoMetaDataStorage, getConnection } from '..'
+import { LegatoErrorNotConnected } from '../errors/NotConnected.error'
+import { LegatoErrorCollectionDoesNotExist } from '../errors/CollectionDoesNotExist.error'
 
 export class LegatoEntityArray<T extends LegatoEntity> {
 	public items: T[] = []
@@ -19,11 +19,17 @@ export class LegatoEntityArray<T extends LegatoEntity> {
 		return this.items.length
 	}
 
-	async populate(connect: LegatoConnection): Promise<any[]> {
+	async populate(): Promise<any[]> {
+		const connection = getConnection()
+
+		if (!connection) {
+			throw new LegatoErrorNotConnected()
+		}
+
 		const collectionName = this.items[0].getCollectionName()
 
-		if (!connect.checkCollectionExists(collectionName)) {
-			throw new LegatoCollectionDoesNotExistError(collectionName)
+		if (!connection.checkCollectionExists(collectionName)) {
+			throw new LegatoErrorCollectionDoesNotExist(collectionName)
 		}
 
 		const pipeline: object[] = [
@@ -67,6 +73,6 @@ export class LegatoEntityArray<T extends LegatoEntity> {
 			}
 		}
 
-		return connect.collections[collectionName].aggregate(pipeline).toArray()
+		return connection.collections[collectionName].aggregate(pipeline).toArray()
 	}
 }

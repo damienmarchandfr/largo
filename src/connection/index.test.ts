@@ -2,7 +2,6 @@ import { createConnectionString, LegatoConnection } from '.'
 import { LegatoField } from '../decorators/field.decorator'
 import { LegatoIndex } from '../decorators/index.decorator'
 import { LegatoEntity } from '../entity'
-import { errorCode, LegatoConnectionError } from '../errors'
 
 const databaseName = 'connectiontest'
 
@@ -28,34 +27,6 @@ describe('createConnectionString function', () => {
 	})
 })
 
-describe('Legato class', () => {
-	it('should throw an error if database name is protected', () => {
-		let hasError = false
-		try {
-			const connection = new LegatoConnection({
-				databaseName: 'admin',
-			})
-		} catch (error) {
-			hasError = true
-			expect(error.message).toEqual(`Database name 'admin' is protected.`)
-			expect(error.code).toEqual('Legato_ERROR_403')
-		}
-
-		expect(hasError).toEqual(true)
-	})
-})
-
-describe('function getCollectionName', () => {
-	class User extends LegatoEntity {}
-	const user = new User()
-	expect(user.getCollectionName()).toEqual('user')
-})
-
-describe('static function getCollectionName', () => {
-	class User extends LegatoEntity {}
-	expect(User.getCollectionName()).toEqual('user')
-})
-
 describe('connect function', () => {
 	it('must have collections if models loaded', async () => {
 		class ConnexionUser extends LegatoEntity {
@@ -73,27 +44,19 @@ describe('connect function', () => {
 		})
 		await legato.connect()
 
-		expect(legato.collections.connexionuser).toBeDefined()
+		expect(legato.collections.connexionusers).toBeDefined()
 	})
 
-	it('must throw error if already connected', async () => {
+	it('must return same if already connected', async () => {
 		const connection = new LegatoConnection({
 			databaseName,
 		})
 
 		await connection.connect()
 
-		let hasError = false
+		const newConnection = await connection.connect()
 
-		try {
-			await connection.connect()
-		} catch (error) {
-			expect(error.message).toEqual(`Already connected to Mongo database.`)
-			expect(error.code).toEqual('Legato_ERROR_500')
-			hasError = true
-		}
-
-		expect(hasError).toBe(true)
+		expect(connection).toStrictEqual(newConnection)
 	})
 
 	it('must create index', async () => {

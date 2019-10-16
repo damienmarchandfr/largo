@@ -1,13 +1,6 @@
 import { Db, MongoClient, Collection } from 'mongodb'
-
-import {
-	LegatoConnectionError,
-	LegatoDatabaseNameProtectedError,
-} from '../errors'
-import { LegatoMetaDataStorage } from '..'
-
-// MongoDB databases protected
-const protectedDatabaseNames = ['admin', 'local', 'config']
+import { uniq } from 'lodash'
+import { LegatoMetaDataStorage, getConnection, setConnection } from '..'
 
 // MongoDB options to create connection
 interface ConnectionOptions {
@@ -38,11 +31,6 @@ export class LegatoConnection {
 	private db: Db | null
 
 	constructor(options: ConnectionOptions) {
-		// Check if database name is not protected
-		if (protectedDatabaseNames.includes(options.databaseName)) {
-			throw new LegatoDatabaseNameProtectedError(options.databaseName)
-		}
-
 		this.options = options
 		this.db = null
 		this.mongoClient = null
@@ -58,14 +46,11 @@ export class LegatoConnection {
 
 	/**
 	 * Connect to database and create collections / indexes / validations
-	 * @param options
 	 */
-	public async connect(
-		options: ConnectOptions = { clean: false }
-	): Promise<LegatoConnection> {
+	public async connect(options: ConnectOptions = { clean: false }) {
 		// Check if already connected
-		if (this.mongoClient) {
-			throw new LegatoConnectionError('ALREADY_CONNECTED')
+		if (getConnection()) {
+			return this
 		}
 
 		const url = createConnectionString(this.options)
@@ -76,7 +61,12 @@ export class LegatoConnection {
 		this.db = this.mongoClient.db(this.options.databaseName)
 
 		// Sync collections
-		let collectionNames = Object.keys(LegatoMetaDataStorage().LegatoFieldMetas)
+		let collectionNames = Object.keys(
+			LegatoMetaDataStorage().LegatoFieldMetas
+		).concat(Object.keys(LegatoMetaDataStorage().LegatoRelationsMetas))
+
+		// Remove duplicate collection name
+		collectionNames = uniq(collectionNames)
 
 		// Create collections if not exist
 		for (const collectionName of collectionNames) {
@@ -84,6 +74,7 @@ export class LegatoConnection {
 			this.collections[collectionName] = collectionCreated
 		}
 
+		// Remove duplicate names
 		collectionNames = Object.keys(LegatoMetaDataStorage().LegatoIndexMetas)
 
 		for (const collectionName of collectionNames) {
@@ -108,6 +99,8 @@ export class LegatoConnection {
 			}
 		}
 
+		setConnection(this)
+
 		return this
 	}
 
@@ -115,20 +108,23 @@ export class LegatoConnection {
 	 * Close connection to MongoDB
 	 */
 	public async disconnect() {
-		if (!this.mongoClient) {
+		if (!getConnection()) {
 			throw new LegatoConnectionError('NOT_CONNECTED_CANNOT_DISCONNECT')
 		}
-		await this.mongoClient.close()
+		if (this.mongoClient) {
+			await this.mongoClient.close()
+		}
 		this.mongoClient = null
 		this.db = null
 		this.collections = {}
+		setConnection(null)
 	}
 
 	/**
 	 * Clean all collections
 	 */
 	public async clean() {
-		if (!this.mongoClient) {
+		if (!getConnection()) {
 			throw new LegatoConnectionError('NOT_CONNECTED')
 		}
 		const collectionNames = Object.keys(this.collections)

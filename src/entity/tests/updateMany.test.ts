@@ -26,7 +26,7 @@ describe(`static method updateMany`, () => {
 		try {
 			await RandomClassWithoutDecoratorUpdateMany.updateMany<
 				RandomClassWithoutDecoratorUpdateMany
-			>(connection, { name: 'titi' }, { name: 'toto' })
+			>({ name: 'titi' }, { name: 'toto' })
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -63,7 +63,6 @@ describe(`static method updateMany`, () => {
 
 		// Update
 		await UserUpdateManyOneElement.updateMany<UserUpdateManyOneElement>(
-			connection,
 			{ email: 'barack@obama.usa' },
 			{ email: 'donald@trump.usa' }
 		)

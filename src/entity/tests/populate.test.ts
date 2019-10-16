@@ -53,22 +53,22 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
 		const job = new JobPopulateDefaultId('js dev')
-		const jobId = await job.insert(connection)
+		const jobId = await job.insert()
 
 		const job2 = new JobPopulateDefaultId('php dev')
-		const job2id = await job2.insert(connection)
+		const job2id = await job2.insert()
 
 		const user = new UserPopulateDefaultId(jobId, job2id)
-		await user.insert(connection)
+		await user.insert()
 
-		const userPopulated = await user.populate(connection)
+		const userPopulated = await user.populate()
 		expect(userPopulated.job).toStrictEqual({
 			_id: jobId,
 			name: 'js dev',
@@ -128,25 +128,25 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
 		const job = new JobPopulateCustomKey('js dev')
-		const generatedJobId = await job.insert(connection)
+		const generatedJobId = await job.insert()
 		const jobId = job.customJobId
 
 		const job2 = new JobPopulateCustomKey('c++ dev')
-		await job2.insert(connection)
+		await job2.insert()
 		const job2Id = job2.customJobId
 
 		const user = new UserPopulateCustomKey(jobId)
 		user.addJob(job2Id)
-		await user.insert(connection)
+		await user.insert()
 
-		const userPopulated = await user.populate(connection)
+		const userPopulated = await user.populate()
 
 		expect(userPopulated.job).toStrictEqual({
 			_id: generatedJobId,
@@ -211,7 +211,7 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -219,16 +219,16 @@ describe('populate method', () => {
 
 		// Create job
 		const job = new JobPopulateIdString()
-		const jobIdCreated = await job.insert(connection)
+		const jobIdCreated = await job.insert()
 
 		const job2 = new JobPopulateIdString()
-		await job2.insert(connection)
+		await job2.insert()
 
 		const user = new UserPopulateIdString(job.customJobId)
 		user.addCustomJobId(job2.customJobId)
-		await user.insert(connection)
+		await user.insert()
 
-		const userPopulated = await user.populate(connection)
+		const userPopulated = await user.populate()
 
 		expect(userPopulated.job).toStrictEqual({
 			_id: jobIdCreated,
@@ -290,7 +290,7 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
@@ -298,16 +298,16 @@ describe('populate method', () => {
 
 		// Create job
 		const job = new JobPopulateIdNumber(1)
-		const jobIdCreated = await job.insert(connection)
+		const jobIdCreated = await job.insert()
 
 		const job2 = new JobPopulateIdNumber(2)
-		await job2.insert(connection)
+		await job2.insert()
 
 		const user = new UserPopulateIdNumber(job.customJobId)
 		user.addJobId(job2.customJobId)
-		await user.insert(connection)
+		await user.insert()
 
-		const userPopulated = await user.populate(connection)
+		const userPopulated = await user.populate()
 
 		expect(userPopulated.job).toStrictEqual({
 			_id: jobIdCreated,
@@ -331,16 +331,16 @@ describe('populate method', () => {
 			}
 		}
 
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
 		const user = new UserPopulateNoRelation()
-		await user.insert(connection)
+		await user.insert()
 
-		const populated = await user.populate(connection)
+		const populated = await user.populate()
 
 		expect(user.toPlainObj()).toStrictEqual(populated)
 	})

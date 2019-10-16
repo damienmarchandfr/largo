@@ -1,6 +1,5 @@
 import { LegatoConnection } from '../../connection'
 import { LegatoEntity } from '..'
-import { LegatoCollectionDoesNotExistError } from '../../errors'
 import { LegatoField } from '../../decorators/field.decorator'
 
 const databaseName = 'findTest'
@@ -27,7 +26,7 @@ describe('static method find', () => {
 		try {
 			await RandomClassWithoutDecoratorFind.find<
 				RandomClassWithoutDecoratorFind
-			>(connection, { name: 'toto' })
+			>({ name: 'toto' })
 		} catch (error) {
 			hasError = true
 			expect(error).toBeInstanceOf(LegatoCollectionDoesNotExistError)
@@ -60,7 +59,7 @@ describe('static method find', () => {
 
 		const users = await UserFindAllWithFilterStatic.find<
 			UserFindAllWithFilterStatic
-		>(connection, {
+		>({
 			email: 'damien@dev.fr',
 		})
 
@@ -131,9 +130,9 @@ describe('static method find', () => {
 			clean: true,
 		})
 
-		await new UserFindAllStaticEmpty().insert(connection)
+		await new UserFindAllStaticEmpty().insert()
 
-		const bads = await UserFindAllStaticEmpty.find(connection, {
+		const bads = await UserFindAllStaticEmpty.find({
 			email: 'donal@trump.usa',
 		})
 

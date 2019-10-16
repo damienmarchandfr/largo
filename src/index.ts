@@ -1,6 +1,6 @@
 import 'reflect-metadata'
 import { LegatoEntity } from './entity'
-import { of } from 'rxjs'
+import { LegatoConnection } from './connection'
 
 // Meta field
 // user : ['id','email'] for User class with 2 fields saved
@@ -28,6 +28,7 @@ interface CustomGlobal extends NodeJS.Global {
 	LegatoFieldMetas: DataStorageFieldMeta
 	LegatoIndexMetas: DataStorageIndexMeta
 	LegatoRelationsMetas: DataStorageFielRelation
+	// connection: LegatoConnection | null
 }
 
 export function LegatoMetaDataStorage() {
@@ -42,4 +43,14 @@ export function LegatoMetaDataStorage() {
 	}
 
 	return global as CustomGlobal
+}
+
+let connection: LegatoConnection | null = null
+
+export function getConnection() {
+	return connection
+}
+
+export function setConnection(connect: LegatoConnection | null) {
+	connection = connect
 }

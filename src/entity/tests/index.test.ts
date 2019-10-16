@@ -1,5 +1,17 @@
 import { LegatoEntity } from '..'
 
+
+describe('function getCollectionName', () => {
+	class User extends LegatoEntity {}
+	const user = new User()
+	expect(user.getCollectionName()).toEqual('users')
+})
+
+describe('static function getCollectionName', () => {
+	class UserStatic extends LegatoEntity {}
+	expect(UserStatic.getCollectionName()).toEqual('userstatics')
+})
+
 describe('getCopy adnd toPlainObj methods', () => {
 	it('should init copy as plain object without events', () => {
 		class LegatoEntityTestCopy extends LegatoEntity {

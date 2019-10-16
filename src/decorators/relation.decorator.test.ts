@@ -30,7 +30,7 @@ describe('Relation decorator', () => {
 		}
 
 		const relationMeta = LegatoMetaDataStorage().LegatoRelationsMetas
-			.userrelationdecorator
+			.userrelationdecorators
 
 		expect(relationMeta.length).toEqual(1)
 		expect(relationMeta[0]).toStrictEqual({
@@ -70,7 +70,7 @@ describe('Relation decorator', () => {
 
 		expect(
 			LegatoMetaDataStorage().LegatoRelationsMetas
-				.userrelationdecoratoridnotset[0].targetKey
+				.userrelationdecoratoridnotsets[0].targetKey
 		).toEqual('_id')
 	})
 
@@ -108,8 +108,8 @@ describe('Relation decorator', () => {
 		}
 
 		expect(
-			LegatoMetaDataStorage().LegatoRelationsMetas.userrelationdecoratoridset[0]
-				.targetKey
+			LegatoMetaDataStorage().LegatoRelationsMetas
+				.userrelationdecoratoridsets[0].targetKey
 		).toEqual('id')
 	})
 })

@@ -24,7 +24,7 @@ describe('static method deleteMany', () => {
 		let hasError = false
 
 		try {
-			await RandomClassWithoutDecoratorDeleteManyStatic.deleteMany(connection, {
+			await RandomClassWithoutDecoratorDeleteManyStatic.deleteMany({
 				name: 'toto',
 			})
 		} catch (error) {
@@ -62,12 +62,9 @@ describe('static method deleteMany', () => {
 		])
 
 		// Delete donald
-		await UserDeleteManyQueryFilter.deleteMany<UserDeleteManyQueryFilter>(
-			connection,
-			{
-				email: 'donald@trump.usa',
-			}
-		)
+		await UserDeleteManyQueryFilter.deleteMany<UserDeleteManyQueryFilter>({
+			email: 'donald@trump.usa',
+		})
 
 		// Searhc for donald
 		const donald = await connection.collections.userdeletemanyqueryfilter.findOne(
