@@ -1,6 +1,8 @@
 import { Db, MongoClient, Collection } from 'mongodb'
 import { uniq } from 'lodash'
 import { LegatoMetaDataStorage, getConnection, setConnection } from '..'
+import { LegatoErrorNotConnectedCannotDisconnect } from '../errors/NotConnectedCannotDisconnect.error'
+import { LegatoErrorNotConnected } from '../errors/NotConnected.error'
 
 // MongoDB options to create connection
 interface ConnectionOptions {
@@ -42,6 +44,10 @@ export class LegatoConnection {
 	 */
 	public checkCollectionExists(collectionName: string): boolean {
 		return !!this.collections[collectionName]
+	}
+
+	public isConnected() {
+		return !!this.db
 	}
 
 	/**
@@ -109,7 +115,7 @@ export class LegatoConnection {
 	 */
 	public async disconnect() {
 		if (!getConnection()) {
-			throw new LegatoConnectionError('NOT_CONNECTED_CANNOT_DISCONNECT')
+			throw new LegatoErrorNotConnectedCannotDisconnect()
 		}
 		if (this.mongoClient) {
 			await this.mongoClient.close()
@@ -125,7 +131,7 @@ export class LegatoConnection {
 	 */
 	public async clean() {
 		if (!getConnection()) {
-			throw new LegatoConnectionError('NOT_CONNECTED')
+			throw new LegatoErrorNotConnected()
 		}
 		const collectionNames = Object.keys(this.collections)
 

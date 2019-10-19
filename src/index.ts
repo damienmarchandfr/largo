@@ -52,5 +52,8 @@ export function getConnection() {
 }
 
 export function setConnection(connect: LegatoConnection | null) {
+	if (connect && !connect.isConnected()) {
+		throw new Error('Cannot set connection. Cause not connected.')
+	}
 	connection = connect
 }

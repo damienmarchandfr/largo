@@ -2,6 +2,7 @@ import { createConnectionString, LegatoConnection } from '.'
 import { LegatoField } from '../decorators/field.decorator'
 import { LegatoIndex } from '../decorators/index.decorator'
 import { LegatoEntity } from '../entity'
+import { getConnection, setConnection } from '../index'
 
 const databaseName = 'connectiontest'
 
@@ -28,8 +29,14 @@ describe('createConnectionString function', () => {
 })
 
 describe('connect function', () => {
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('must have collections if models loaded', async () => {
-		class ConnexionUser extends LegatoEntity {
+		class ConnectUser extends LegatoEntity {
 			@LegatoField()
 			field: string
 
@@ -44,7 +51,7 @@ describe('connect function', () => {
 		})
 		await legato.connect()
 
-		expect(legato.collections.connexionusers).toBeDefined()
+		expect(legato.collections.ConnectUser).toBeDefined()
 	})
 
 	it('must return same if already connected', async () => {
@@ -59,8 +66,18 @@ describe('connect function', () => {
 		expect(connection).toStrictEqual(newConnection)
 	})
 
+	it('must create a reference to connection', async () => {
+		setConnection(null)
+
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect()
+
+		expect(getConnection()).toStrictEqual(connection)
+	})
+
 	it('must create index', async () => {
-		class Indexed extends LegatoEntity {
+		class ConnectIndexed extends LegatoEntity {
 			@LegatoIndex({
 				unique: false,
 			})
@@ -77,13 +94,12 @@ describe('connect function', () => {
 		})
 
 		await connection.connect()
-
-		const indexes = await connection.collections.indexed.listIndexes().toArray()
+		const indexes = await connection.collections.ConnectIndexed.listIndexes().toArray()
 		expect(indexes[1].key.firstname).toEqual(1)
 	})
 
 	it('must clean collections if clean = true', async () => {
-		class Cleaned extends LegatoEntity {
+		class ConnectCleaned extends LegatoEntity {
 			@LegatoField()
 			field: string
 
@@ -97,9 +113,11 @@ describe('connect function', () => {
 			databaseName,
 		}).connect()
 
-		expect(connection.collections.cleaned).toBeDefined()
+		expect(connection.collections.ConnectCleaned).toBeDefined()
 
-		await connection.collections.cleaned.insertOne(new Cleaned())
+		await connection.collections.ConnectCleaned.insertOne(new ConnectCleaned())
+
+		setConnection(null)
 
 		// Create new connection with clean = true
 		const secondConnection = await new LegatoConnection({
@@ -107,14 +125,20 @@ describe('connect function', () => {
 		}).connect({
 			clean: true,
 		})
-		expect(secondConnection.collections.cleaned).toBeDefined()
+		expect(secondConnection.collections.ConnectCleaned).toBeDefined()
 
-		const count = await secondConnection.collections.cleaned.countDocuments()
+		const count = await secondConnection.collections.ConnectCleaned.countDocuments()
 		expect(count).toEqual(0)
 	})
 })
 
 describe('disconnect function', () => {
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('must throw an error if not connected', async () => {
 		const legato = new LegatoConnection({
 			databaseName,
@@ -126,9 +150,8 @@ describe('disconnect function', () => {
 			await legato.disconnect()
 		} catch (error) {
 			expect(error.message).toEqual(
-				'Mongo client not conected. You cannot disconnect.'
+				'Cannot disconnect cause not connected to MongoDB.'
 			)
-			expect(error.code).toEqual('Legato_ERROR_500')
 			hasError = true
 		}
 
@@ -136,7 +159,7 @@ describe('disconnect function', () => {
 	})
 
 	it('must accept disconnect after a connection', async () => {
-		class City extends LegatoEntity {
+		class DisconnectCity extends LegatoEntity {
 			@LegatoField()
 			name: string
 
@@ -151,14 +174,31 @@ describe('disconnect function', () => {
 		})
 
 		await connection.connect()
-		expect(connection.collections.city).toBeDefined()
 
 		await connection.disconnect()
 		expect(connection.collections).toStrictEqual({})
 	})
+
+	it('must set connection to null', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		await connection.disconnect()
+
+		expect(getConnection()).toEqual(null)
+	})
 })
 
 describe('clean function', () => {
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('must throw error if not connected', async () => {
 		const connection = new LegatoConnection({
 			databaseName,
@@ -169,10 +209,7 @@ describe('clean function', () => {
 		try {
 			await connection.clean()
 		} catch (error) {
-			expect(error.message).toEqual(
-				`You are not connected to a Mongo database.`
-			)
-			expect(error.code).toEqual('Legato_ERROR_500')
+			expect(error.message).toEqual(`You are not connected to MongoDB.`)
 			hasError = true
 		}
 
@@ -180,7 +217,7 @@ describe('clean function', () => {
 	})
 
 	it('should clean all collections', async () => {
-		class User extends LegatoEntity {
+		class CleanUser extends LegatoEntity {
 			@LegatoField()
 			firstname: string
 
@@ -190,7 +227,7 @@ describe('clean function', () => {
 			}
 		}
 
-		class Job extends LegatoEntity {
+		class CleanJob extends LegatoEntity {
 			@LegatoField()
 			name: string
 
@@ -204,22 +241,29 @@ describe('clean function', () => {
 			databaseName,
 		}).connect()
 
-		await connection.collections.job.insertOne(new Job())
-		await connection.collections.user.insertOne(new User())
+		await connection.collections.CleanJob.insertOne(new CleanJob())
+		await connection.collections.CleanUser.insertOne(new CleanUser())
 
 		await connection.clean()
 
 		// Count all users
-		const usersCount = await connection.collections.user.countDocuments()
+		const usersCount = await connection.collections.CleanUser.countDocuments()
 		expect(usersCount).toEqual(0)
 
 		// Count all jobs
-		const jobsCount = await connection.collections.job.countDocuments()
+		const jobsCount = await connection.collections.CleanJob.countDocuments()
 		expect(jobsCount).toEqual(0)
 	})
 })
 
 describe('checkCollectionExists function', () => {
+	beforeEach(() => {
+		// If connected then disconnect
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('should return false if connection does not exist', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
@@ -233,7 +277,7 @@ describe('checkCollectionExists function', () => {
 	})
 
 	it('should return true if collection exists', async () => {
-		class User extends LegatoEntity {
+		class CheckCollectionExistsUser extends LegatoEntity {
 			@LegatoField()
 			firstname: string
 
@@ -249,7 +293,7 @@ describe('checkCollectionExists function', () => {
 			clean: false,
 		})
 
-		const exists = connection.checkCollectionExists('user')
+		const exists = connection.checkCollectionExists('CheckCollectionExistsUser')
 
 		expect(exists).toEqual(true)
 	})

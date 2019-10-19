@@ -1,17 +1,24 @@
 import { LegatoEntity } from '..'
 import { LegatoConnection } from '../../connection'
 import { LegatoField } from '../../decorators/field.decorator'
+import { getConnection, setConnection } from '../..'
 
 const databaseName = 'countDocumentsTest'
 
 describe('static method countDocuments', () => {
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('should throw an error if collection does not exist', async () => {
 		class RandomClassWithoutDecoratorCountDocumentsStatic extends LegatoEntity {
 			name: string
 
 			constructor() {
 				super()
-				this.name = 'toto'
+				this.name = 'John'
 			}
 		}
 
@@ -25,17 +32,16 @@ describe('static method countDocuments', () => {
 
 		try {
 			await RandomClassWithoutDecoratorCountDocumentsStatic.countDocuments({
-				name: 'toto',
+				name: 'John',
 			})
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
-				`Collection randomclasswithoutdecoratorcountdocumentsstatic does not exist.`
+				`Collection RandomClassWithoutDecoratorCountDocumentsStatic does not exist.`
 			)
-			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
-		expect(hasError).toEqual(true)
+		expect(hasError).toBeTruthy()
 	})
 
 	it('should count all documents', async () => {
@@ -56,13 +62,14 @@ describe('static method countDocuments', () => {
 		})
 
 		const users: UserCountAllStatic[] = []
+
 		// Add 10 users
 		for (let i = 0; i < 10; i++) {
 			users.push(new UserCountAllStatic('damien@dev.fr'))
 		}
-		await connection.collections.usercountallstatic.insertMany(users)
+		await connection.collections.UserCountAllStatic.insertMany(users)
 
-		const count = await UserCountAllStatic.countDocuments(connection)
+		const count = await UserCountAllStatic.countDocuments()
 		expect(count).toEqual(10)
 	})
 
@@ -91,7 +98,7 @@ describe('static method countDocuments', () => {
 		// User in filter
 		users.push(new UserCountDocumentsQueryFilter('jeremy@dev.fr'))
 
-		await connection.collections.usercountdocumentsqueryfilter.insertMany(users)
+		await connection.collections.UserCountDocumentsQueryFilter.insertMany(users)
 
 		const count = await UserCountDocumentsQueryFilter.countDocuments({
 			email: 'jeremy@dev.fr',

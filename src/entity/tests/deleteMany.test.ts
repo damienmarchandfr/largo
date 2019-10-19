@@ -32,7 +32,6 @@ describe('static method deleteMany', () => {
 			expect(error.message).toEqual(
 				`Collection randomclasswithoutdecoratordeletemanystatic does not exist.`
 			)
-			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
@@ -66,7 +65,7 @@ describe('static method deleteMany', () => {
 			email: 'donald@trump.usa',
 		})
 
-		// Searhc for donald
+		// Search for Donald
 		const donald = await connection.collections.userdeletemanyqueryfilter.findOne(
 			{
 				email: 'donald@trump.usa',

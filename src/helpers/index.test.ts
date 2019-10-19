@@ -2,6 +2,8 @@ import { LegatoEntity } from '../entity'
 import { LegatoField } from '../decorators/field.decorator'
 import { LegatoIndex } from '../decorators/index.decorator'
 import { getLegatoPartial } from '.'
+import { LegatoRelation } from '../decorators/relation.decorator'
+import { ObjectID } from 'mongodb'
 
 describe('getLegatoPartial function', () => {
 	it('should not return field without decorator', () => {
@@ -14,6 +16,12 @@ describe('getLegatoPartial function', () => {
 			@LegatoField()
 			lastname: string
 
+			@LegatoRelation({
+				populatedKey: 'relation',
+				targetType: UserFull,
+			})
+			relationId: ObjectID
+
 			age: number
 
 			constructor() {
@@ -21,14 +29,18 @@ describe('getLegatoPartial function', () => {
 				this.firstname = 'Damien'
 				this.lastname = 'Marchand'
 				this.age = 18
+				this.relationId = new ObjectID()
 			}
 		}
 
-		const partial = getLegatoPartial(new UserFull(), 'userfull')
+		const user = new UserFull()
+
+		const partial = getLegatoPartial(user, 'UserFull')
 
 		expect(partial).toStrictEqual({
 			lastname: 'Marchand',
 			firstname: 'Damien',
+			relationId: user.relationId,
 		})
 	})
 
@@ -48,11 +60,26 @@ describe('getLegatoPartial function', () => {
 
 		const partial = getLegatoPartial(
 			new UserFullEmptyField(),
-			'userfullemptyfields'
+			'UserFullEmptyField'
 		)
 
 		expect(partial).toStrictEqual({
 			firstname: 'Damien',
 		})
+	})
+
+	it('should return empty object if no legato decorators', () => {
+		class UserFullNoDecorator extends LegatoEntity {
+			constructor() {
+				super()
+			}
+		}
+
+		const partial = getLegatoPartial(
+			new UserFullNoDecorator(),
+			'UserFullNoDecorator'
+		)
+
+		expect(partial).toStrictEqual({})
 	})
 })
