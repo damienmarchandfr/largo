@@ -21,6 +21,7 @@ describe('Relation decorator', () => {
 			@LegatoRelation({
 				populatedKey: 'job',
 				targetType: JobRelationDecorator,
+				checkRelation: false,
 			})
 			jobId: Object | null = null
 
@@ -30,7 +31,7 @@ describe('Relation decorator', () => {
 		}
 
 		const relationMeta = LegatoMetaDataStorage().LegatoRelationsMetas
-			.userrelationdecorators
+			.UserRelationDecorator
 
 		expect(relationMeta.length).toEqual(1)
 		expect(relationMeta[0]).toStrictEqual({
@@ -38,6 +39,7 @@ describe('Relation decorator', () => {
 			populatedKey: 'job',
 			targetKey: '_id',
 			targetType: JobRelationDecorator,
+			checkRelation: false,
 		})
 	})
 
@@ -70,7 +72,7 @@ describe('Relation decorator', () => {
 
 		expect(
 			LegatoMetaDataStorage().LegatoRelationsMetas
-				.userrelationdecoratoridnotsets[0].targetKey
+				.UserRelationDecoratorIdNotSet[0].targetKey
 		).toEqual('_id')
 	})
 
@@ -108,8 +110,41 @@ describe('Relation decorator', () => {
 		}
 
 		expect(
-			LegatoMetaDataStorage().LegatoRelationsMetas
-				.userrelationdecoratoridsets[0].targetKey
+			LegatoMetaDataStorage().LegatoRelationsMetas.UserRelationDecoratorIdSet[0]
+				.targetKey
 		).toEqual('id')
+	})
+
+	it('should set check relation to true by default', () => {
+		class JobRelationDecoratorCheckSet extends LegatoEntity {
+			@LegatoField()
+			companyName: string
+
+			constructor() {
+				super()
+				this.companyName = 'yolo company'
+			}
+		}
+
+		class UserRelationDecoratorCheckSet extends LegatoEntity {
+			@LegatoField()
+			email: string
+
+			@LegatoRelation({
+				populatedKey: 'job',
+				targetType: JobRelationDecoratorCheckSet,
+			})
+			jobId: ObjectID | null = null
+
+			constructor() {
+				super()
+				this.email = 'damien@mail.com'
+			}
+		}
+
+		expect(
+			LegatoMetaDataStorage().LegatoRelationsMetas
+				.UserRelationDecoratorCheckSet[0].checkRelation
+		).toEqual(true)
 	})
 })

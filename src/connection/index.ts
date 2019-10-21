@@ -1,8 +1,7 @@
 import { Db, MongoClient, Collection } from 'mongodb'
 import { uniq } from 'lodash'
 import { LegatoMetaDataStorage, getConnection, setConnection } from '..'
-import { LegatoErrorNotConnectedCannotDisconnect } from '../errors/NotConnectedCannotDisconnect.error'
-import { LegatoErrorNotConnected } from '../errors/NotConnected.error'
+import { LegatoErrorCannotDisconnect, LegatoErrorNotConnected } from '../errors'
 
 // MongoDB options to create connection
 interface ConnectionOptions {
@@ -115,7 +114,7 @@ export class LegatoConnection {
 	 */
 	public async disconnect() {
 		if (!getConnection()) {
-			throw new LegatoErrorNotConnectedCannotDisconnect()
+			throw new LegatoErrorCannotDisconnect()
 		}
 		if (this.mongoClient) {
 			await this.mongoClient.close()

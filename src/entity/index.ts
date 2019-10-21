@@ -9,13 +9,12 @@ import { LegatoMetaDataStorage, getConnection } from '..'
 import { difference } from 'lodash'
 import { LegatoEntityArray } from '../entityArray'
 import { getLegatoPartial } from '../helpers'
-import { LegatoErrorNotConnected } from '../errors/NotConnected.error'
-import { LegatoErrorCollectionDoesNotExist } from '../errors/CollectionDoesNotExist.error'
-import { LegatoErrorObjectAlreadyInserted } from '../errors/ObjectAlreadyInserted.error'
-import { LegatoErrorRelationOneToManyCreate } from '../errors/RelationOneToManyCreate.error'
-import { LegatoErrorRelationOneToOneCreate } from '../errors/RelationOneToOneCreate.error'
-import { LegatoErrorRelationOneToManyDelete } from '../errors/RelationOneToManyDelete.error'
 import { LegatoErrorOneToOneDeleteParent } from '../errors/delete/OneToOneDeleteParent.error'
+import {
+	LegatoErrorNotConnected,
+	LegatoErrorCollectionDoesNotExist,
+	LegatoErrorObjectAlreadyInserted,
+} from '../errors'
 
 export class LegatoEntity {
 	/**
@@ -304,11 +303,7 @@ export class LegatoEntity {
 								}
 							)
 
-							throw new LegatoErrorRelationOneToManyCreate(
-								this,
-								relation.key,
-								diff[0]
-							)
+							throw new Error()
 						}
 					} else {
 						// Relation with one element
@@ -319,7 +314,7 @@ export class LegatoEntity {
 						})
 
 						if (!relationQueryResult) {
-							throw new LegatoErrorRelationOneToOneCreate(this, relation.key)
+							throw new Error()
 						}
 					}
 				}

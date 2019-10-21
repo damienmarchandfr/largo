@@ -26,7 +26,7 @@ describe('LegatoIndex decorator', () => {
 		}
 
 		const classIndexMetas = LegatoMetaDataStorage().LegatoIndexMetas
-			.legatoindexclasses
+			.LegatoIndexClass
 		expect(classIndexMetas.length).toEqual(2)
 
 		expect(classIndexMetas[0]).toStrictEqual({
@@ -62,12 +62,12 @@ describe('LegatoIndex decorator', () => {
 		console.log(connexion.collections)
 
 		// No error for the first object saved with id = hello
-		await connexion.collections.uniqueindices.insertOne(new UniqueIndex())
+		await connexion.collections.UniqueIndex.insertOne(new UniqueIndex())
 
 		let hasError = false
 
 		try {
-			await connexion.collections.uniqueindices.insertOne(new UniqueIndex())
+			await connexion.collections.UniqueIndex.insertOne(new UniqueIndex())
 		} catch (error) {
 			hasError = true
 		}
@@ -75,7 +75,7 @@ describe('LegatoIndex decorator', () => {
 		expect(hasError).toBe(true)
 
 		// Check if just one inserted
-		const count = await connexion.collections.uniqueindexes.count({
+		const count = await connexion.collections.UniqueIndex.count({
 			id: 'hello',
 		})
 

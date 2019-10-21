@@ -1,7 +1,9 @@
 import { LegatoEntity } from '../entity'
 import { LegatoMetaDataStorage, getConnection } from '..'
-import { LegatoErrorNotConnected } from '../errors/NotConnected.error'
-import { LegatoErrorCollectionDoesNotExist } from '../errors/CollectionDoesNotExist.error'
+import {
+	LegatoErrorCollectionDoesNotExist,
+	LegatoErrorNotConnected,
+} from '../errors'
 
 export class LegatoEntityArray<T extends LegatoEntity> {
 	public items: T[] = []

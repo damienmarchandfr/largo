@@ -21,6 +21,7 @@ type DataStorageFielRelation = {
 		populatedKey: string
 		targetType: new (...args: any[]) => LegatoEntity
 		targetKey: string
+		checkRelation: boolean
 	}>
 }
 
@@ -28,7 +29,6 @@ interface CustomGlobal extends NodeJS.Global {
 	LegatoFieldMetas: DataStorageFieldMeta
 	LegatoIndexMetas: DataStorageIndexMeta
 	LegatoRelationsMetas: DataStorageFielRelation
-	// connection: LegatoConnection | null
 }
 
 export function LegatoMetaDataStorage() {

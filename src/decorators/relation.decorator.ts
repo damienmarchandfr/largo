@@ -5,6 +5,7 @@ interface LegatoRelationOptions {
 	populatedKey: string // userId -> user
 	targetType: new (...args: any[]) => LegatoEntity // User
 	targetKey?: string // _id
+	checkRelation?: boolean
 }
 
 export function LegatoRelation<T extends LegatoEntity>(
@@ -22,6 +23,10 @@ export function LegatoRelation<T extends LegatoEntity>(
 			populatedKey: options.populatedKey,
 			targetKey: options.targetKey || '_id',
 			targetType: options.targetType,
+			checkRelation:
+				typeof options.checkRelation === 'undefined'
+					? true
+					: options.checkRelation,
 		})
 	}
 }
