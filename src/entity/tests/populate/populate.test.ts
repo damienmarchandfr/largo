@@ -1,9 +1,9 @@
-import { LegatoEntity } from '..'
-import { LegatoField } from '../../decorators/field.decorator'
-import { LegatoRelation } from '../../decorators/relation.decorator'
+import { LegatoEntity } from '../..'
+import { LegatoField } from '../../../decorators/field.decorator'
+import { LegatoRelation } from '../../../decorators/relation.decorator'
 import { ObjectID } from 'mongodb'
-import { LegatoConnection } from '../../connection'
-import { LegatoIndex } from '../../decorators/index.decorator'
+import { LegatoConnection } from '../../../connection'
+import { LegatoIndex } from '../../../decorators/index.decorator'
 
 const databaseName = 'populateTest'
 

@@ -66,9 +66,9 @@ export class LegatoConnection {
 		this.db = this.mongoClient.db(this.options.databaseName)
 
 		// Sync collections
-		let collectionNames = Object.keys(
-			LegatoMetaDataStorage().LegatoFieldMetas
-		).concat(Object.keys(LegatoMetaDataStorage().LegatoRelationsMetas))
+		let collectionNames = Object.keys(LegatoMetaDataStorage().LegatoFieldMetas)
+			.concat(Object.keys(LegatoMetaDataStorage().LegatoRelationsMetas))
+			.concat(Object.keys(LegatoMetaDataStorage().LegatoIndexMetas))
 
 		// Remove duplicate collection name
 		collectionNames = uniq(collectionNames)

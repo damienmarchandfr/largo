@@ -37,6 +37,7 @@ describe('Relation decorator', () => {
 		expect(relationMeta[0]).toStrictEqual({
 			key: 'jobId',
 			populatedKey: 'job',
+			populatedType: UserRelationDecorator,
 			targetKey: '_id',
 			targetType: JobRelationDecorator,
 			checkRelation: false,

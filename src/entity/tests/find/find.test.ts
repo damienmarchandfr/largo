@@ -1,6 +1,6 @@
-import { LegatoConnection } from '../../connection'
-import { LegatoEntity } from '..'
-import { LegatoField } from '../../decorators/field.decorator'
+import { LegatoConnection } from '../../../connection'
+import { LegatoEntity } from '../..'
+import { LegatoField } from '../../../decorators/field.decorator'
 
 const databaseName = 'findTest'
 

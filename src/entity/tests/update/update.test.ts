@@ -1,7 +1,7 @@
-import { LegatoConnection } from '../../connection'
-import { LegatoEntity } from '..'
+import { LegatoConnection } from '../../../connection'
+import { LegatoEntity } from '../..'
 import { ObjectID } from 'mongodb'
-import { LegatoField } from '../../decorators/field.decorator'
+import { LegatoField } from '../../../decorators/field.decorator'
 
 const databaseName = 'updateTest'
 

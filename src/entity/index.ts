@@ -5,8 +5,12 @@ import {
 	FindOneOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
-import { LegatoMetaDataStorage, getConnection } from '..'
-import { difference } from 'lodash'
+import {
+	LegatoMetaDataStorage,
+	getConnection,
+	DataStorageFielRelationValue,
+} from '..'
+import { difference, filter as f } from 'lodash'
 import { LegatoEntityArray } from '../entityArray'
 import { getLegatoPartial } from '../helpers'
 import { LegatoErrorOneToOneDeleteParent } from '../errors/delete/OneToOneDeleteParent.error'
@@ -15,6 +19,7 @@ import {
 	LegatoErrorCollectionDoesNotExist,
 	LegatoErrorObjectAlreadyInserted,
 } from '../errors'
+import { cpus } from 'os'
 
 export class LegatoEntity {
 	/**
@@ -22,6 +27,49 @@ export class LegatoEntity {
 	 */
 	static getCollectionName() {
 		return this.name
+	}
+
+	static getMetasToCheck(): {
+		children: DataStorageFielRelationValue[]
+		parents: DataStorageFielRelationValue[]
+	} {
+		const allMetas = LegatoMetaDataStorage().LegatoRelationsMetas
+
+		const metasToReturn: {
+			children: DataStorageFielRelationValue[]
+			parents: DataStorageFielRelationValue[]
+		} = {
+			children: [],
+			parents: [],
+		}
+
+		for (const key in allMetas) {
+			if (allMetas.hasOwnProperty(key)) {
+				const metas = allMetas[key]
+
+				// Children
+				let metasToAdd = f(metas, (m) => {
+					return m.checkRelation === true && m.populatedType.name === this.name
+				})
+				metasToReturn.children = metasToReturn.children.concat(metasToAdd)
+
+				// Parents
+				metasToAdd = f(metas, (m) => {
+					return m.checkRelation === true && m.targetType.name === this.name
+				})
+				metasToReturn.parents = metasToReturn.parents.concat(metasToAdd)
+			}
+		}
+
+		return metasToReturn
+
+		// } else {
+		// 	const meta = LegatoMetaDataStorage().LegatoRelationsMetas[this.name]
+		// 	// Get all keys with check relation = true
+		// 	return f(meta, (m) => {
+		// 		return m.checkRelation === true && m.populatedType.name === this.name
+		// 	})
+		// }
 	}
 
 	static async find<T extends LegatoEntity>(
@@ -107,9 +155,57 @@ export class LegatoEntity {
 		// Filter properties
 		const toUpdate = getLegatoPartial(partial, collectionName)
 
-		// TODO If relations are updated check relations
+		delete toUpdate._id // MongoID cannot be changed
 
-		delete toUpdate._id
+		// Get meta for relation checking
+		const metasToCheck = this.getMetasToCheck()
+
+		// Must check relation in database
+		if (metasToCheck.children.length) {
+			// Get all
+			const mongoResult = await connection.collections[collectionName]
+				.find(filter)
+				.toArray()
+			for (const result of mongoResult) {
+				for (const meta of metasToCheck.children) {
+					// Set new vaules
+					Object.assign(result, toUpdate)
+
+					if (result[meta.key]) {
+						// Search if element exists in database
+						// One to many
+						if (Array.isArray(result[meta.key])) {
+							const resultOneToMany = await connection.collections[
+								meta.targetType.name
+							]
+								.find({
+									[meta.targetKey]: {
+										$in: result[meta.key],
+									},
+								})
+								.toArray()
+
+							if (resultOneToMany.length !== result[meta.key].length) {
+								// Number of id != number of results from db
+								throw new Error()
+							}
+						} else {
+							// One to one
+							const resultOneToOne = await connection.collections[
+								meta.targetType.name
+							].findOne({
+								[meta.targetKey]: result[meta.key],
+							})
+
+							if (!resultOneToOne) {
+								throw new Error()
+							}
+						}
+					}
+				}
+			}
+			// If an id is updated I must check parents
+		}
 
 		return connection.collections[collectionName].updateMany(
 			filter,
@@ -132,7 +228,22 @@ export class LegatoEntity {
 			throw new LegatoErrorCollectionDoesNotExist(collectionName)
 		}
 
-		// TODO : check if not linked to others
+		// TODO : check if not linked to others as a child
+		const relationMetas = LegatoMetaDataStorage().LegatoRelationsMetas
+
+		for (const key in relationMetas) {
+			if (relationMetas.hasOwnProperty(key)) {
+				const element = relationMetas[key]
+				for (const iterator of element) {
+					if (
+						iterator.targetType.name === collectionName &&
+						iterator.checkRelation
+					) {
+						// Search parent with relation
+					}
+				}
+			}
+		}
 
 		return connection.collections[collectionName].deleteMany(filter)
 	}
@@ -183,7 +294,6 @@ export class LegatoEntity {
 			afterDelete: new Subject(),
 		}
 		this.collectionName = this.getCollectionName()
-		this.copy = this.toPlainObj()
 	}
 
 	beforeInsert<T extends LegatoEntity>() {
@@ -232,6 +342,10 @@ export class LegatoEntity {
 	}
 
 	getCopy() {
+		// Check if this.copy exsits
+		if (!this.copy) {
+			this.copy = this.toPlainObj()
+		}
 		return this.copy
 	}
 
@@ -470,9 +584,6 @@ export class LegatoEntity {
 						delete object.events
 						Object.assign(object, relationQueryResult)
 
-						// console.log(this)
-						// console.log(object)
-
 						throw new LegatoErrorOneToOneDeleteParent(this, object)
 					}
 				}
@@ -547,5 +658,15 @@ export class LegatoEntity {
 			.next()
 
 		return mongoObj as any
+	}
+
+	private getMetasToCheck() {
+		const meta = LegatoMetaDataStorage().LegatoRelationsMetas[
+			this.getCollectionName()
+		]
+		// Get all keys with check relation = true
+		return f(meta, (m) => {
+			return m.checkRelation === true
+		})
 	}
 }

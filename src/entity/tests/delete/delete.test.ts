@@ -1,10 +1,10 @@
-import { LegatoConnection } from '../../connection'
-import { LegatoEntity } from '..'
+import { LegatoConnection } from '../../../connection'
+import { LegatoEntity } from '../..'
 import { ObjectID } from 'mongodb'
-import { LegatoField } from '../../decorators/field.decorator'
-import { LegatoRelation } from '../../decorators/relation.decorator'
+import { LegatoField } from '../../../decorators/field.decorator'
+import { LegatoRelation } from '../../../decorators/relation.decorator'
 import { exec } from 'child_process'
-import { getConnection, setConnection } from '../..'
+import { getConnection, setConnection } from '../../..'
 
 const databaseName = 'deleteTest'
 

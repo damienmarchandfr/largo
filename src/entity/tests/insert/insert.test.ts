@@ -1,8 +1,8 @@
-import { LegatoEntity } from '..'
-import { LegatoConnection } from '../../connection'
-import { LegatoField } from '../../decorators/field.decorator'
+import { LegatoEntity } from '../..'
+import { LegatoConnection } from '../../../connection'
+import { LegatoField } from '../../../decorators/field.decorator'
 import { ObjectID } from 'mongodb'
-import { LegatoRelation } from '../../decorators/relation.decorator'
+import { LegatoRelation } from '../../../decorators/relation.decorator'
 
 const databaseName = 'insertTest'
 

@@ -9,20 +9,23 @@ import { LegatoConnection } from './connection'
 // user : [{key : 'id', unique : true},{key : 'email', unique : false}]
 
 // Meta relation
-// user : [{ key : companyId ,populatedKey : company, targetType : Company, targetKey : id}]
+// user : [{ key : companyId ,populatedKey : company, populatedType : User, targetType : Company, targetKey : id}]
 
 type DataStorageFieldMeta = { [key: string]: string[] }
 type DataStorageIndexMeta = {
 	[key: string]: Array<{ key: string; unique: boolean }>
 }
 type DataStorageFielRelation = {
-	[key: string]: Array<{
-		key: string
-		populatedKey: string
-		targetType: new (...args: any[]) => LegatoEntity
-		targetKey: string
-		checkRelation: boolean
-	}>
+	[key: string]: DataStorageFielRelationValue[]
+}
+
+export type DataStorageFielRelationValue = {
+	key: string
+	populatedKey: string
+	populatedType: Function // Parent
+	targetType: new (...args: any[]) => LegatoEntity // Child
+	targetKey: string
+	checkRelation: boolean
 }
 
 interface CustomGlobal extends NodeJS.Global {

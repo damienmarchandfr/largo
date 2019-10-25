@@ -59,8 +59,6 @@ describe('LegatoIndex decorator', () => {
 			clean: true,
 		})
 
-		console.log(connexion.collections)
-
 		// No error for the first object saved with id = hello
 		await connexion.collections.UniqueIndex.insertOne(new UniqueIndex())
 
