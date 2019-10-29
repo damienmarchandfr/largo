@@ -1,4 +1,4 @@
-# MongODM
+![legato logo](./logo.png)
 
 Develop
 

@@ -1,7 +1,8 @@
 import { LegatoEntity } from '../../entity'
 import { ObjectID } from 'mongodb'
+import { DataStorageFielRelationValue } from '../..'
 
-export class LegatoErrorOneToOneDeleteParent extends Error {
+export class LegatoErrorDeleteParent extends Error {
 	// Parent want to delete
 	parentCollectionName: string
 	parentMongoID: ObjectID | undefined
@@ -18,7 +19,11 @@ export class LegatoErrorOneToOneDeleteParent extends Error {
 	childRelationKeyValue: any
 	child: LegatoEntity
 
-	constructor(parent: LegatoEntity, child: LegatoEntity) {
+	constructor(
+		parent: LegatoEntity,
+		child: LegatoEntity,
+		meta: DataStorageFielRelationValue
+	) {
 		super()
 		this.message = `Cannot delete ${parent.getCollectionName()} with _id = ${
 			parent._id
@@ -31,15 +36,15 @@ export class LegatoErrorOneToOneDeleteParent extends Error {
 		this.parentClass = parent.constructor
 		this.parentCollectionName = parent.getCollectionName()
 		this.parentMongoID = parent._id
-		this.parentRelationKey = '' // TODO
-		this.parentRelationKeyValue = '' // TODO
+		this.parentRelationKey = meta.key
+		this.parentRelationKeyValue = (parent as any)[meta.key]
 
 		// Child information
 		this.child = child.toPlainObj()
 		this.childClass = child.constructor
 		this.childCollectionName = child.getCollectionName()
 		this.childMongoID = child._id
-		this.childRelationKey = '' // TODO
-		this.childRelationKeyValue = '' // TODO
+		this.childRelationKey = meta.targetKey
+		this.childRelationKeyValue = (child as any)[meta.targetKey]
 	}
 }

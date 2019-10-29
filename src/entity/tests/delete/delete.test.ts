@@ -5,6 +5,15 @@ import { LegatoField } from '../../../decorators/field.decorator'
 import { LegatoRelation } from '../../../decorators/relation.decorator'
 import { exec } from 'child_process'
 import { getConnection, setConnection } from '../../..'
+import {
+	DeleteEntityTestWithoutDecorator,
+	DeleteEntityTest,
+} from './entities/Delete.entity.test'
+import { async } from 'rxjs/internal/scheduler/async'
+import { DeleteChildTest } from './entities/DeleteChild.entity.test'
+import { DeleteParentTest } from './entities/DeleteParent.entity.test'
+import { DeleteNoChildTest } from './entities/DeleteNoChild.entity.test'
+import { ParentEntityTest } from '../index/enities/Parent.entity.test'
 
 const databaseName = 'deleteTest'
 
@@ -22,27 +31,41 @@ describe('delete method', () => {
 	// 		clean: false,
 	// 	})
 
-	// 	class RandomClassWithoutDecoratorDelete extends LegatoEntity {
-	// 		name: string
-
-	// 		constructor() {
-	// 			super()
-	// 			this.name = 'John'
-	// 		}
-	// 	}
-
 	// 	let hasError = false
 
-	// 	const random = new RandomClassWithoutDecoratorDelete()
+	// 	const toDelete = new DeleteEntityTestWithoutDecorator()
 	// 	const id = new ObjectID()
-	// 	random._id = id
+	// 	toDelete._id = id
 
 	// 	try {
-	// 		await random.delete()
+	// 		await toDelete.delete()
 	// 	} catch (error) {
 	// 		hasError = true
 	// 		expect(error.message).toEqual(
-	// 			`Collection RandomClassWithoutDecoratorDelete does not exist.`
+	// 			`Cannot find DeleteEntityTestWithoutDecorator collection.`
+	// 		)
+	// 	}
+
+	// 	expect(hasError).toBeTruthy()
+	// })
+
+	// it('should throw error if object does not have _id', async () => {
+	// 	await new LegatoConnection({
+	// 		databaseName,
+	// 	}).connect({
+	// 		clean: false,
+	// 	})
+
+	// 	let hasError = false
+
+	// 	// No _id set
+	// 	const toDelete = new DeleteEntityTest('John')
+	// 	try {
+	// 		await toDelete.delete()
+	// 	} catch (error) {
+	// 		hasError = true
+	// 		expect(error.message).toEqual(
+	// 			`Cannot delete DeleteEntityTest. No mongoID set.`
 	// 		)
 	// 	}
 
@@ -50,161 +73,109 @@ describe('delete method', () => {
 	// })
 
 	// it('should delete', async () => {
-	// 	class UserDelete extends LegatoEntity {
-	// 		@LegatoField()
-	// 		email: string
-
-	// 		constructor(email: string) {
-	// 			super()
-	// 			this.email = email
-	// 		}
-	// 	}
-
 	// 	const connection = await new LegatoConnection({
 	// 		databaseName,
 	// 	}).connect({
 	// 		clean: true,
 	// 	})
 
-	// 	const user = new UserDelete('damien@dev.fr')
+	// 	const obj = new DeleteEntityTest('john')
 
 	// 	// Insert with native
-	// 	const insertResult = await connection.collections.UserDelete.insertOne(user)
-	// 	user._id = insertResult.insertedId
+	// 	const insertResult = await connection.collections.DeleteEntityTest.insertOne(
+	// 		obj
+	// 	)
+	// 	obj._id = insertResult.insertedId
 
 	// 	// Check user in db
-	// 	const check = await connection.collections.UserDelete.findOne({
-	// 		_id: user._id,
+	// 	const check = await connection.collections.DeleteEntityTest.findOne({
+	// 		_id: obj._id,
 	// 	})
-	// 	expect(check.email).toEqual(user.email)
+	// 	expect(check.name).toEqual(obj.name)
 
 	// 	// Delete
-	// 	await user.delete()
-	// 	const checkDeleted = await connection.collections.UserDelete.findOne({
-	// 		_id: user._id,
+	// 	await obj.delete()
+	// 	const checkDeleted = await connection.collections.DeleteEntityTest.findOne({
+	// 		_id: obj._id,
 	// 	})
 	// 	expect(checkDeleted).toBeNull()
 	// })
 
 	// it('should trigger beforeDelete', async (done) => {
-	// 	class UserBeforeDelete extends LegatoEntity {
-	// 		@LegatoField()
-	// 		email: string
-
-	// 		constructor(email: string) {
-	// 			super()
-	// 			this.email = email
-	// 		}
-	// 	}
-
 	// 	const connection = await new LegatoConnection({
 	// 		databaseName,
 	// 	}).connect({
 	// 		clean: true,
 	// 	})
 
-	// 	const inserted = await connection.collections.UserBeforeDelete.insertOne({
-	// 		email: 'damien@dev.fr',
-	// 	})
+	// 	const obj = new DeleteEntityTest('john')
+	// 	const inserted = await connection.collections.DeleteEntityTest.insertOne(
+	// 		obj
+	// 	)
 
-	// 	const user = new UserBeforeDelete('damien@dev.fr')
-	// 	user._id = inserted.insertedId
+	// 	obj._id = inserted.insertedId
 
-	// 	user.beforeDelete<UserBeforeDelete>().subscribe((userBeforeDelete) => {
-	// 		expect(userBeforeDelete._id).toStrictEqual(inserted.insertedId)
+	// 	obj.beforeDelete<DeleteEntityTest>().subscribe((objBeforeDelete) => {
+	// 		expect(objBeforeDelete._id).toStrictEqual(inserted.insertedId)
 	// 		done()
 	// 	})
 
-	// 	await user.delete()
+	// 	await obj.delete()
 	// })
 
 	// it('should trigger afterDelete', async (done) => {
-	// 	class UserAfterDelete extends LegatoEntity {
-	// 		@LegatoField()
-	// 		email: string
-
-	// 		constructor(email: string) {
-	// 			super()
-	// 			this.email = email
-	// 		}
-	// 	}
-
 	// 	const connection = await new LegatoConnection({
 	// 		databaseName,
 	// 	}).connect({
 	// 		clean: true,
 	// 	})
 
-	// 	const inserted = await connection.collections.UserAfterDelete.insertOne({
-	// 		email: 'damien@dev.fr',
-	// 	})
+	// 	const obj = new DeleteEntityTest('john')
 
-	// 	const user = new UserAfterDelete('damien@dev.fr')
-	// 	user._id = inserted.insertedId
+	// 	const inserted = await connection.collections.DeleteEntityTest.insertOne(
+	// 		obj
+	// 	)
+	// 	obj._id = inserted.insertedId
 
-	// 	user.afterDelete<UserAfterDelete>().subscribe(async (userDeleted) => {
-	// 		expect(userDeleted._id).toStrictEqual(inserted.insertedId)
+	// 	obj.afterDelete<DeleteEntityTest>().subscribe(async (objDeleted) => {
+	// 		expect(objDeleted._id).toStrictEqual(inserted.insertedId)
+	// 		expect(objDeleted.name).toEqual('john')
 
 	// 		// Check if in db
-	// 		const checkUser = await connection.collections.UserAfterDelete.findOne({
+	// 		const check = await connection.collections.DeleteEntityTest.findOne({
 	// 			_id: inserted.insertedId,
 	// 		})
 
-	// 		expect(checkUser).toEqual(null)
+	// 		expect(check).toEqual(null)
 
 	// 		done()
 	// 	})
 
-	// 	await user.delete()
+	// 	await obj.delete()
 	// })
 
 	it('should be forbidden to delete an object with a one to one child relation', async () => {
-		class JobDeleteWithRelation extends LegatoEntity {
-			@LegatoField()
-			name: string
-
-			constructor(name: string) {
-				super()
-				this.name = name
-			}
-		}
-
-		class UserDeleteWithRelation extends LegatoEntity {
-			@LegatoRelation({
-				populatedKey: 'job',
-				targetType: JobDeleteWithRelation,
-			})
-			jobId: ObjectID
-
-			constructor(jId: ObjectID) {
-				super()
-				this.jobId = jId
-			}
-		}
-
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		// Create job
-		const job = new JobDeleteWithRelation('js dev')
-		const insertedJob = await connection.collections.JobDeleteWithRelation.insertOne(
-			job
-		)
+		const parent = new DeleteParentTest()
+		await parent.insert()
 
-		// Inset a user linked to a job
-		const user = new UserDeleteWithRelation(insertedJob.insertedId)
-		const insertedUser = await connection.collections.UserDeleteWithRelation.insertOne(
-			user
-		)
-		user._id = insertedUser.insertedId
+		const child = new DeleteChildTest()
+		const childId = await child.insert()
+
+		parent.childId = childId
+		parent.childIds = [childId, childId]
+
+		await parent.update()
 
 		let hasError = false
 
 		try {
-			await user.delete()
+			await child.delete()
 		} catch (error) {
 			console.error(error)
 			hasError = true

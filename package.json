@@ -29,7 +29,7 @@
 		"example": "ts-node-dev examples/index.ts",
 		"bench_populate_orm": "ts-node-dev benchmark/populate/mongorm.ts",
 		"bench_populate_mongoose": "ts-node-dev benchmark/populate/mongoose.ts",
-		"dev": "jest -- entity/tests/countDocuments/countDocuments.test.ts"
+		"dev": "jest -- entity/tests/delete/delete.test.ts"
 	},
 	"dependencies": {
 		"lodash": "^4.17.15",

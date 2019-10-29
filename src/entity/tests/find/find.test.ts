@@ -1,6 +1,7 @@
 import { LegatoConnection } from '../../../connection'
 import { LegatoEntity } from '../..'
 import { LegatoField } from '../../../decorators/field.decorator'
+import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 
 const databaseName = 'findTest'
 
@@ -29,7 +30,7 @@ describe('static method find', () => {
 			>({ name: 'toto' })
 		} catch (error) {
 			hasError = true
-			expect(error).toBeInstanceOf(LegatoCollectionDoesNotExistError)
+			expect(error).toBeInstanceOf(LegatoErrorCollectionDoesNotExist)
 		}
 
 		expect(hasError).toEqual(true)

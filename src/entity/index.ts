@@ -13,13 +13,13 @@ import {
 import { difference, filter as f } from 'lodash'
 import { LegatoEntityArray } from '../entityArray'
 import { getLegatoPartial } from '../helpers'
-import { LegatoErrorOneToOneDeleteParent } from '../errors/delete/OneToOneDeleteParent.error'
 import {
 	LegatoErrorNotConnected,
 	LegatoErrorCollectionDoesNotExist,
 	LegatoErrorObjectAlreadyInserted,
 } from '../errors'
-import { cpus } from 'os'
+import { LegatoErrorDeleteNoMongoID } from '../errors/delete/NoMongoIdDelete.error'
+import { LegatoErrorDeleteParent } from '../errors/delete/DeleteParent.error'
 
 export class LegatoEntity {
 	/**
@@ -29,6 +29,9 @@ export class LegatoEntity {
 		return this.name
 	}
 
+	/**
+	 * Get parents and children to check relations
+	 */
 	static getMetasToCheck(): {
 		children: DataStorageFielRelationValue[]
 		parents: DataStorageFielRelationValue[]
@@ -62,16 +65,17 @@ export class LegatoEntity {
 		}
 
 		return metasToReturn
-
-		// } else {
-		// 	const meta = LegatoMetaDataStorage().LegatoRelationsMetas[this.name]
-		// 	// Get all keys with check relation = true
-		// 	return f(meta, (m) => {
-		// 		return m.checkRelation === true && m.populatedType.name === this.name
-		// 	})
-		// }
 	}
 
+	/**
+	 * @description Find multiple element in database
+	 * @example await User.find<User>({name : 'John'});
+	 * @summary If filter is empty will return all objects saved
+	 * @returns Promise<LegatoEntity[]>
+	 *
+	 * @param filter
+	 * @param findOptions
+	 */
 	static async find<T extends LegatoEntity>(
 		filter: FilterQuery<any>,
 		findOptions?: FindOneOptions
@@ -511,80 +515,34 @@ export class LegatoEntity {
 			throw new LegatoErrorCollectionDoesNotExist(this.collectionName)
 		}
 
+		if (!this._id) {
+			throw new LegatoErrorDeleteNoMongoID(this)
+		}
+
 		this.events.beforeDelete.next(this)
 
-		// Check if has relations to other objects in db
-		// Check if all relations works
-		const relations = LegatoMetaDataStorage().LegatoRelationsMetas[
-			this.collectionName
-		]
+		const relationMetas = this.getMetasToCheck()
 
-		if (relations) {
-			for (const relation of relations) {
-				if ((this as any)[relation.key]) {
-					const relationCollectioName = relation.targetType.name
+		// Parents
+		if (relationMetas.parents.length) {
+			for (const relation of relationMetas.parents) {
+				if ((this as any)[relation.targetKey]) {
+					// Search parent(s) with relation
+					const relationCollectionName = relation.populatedType.name
 
-					// Relation with multiple elements
-					if (Array.isArray((this as any)[relation.key])) {
-						const relationQueryResults = await connection.collections[
-							relationCollectioName
-						]
-							.find({
-								[relation.targetKey]: {
-									$in: (this as any)[relation.key],
-								},
-							})
-							.toArray()
+					const filter: any = {}
+					filter[relation.key] = (this as any)[relation.targetKey]
 
-						if (
-							relationQueryResults.length !== (this as any)[relation.key].length
-						) {
-							const resultIds = relationQueryResults.map((result) => {
-								return result._id
-							})
-							const relationIds = (this as any)[relation.key]
+					const parents = await connection.collections[relationCollectionName]
+						.find(filter)
+						.toArray()
 
-							const resultIdsString = (resultIds as ObjectID[]).map((id) => {
-								return id.toHexString()
-							})
-							const relationIdsString = (relationIds as ObjectID[]).map(
-								(id) => {
-									return id.toHexString()
-								}
-							)
+					if (parents.length) {
+						// Get parent constructor
+						const parent = new (relation.populatedType as any)() as LegatoEntity
+						Object.assign(parent, parents[0])
 
-							const diff = difference(relationIdsString, resultIdsString).map(
-								(idString) => {
-									return new ObjectID(idString)
-								}
-							)
-
-							if (diff.length) {
-								// Get first child not found
-								const relationQueryResult = await connection.collections[
-									relationCollectioName
-								].findOne({
-									[relation.targetKey]: diff[0],
-								})
-								const object = new (this as any).constructor()
-								Object.assign(object, relationQueryResult)
-
-								throw new LegatoErrorOneToOneDeleteParent(this, object)
-							}
-						}
-					} else {
-						// Relation with one element
-						const relationQueryResult = await connection.collections[
-							relationCollectioName
-						].findOne({
-							[relation.targetKey]: (this as any)[relation.key],
-						})
-
-						const object = new relation.targetType()
-						delete object.events
-						Object.assign(object, relationQueryResult)
-
-						throw new LegatoErrorOneToOneDeleteParent(this, object)
+						throw new LegatoErrorDeleteParent(parent, this, relation)
 					}
 				}
 			}
@@ -660,13 +618,44 @@ export class LegatoEntity {
 		return mongoObj as any
 	}
 
-	private getMetasToCheck() {
-		const meta = LegatoMetaDataStorage().LegatoRelationsMetas[
-			this.getCollectionName()
-		]
-		// Get all keys with check relation = true
-		return f(meta, (m) => {
-			return m.checkRelation === true
-		})
+	private getMetasToCheck(): {
+		children: DataStorageFielRelationValue[]
+		parents: DataStorageFielRelationValue[]
+	} {
+		const allMetas = LegatoMetaDataStorage().LegatoRelationsMetas
+
+		const metasToReturn: {
+			children: DataStorageFielRelationValue[]
+			parents: DataStorageFielRelationValue[]
+		} = {
+			children: [],
+			parents: [],
+		}
+
+		for (const key in allMetas) {
+			if (allMetas.hasOwnProperty(key)) {
+				const metas = allMetas[key]
+
+				// Children
+				let metasToAdd = f(metas, (m) => {
+					return (
+						m.checkRelation === true &&
+						m.populatedType.name === this.getCollectionName()
+					)
+				})
+				metasToReturn.children = metasToReturn.children.concat(metasToAdd)
+
+				// Parents
+				metasToAdd = f(metas, (m) => {
+					return (
+						m.checkRelation === true &&
+						m.targetType.name === this.getCollectionName()
+					)
+				})
+				metasToReturn.parents = metasToReturn.parents.concat(metasToAdd)
+			}
+		}
+
+		return metasToReturn
 	}
 }

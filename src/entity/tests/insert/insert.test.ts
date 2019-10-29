@@ -3,6 +3,7 @@ import { LegatoConnection } from '../../../connection'
 import { LegatoField } from '../../../decorators/field.decorator'
 import { ObjectID } from 'mongodb'
 import { LegatoRelation } from '../../../decorators/relation.decorator'
+import { LegatoErrorObjectAlreadyInserted } from '../../../errors'
 
 const databaseName = 'insertTest'
 
@@ -135,7 +136,7 @@ describe('insert method', () => {
 			await user.insert()
 		} catch (error) {
 			hasError = true
-			expect(error).toBeInstanceOf(LegatoAlreadyInsertedError)
+			expect(error).toBeInstanceOf(LegatoErrorObjectAlreadyInserted)
 		}
 		expect(hasError).toEqual(true)
 
@@ -162,7 +163,7 @@ describe('insert method', () => {
 
 		const user = new UserBeforeInsert()
 
-		user.events.beforeInsert.subscribe((userToInsert) => {
+		user.beforeInsert<UserBeforeInsert>().subscribe((userToInsert) => {
 			expect(userToInsert.firstname).toEqual('Damien')
 			expect(userToInsert._id).not.toBeDefined()
 			done()
@@ -190,7 +191,7 @@ describe('insert method', () => {
 
 		const user = new UserAfterInsert()
 
-		user.events.afterInsert.subscribe((userSaved) => {
+		user.afterInsert<UserAfterInsert>().subscribe((userSaved) => {
 			expect(userSaved.firstname).toEqual('Damien')
 			expect(userSaved._id).toBeDefined()
 			done()
