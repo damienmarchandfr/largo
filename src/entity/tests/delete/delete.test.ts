@@ -14,6 +14,7 @@ import { DeleteChildTest } from './entities/DeleteChild.entity.test'
 import { DeleteParentTest } from './entities/DeleteParent.entity.test'
 import { DeleteNoChildTest } from './entities/DeleteNoChild.entity.test'
 import { ParentEntityTest } from '../index/enities/Parent.entity.test'
+import { LegatoErrorDeleteParent } from '../../../errors/delete/DeleteParent.error'
 
 const databaseName = 'deleteTest'
 
@@ -177,8 +178,25 @@ describe('delete method', () => {
 		try {
 			await child.delete()
 		} catch (error) {
-			console.error(error)
 			hasError = true
+
+			expect(error).toBeInstanceOf(LegatoErrorDeleteParent)
+			expect(error.toPlainObj()).toStrictEqual({
+				message: `Cannot delete DeleteChildTest with _id = ${child._id} because it's linked to his parent DeleteParentTest with _id = ${parent._id}.`,
+				parent: parent.toPlainObj(),
+				parentClass: DeleteParentTest,
+				parentCollectionName: 'DeleteParentTest',
+				parentMongoID: parent._id,
+				parentRelationKey: 'childId',
+				parentRelationKeyValue: parent.childId,
+
+				child: child.toPlainObj(),
+				childClass: DeleteChildTest,
+				childCollectionName: 'DeleteChildTest',
+				childMongoID: child._id,
+				childRelationKey: '_id',
+				childRelationKeyValue: child._id,
+			})
 		}
 
 		expect(hasError).toBeTruthy()

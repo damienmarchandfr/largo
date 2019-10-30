@@ -25,10 +25,10 @@ export class LegatoErrorDeleteParent extends Error {
 		meta: DataStorageFielRelationValue
 	) {
 		super()
-		this.message = `Cannot delete ${parent.getCollectionName()} with _id = ${
-			parent._id
-		} because it's linked to his child ${child.getCollectionName()} with _id = ${
+		this.message = `Cannot delete ${child.getCollectionName()} with _id = ${
 			child._id
+		} because it's linked to his parent ${parent.getCollectionName()} with _id = ${
+			parent._id
 		}.`
 
 		// Parent informations
@@ -46,5 +46,30 @@ export class LegatoErrorDeleteParent extends Error {
 		this.childMongoID = child._id
 		this.childRelationKey = meta.targetKey
 		this.childRelationKeyValue = (child as any)[meta.targetKey]
+	}
+
+	toPlainObj() {
+		const errorKey = ['message']
+		const parentKeys = [
+			'parentCollectionName',
+			'parentMongoID',
+			'parentClass',
+			'parentRelationKey',
+			'parentRelationKeyValue',
+			'parent',
+		]
+		const childKeys = [
+			'childCollectionName',
+			'childMongoID',
+			'childClass',
+			'childRelationKey',
+			'childRelationKeyValue',
+			'child',
+		]
+		const toReturn: any = {}
+		for (const key of errorKey.concat(parentKeys, childKeys)) {
+			toReturn[key] = (this as any)[key]
+		}
+		return toReturn
 	}
 }
