@@ -21,4 +21,18 @@ export class DeleteParentTest extends LegatoEntity {
 		targetType: DeleteChildTest,
 	})
 	childIds: ObjectID[] = []
+
+	@LegatoRelation({
+		checkRelation: false,
+		populatedKey: 'childNoCheck',
+		targetType: DeleteChildTest,
+	})
+	childIdNoCheck: ObjectID | null = null
+
+	@LegatoRelation({
+		checkRelation: false,
+		populatedKey: 'childrenNoCheck',
+		targetType: DeleteChildTest,
+	})
+	childIdsNoCheck: ObjectID[] = []
 }
