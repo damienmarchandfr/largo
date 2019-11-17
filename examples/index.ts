@@ -103,38 +103,34 @@ new LegatoConnection({
 	.connect({
 		clean: true,
 	})
-	.then(async (connection) => {
+	.then(async () => {
 		// Connected to Mongo database
 		console.log('Your are now connected')
-
-		// Clean all collections
-		await connection.clean()
 
 		// Create first user
 		const user = new User('damien@dev.fr', 'azerty123')
 
-		user.events.beforeInsert.subscribe(() => {
+		user.beforeInsert().subscribe(() => {
 			console.log('Event before insert user')
 		})
 
-		user.events.afterInsert.subscribe(() => {
+		user.afterInsert().subscribe(() => {
 			console.log('Event after insert user.')
 		})
 
 		console.log('User will be saved')
-		const userId = await user.insert(connection)
+		const userId = await user.insert()
 		// User added
 		console.log('User added. MongoID = ' + userId)
 
 		// Change email
-		User.updateMany<User>(
-			connection,
-			{ email: 'toto@toto.com' },
-			{ email: 'damien@dev.fr' }
+		await User.updateMany<User>(
+			{ email: 'damien@dev.fr' },
+			{ email: 'john@doe.fr' }
 		)
 		// Find with new email
-		const updatedUser = await User.findOne<User>(connection, {
-			email: 'toto@toto.com',
+		const updatedUser = await User.findOne<User>({
+			email: 'john@doe.fr',
 		})
 
 		if (!updatedUser) {
@@ -146,46 +142,46 @@ new LegatoConnection({
 		// Create a job
 		const job = new Job('Lead dev !!')
 
-		const inserted = await job.insert(connection)
+		const inserted = await job.insert()
 		user.setJob(inserted)
-		await user.update(connection)
+		await user.update()
 
 		// Create hooby
 		const hobby = new Hobby('Make JS great again !')
-		await hobby.insert(connection)
+		await hobby.insert()
 
 		user.setHobby(hobby.customId)
-		await user.update(connection)
+		await user.update()
 
 		const jobsSavedIds: ObjectID[] = []
 
 		// Create jobs
 		for (let i = 0; i < 2; i++) {
 			const jobForList = new Job('Dev JS number ' + i)
-			jobsSavedIds.push(await jobForList.insert(connection))
+			jobsSavedIds.push(await jobForList.insert())
 		}
 		// Add jobs to user
 		user.setJobs(jobsSavedIds)
-		await user.update(connection)
+		await user.update()
 
-		const populated = await user.populate(connection)
+		const populated = await user.populate()
 
 		// Create a second user
 		const user2 = new User('jeremy@dev.fr', 'azerty123')
 		user2.firstname = 'Jeremy'
 
-		await user2.insert(connection)
+		await user2.insert()
 
 		// Add a hobby to user 2
 		user2.hobbyId = hobby.customId
-		await user2.update(connection)
+		await user2.update()
 
 		// Add jobs to user
 		user2.setJobs(jobsSavedIds)
-		await user2.update(connection)
+		await user2.update()
 
 		// Populate many
-		const users = await User.find<User>(connection, {})
+		const users = await User.find<User>({})
 
 		// const populatedM = await users.populate(connection)
 

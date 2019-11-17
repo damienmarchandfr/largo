@@ -1,8 +1,9 @@
 import { LegatoEntity } from '../../entity'
 import { ObjectID } from 'mongodb'
 import { DataStorageFielRelationValue } from '../..'
+import { LegatoErrorAbstract } from '..'
 
-export class LegatoErrorDeleteParent extends Error {
+export class LegatoErrorDeleteParent extends LegatoErrorAbstract {
 	// Parent want to delete
 	parentCollectionName: string
 	parentMongoID: ObjectID | undefined
@@ -24,12 +25,12 @@ export class LegatoErrorDeleteParent extends Error {
 		child: LegatoEntity,
 		meta: DataStorageFielRelationValue
 	) {
-		super()
-		this.message = `Cannot delete ${child.getCollectionName()} with _id = ${
+		const message = `Cannot delete ${child.getCollectionName()} with _id = ${
 			child._id
 		} because it's linked to his parent ${parent.getCollectionName()} with _id = ${
 			parent._id
 		}.`
+		super(message, 'LEGATO_ERROR_4')
 
 		// Parent informations
 		this.parent = parent.toPlainObj()

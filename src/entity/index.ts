@@ -141,8 +141,8 @@ export class LegatoEntity {
 	}
 
 	static async updateMany<T extends LegatoEntity>(
-		partial: Partial<T>,
 		filter: FilterQuery<any> = {},
+		partial: Partial<T>,
 		options?: UpdateOneOptions
 	) {
 		const collectionName = this.getCollectionName()
@@ -442,7 +442,7 @@ export class LegatoEntity {
 		const inserted = await connection.collections[
 			this.collectionName
 		].insertOne(toInsert)
-		this._id = inserted.insertedId
+		this._id = inserted.insertedId as ObjectID
 		this.copy = this.toPlainObj()
 
 		this.events.afterInsert.next(this)

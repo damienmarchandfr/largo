@@ -1,7 +1,7 @@
 import { setConnection, getConnection } from './index'
 import { LegatoConnection } from './connection'
 
-const databaseName = 'rroro'
+const databaseName = 'errors'
 
 describe('set connection', () => {
 	beforeEach(() => {
@@ -10,7 +10,7 @@ describe('set connection', () => {
 		}
 	})
 
-	it('should throw error if set a disconnect LegatoConnection', () => {
+	it('should throw error if set a disconnected LegatoConnection', () => {
 		const connection = new LegatoConnection({
 			databaseName,
 		})

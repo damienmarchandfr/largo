@@ -73,13 +73,13 @@ export class LegatoConnection {
 		// Remove duplicate collection name
 		collectionNames = uniq(collectionNames)
 
-		// Create collections if not exist
+		// Create collections
 		for (const collectionName of collectionNames) {
 			const collectionCreated = await this.db.createCollection(collectionName)
 			this.collections[collectionName] = collectionCreated
 		}
 
-		// Remove duplicate names
+		// Create indexes
 		collectionNames = Object.keys(LegatoMetaDataStorage().LegatoIndexMetas)
 
 		for (const collectionName of collectionNames) {

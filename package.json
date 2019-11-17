@@ -7,8 +7,8 @@
 	"keywords": [
 		"mongodb",
 		"typescript",
-		"validation",
-		"node"
+		"node",
+		"orm"
 	],
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -29,7 +29,7 @@
 		"example": "ts-node-dev examples/index.ts",
 		"bench_populate_orm": "ts-node-dev benchmark/populate/mongorm.ts",
 		"bench_populate_mongoose": "ts-node-dev benchmark/populate/mongoose.ts",
-		"dev": "jest -- entity/tests/delete/delete.test.ts"
+		"dev": "jest -- entity/tests/deleteMany/deleteMany.test.ts"
 	},
 	"dependencies": {
 		"lodash": "^4.17.15",
@@ -43,10 +43,8 @@
 		"@types/lodash": "^4.14.138",
 		"@types/mongodb": "^3.3.1",
 		"@types/node": "^12.7.4",
-		"faker": "^4.1.0",
 		"jest": "^24.8.0",
 		"rimraf": "^3.0.0",
-		"standard-version": "^7.0.0",
 		"ts-jest": "^24.0.2",
 		"ts-node": "^8.3.0",
 		"ts-node-dev": "^1.0.0-pre.40",

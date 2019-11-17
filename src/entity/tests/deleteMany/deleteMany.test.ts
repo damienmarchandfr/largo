@@ -1,53 +1,45 @@
 import { LegatoConnection } from '../../../connection'
-import { LegatoEntity } from '../..'
-import { LegatoField } from '../../../decorators/field.decorator'
+import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
+import {
+	DeleteManyEntityTest,
+	DeleteManyEntityTestNoDecorator,
+} from './entities/DeleteMany.entity.test'
+import { getConnection, setConnection } from '../../..'
 
-const databaseName = 'deletemanyTest'
+const databaseName = 'deleteMany'
 
 describe('static method deleteMany', () => {
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorDeleteManyStatic extends LegatoEntity {
-			name: string
-
-			constructor() {
-				super()
-				this.name = 'toto'
-			}
-		}
-
 		let hasError = false
 
 		try {
-			await RandomClassWithoutDecoratorDeleteManyStatic.deleteMany({
-				name: 'toto',
+			await DeleteManyEntityTestNoDecorator.deleteMany({
+				name: 'john',
 			})
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
-				`Collection randomclasswithoutdecoratordeletemanystatic does not exist.`
+				`Cannot find DeleteManyEntityTestNoDecorator collection.`
 			)
+			expect(error).toBeInstanceOf(LegatoErrorCollectionDoesNotExist)
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('shoud delete with query filter', async () => {
-		class UserDeleteManyQueryFilter extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			constructor(email: string) {
-				super()
-				this.email = email
-			}
-		}
-
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
@@ -55,37 +47,25 @@ describe('static method deleteMany', () => {
 		})
 
 		// Add 2 users
-		await connection.collections.userdeletemanyqueryfilter.insertMany([
-			new UserDeleteManyQueryFilter('damien@marchand.fr'),
-			new UserDeleteManyQueryFilter('donald@trump.usa'),
+		await connection.collections.DeleteManyEntityTest.insertMany([
+			new DeleteManyEntityTest('john@doe.fr'),
+			new DeleteManyEntityTest('donald@trump.usa'),
 		])
 
 		// Delete donald
-		await UserDeleteManyQueryFilter.deleteMany<UserDeleteManyQueryFilter>({
+		await DeleteManyEntityTest.deleteMany<DeleteManyEntityTest>({
 			email: 'donald@trump.usa',
 		})
 
 		// Search for Donald
-		const donald = await connection.collections.userdeletemanyqueryfilter.findOne(
-			{
-				email: 'donald@trump.usa',
-			}
-		)
+		const donald = await connection.collections.DeleteManyEntityTest.findOne({
+			email: 'donald@trump.usa',
+		})
 
 		expect(donald).toEqual(null)
 	})
 
 	it('should delete all if no query filter', async () => {
-		class UserDeleteManyDeleteAll extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			constructor(email: string) {
-				super()
-				this.email = email
-			}
-		}
-
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
@@ -93,14 +73,14 @@ describe('static method deleteMany', () => {
 		})
 
 		// Add 2 users
-		await connection.collections.userdeletemanydeleteall.insertMany([
-			new UserDeleteManyDeleteAll('damien@marchand.fr'),
-			new UserDeleteManyDeleteAll('donald@trump.usa'),
+		await connection.collections.DeleteManyEntityTest.insertMany([
+			new DeleteManyEntityTest('john@doe.fr'),
+			new DeleteManyEntityTest('donald@trump.usa'),
 		])
 
 		// Delete all users
-		await UserDeleteManyDeleteAll.deleteMany(connection)
-		const countUser = await connection.collections.userdeletemanydeleteall.countDocuments()
+		await DeleteManyEntityTest.deleteMany()
+		const countUser = await connection.collections.DeleteManyEntityTest.countDocuments()
 
 		expect(countUser).toEqual(0)
 	})

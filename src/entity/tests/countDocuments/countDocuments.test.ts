@@ -4,6 +4,7 @@ import {
 	CountDocumentsTestWithoutDecorator,
 	CountDocumentsTest,
 } from './entities/CountDocuments.entity.test'
+import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 
 const databaseName = 'countDocumentsTest'
 
@@ -32,6 +33,7 @@ describe('static method countDocuments', () => {
 			expect(error.message).toEqual(
 				`Cannot find CountDocumentsTestWithoutDecorator collection.`
 			)
+			expect(error).toBeInstanceOf(LegatoErrorCollectionDoesNotExist)
 		}
 
 		expect(hasError).toBeTruthy()

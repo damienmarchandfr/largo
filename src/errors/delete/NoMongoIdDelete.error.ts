@@ -1,10 +1,12 @@
 import { LegatoEntity } from '../../entity'
+import { LegatoErrorAbstract } from '..'
 
-export class LegatoErrorDeleteNoMongoID extends Error {
+export class LegatoErrorDeleteNoMongoID extends LegatoErrorAbstract {
 	toDelete: any
 
 	constructor(toDelete: LegatoEntity) {
-		super(`Cannot delete ${toDelete.getCollectionName()}. No mongoID set.`)
+		const message = `Cannot delete ${toDelete.getCollectionName()}. No mongoID set.`
+		super(message, 'LEGATO_ERROR_5')
 		this.toDelete = toDelete.toPlainObj()
 	}
 }

@@ -8,6 +8,8 @@ import {
 import { DeleteChildTest } from './entities/DeleteChild.entity.test'
 import { DeleteParentTest } from './entities/DeleteParent.entity.test'
 import { LegatoErrorDeleteParent } from '../../../errors/delete/DeleteParent.error'
+import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
+import { LegatoErrorDeleteNoMongoID } from '../../../errors/delete/NoMongoIdDelete.error'
 
 const databaseName = 'deleteTest'
 
@@ -38,6 +40,7 @@ describe('delete method', () => {
 			expect(error.message).toEqual(
 				`Cannot find DeleteEntityTestWithoutDecorator collection.`
 			)
+			expect(error).toBeInstanceOf(LegatoErrorCollectionDoesNotExist)
 		}
 
 		expect(hasError).toBeTruthy()
@@ -61,6 +64,7 @@ describe('delete method', () => {
 			expect(error.message).toEqual(
 				`Cannot delete DeleteEntityTest. No mongoID set.`
 			)
+			expect(error).toBeInstanceOf(LegatoErrorDeleteNoMongoID)
 		}
 
 		expect(hasError).toBeTruthy()
@@ -79,7 +83,7 @@ describe('delete method', () => {
 		const insertResult = await connection.collections.DeleteEntityTest.insertOne(
 			obj
 		)
-		obj._id = insertResult.insertedId
+		obj._id = insertResult.insertedId as ObjectID
 
 		// Check obj in db
 		const check = await connection.collections.DeleteEntityTest.findOne({
@@ -107,7 +111,7 @@ describe('delete method', () => {
 			obj
 		)
 
-		obj._id = inserted.insertedId
+		obj._id = inserted.insertedId as ObjectID
 
 		obj.beforeDelete<DeleteEntityTest>().subscribe((objBeforeDelete) => {
 			expect(objBeforeDelete._id).toStrictEqual(inserted.insertedId)
@@ -129,7 +133,7 @@ describe('delete method', () => {
 		const inserted = await connection.collections.DeleteEntityTest.insertOne(
 			obj
 		)
-		obj._id = inserted.insertedId
+		obj._id = inserted.insertedId as ObjectID
 
 		obj.afterDelete<DeleteEntityTest>().subscribe(async (objDeleted) => {
 			expect(objDeleted._id).toStrictEqual(inserted.insertedId)
