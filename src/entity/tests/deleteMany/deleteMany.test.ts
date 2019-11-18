@@ -9,6 +9,7 @@ import { DeleteManyChildTest } from './entities/DeleteManyChild.entity.test'
 import { DeleteManyParentTest } from './entities/DeleteManyParent.entity.test'
 import { ObjectID } from 'mongodb'
 import { LegatoErrorDeleteChild } from '../../../errors/delete/DeleteChild.error'
+
 const databaseName = 'deleteMany'
 
 describe('static method deleteMany', () => {
@@ -295,7 +296,7 @@ describe('static method deleteMany', () => {
 		expect(childrenCounter).toEqual(2)
 	})
 
-	it('should delete if parent is deleted with one to one relation', async () => {
+	it('should delete if parent relation is set to null for one to one relation', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
@@ -324,5 +325,49 @@ describe('static method deleteMany', () => {
 		}
 
 		expect(hasError).toBeFalsy()
+
+		// Check child is deleted
+		const childrenCounter = await connection.collections.DeleteManyChildTest.count()
+		expect(childrenCounter).toEqual(0)
+	})
+
+	it('should delete if parent relation is set to [] for one to many relation', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Create parent
+		const parent = new DeleteManyParentTest()
+
+		// Create children
+		const child1 = new DeleteManyChildTest()
+		const child2 = new DeleteManyChildTest()
+
+		// Save children
+		await connection.collections.DeleteManyChildTest.insertMany([
+			child1,
+			child2,
+		])
+
+		// Save parent
+		parent.childIds = []
+		await connection.collections.DeleteManyParentTest.insertOne(parent)
+
+		let hasError = false
+
+		try {
+			await DeleteManyChildTest.deleteMany()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		// Children must be deleted
+		const childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
+
+		expect(childrenCounter).toEqual(0)
 	})
 })
