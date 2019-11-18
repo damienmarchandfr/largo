@@ -19,7 +19,7 @@ import {
 	LegatoErrorObjectAlreadyInserted,
 } from '../errors'
 import { LegatoErrorDeleteNoMongoID } from '../errors/delete/NoMongoIdDelete.error'
-import { LegatoErrorDeleteParent } from '../errors/delete/DeleteParent.error'
+import { LegatoErrorDeleteChild } from '../errors/delete/DeleteChild.error'
 
 export class LegatoEntity {
 	/**
@@ -232,18 +232,43 @@ export class LegatoEntity {
 			throw new LegatoErrorCollectionDoesNotExist(collectionName)
 		}
 
-		// TODO : check if not linked to others as a child
-		const relationMetas = LegatoMetaDataStorage().LegatoRelationsMetas
+		// WIP : check if not linked to others as a child
+		const relationMetas = this.getMetasToCheck()
 
-		for (const key in relationMetas) {
-			if (relationMetas.hasOwnProperty(key)) {
-				const element = relationMetas[key]
-				for (const iterator of element) {
-					if (
-						iterator.targetType.name === collectionName &&
-						iterator.checkRelation
-					) {
-						// Search parent with relation
+		// Must check parents
+		if (relationMetas.parents && relationMetas.parents.length) {
+			// Search all elements to delete
+			const mongoObjects = await connection.collections[collectionName]
+				.find(filter)
+				.toArray()
+
+			// Element to delete
+			const children = mongoObjects.map((mongoElement) => {
+				const object = new this()
+				Object.assign(object, mongoElement)
+				return object
+			})
+
+			for (const child of children) {
+				for (const relation of relationMetas.parents) {
+					if ((child as any)[relation.targetKey]) {
+						// Search parent(s) with relation
+						const relationCollectionName = relation.populatedType.name
+
+						const parentFilter: any = {}
+						parentFilter[relation.key] = (child as any)[relation.targetKey]
+
+						const parents = await connection.collections[relationCollectionName]
+							.find(parentFilter)
+							.toArray()
+
+						if (parents.length) {
+							// Get parent constructor
+							const parent = new (relation.populatedType as any)() as LegatoEntity
+							Object.assign(parent, parents[0])
+
+							throw new LegatoErrorDeleteChild(parent, child, relation)
+						}
 					}
 				}
 			}
@@ -542,7 +567,7 @@ export class LegatoEntity {
 						const parent = new (relation.populatedType as any)() as LegatoEntity
 						Object.assign(parent, parents[0])
 
-						throw new LegatoErrorDeleteParent(parent, this, relation)
+						throw new LegatoErrorDeleteChild(parent, this, relation)
 					}
 				}
 			}

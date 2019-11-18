@@ -3,7 +3,7 @@ import { ObjectID } from 'mongodb'
 import { DataStorageFielRelationValue } from '../..'
 import { LegatoErrorAbstract } from '..'
 
-export class LegatoErrorDeleteParent extends LegatoErrorAbstract {
+export class LegatoErrorDeleteChild extends LegatoErrorAbstract {
 	// Parent want to delete
 	parentCollectionName: string
 	parentMongoID: ObjectID | undefined

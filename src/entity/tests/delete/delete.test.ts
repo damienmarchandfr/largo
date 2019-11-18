@@ -7,7 +7,7 @@ import {
 } from './entities/Delete.entity.test'
 import { DeleteChildTest } from './entities/DeleteChild.entity.test'
 import { DeleteParentTest } from './entities/DeleteParent.entity.test'
-import { LegatoErrorDeleteParent } from '../../../errors/delete/DeleteParent.error'
+import { LegatoErrorDeleteChild } from '../../../errors/delete/DeleteChild.error'
 import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 import { LegatoErrorDeleteNoMongoID } from '../../../errors/delete/NoMongoIdDelete.error'
 
@@ -176,7 +176,7 @@ describe('delete method', () => {
 		} catch (error) {
 			hasError = true
 
-			expect(error).toBeInstanceOf(LegatoErrorDeleteParent)
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
 			expect(error.toPlainObj()).toStrictEqual({
 				message: `Cannot delete DeleteChildTest with _id = ${child._id} because it's linked to his parent DeleteParentTest with _id = ${parent._id}.`,
 				parent: parent.toPlainObj(),
@@ -232,7 +232,7 @@ describe('delete method', () => {
 		} catch (error) {
 			hasError = true
 
-			expect(error).toBeInstanceOf(LegatoErrorDeleteParent)
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
 			expect(error.toPlainObj()).toStrictEqual({
 				message: `Cannot delete DeleteChildTest with _id = ${child._id} because it's linked to his parent DeleteParentTest with _id = ${parent._id}.`,
 				parent: parent.toPlainObj(),
