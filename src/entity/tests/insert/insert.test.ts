@@ -1,24 +1,23 @@
-import { LegatoEntity } from '../..'
 import { LegatoConnection } from '../../../connection'
-import { LegatoField } from '../../../decorators/field.decorator'
 import { ObjectID } from 'mongodb'
-import { LegatoRelation } from '../../../decorators/relation.decorator'
+import {
+	InsertTestWithoutDecorator,
+	InsertTest,
+} from './entities/Insert.entity.test'
+import { getConnection, setConnection } from '../../..'
 import { LegatoErrorObjectAlreadyInserted } from '../../../errors'
 
 const databaseName = 'insertTest'
 
 describe('insert method', () => {
-	it('should throw an error if collection does not exist', async () => {
-		class RandomClassWithoutDecoratorInsert extends LegatoEntity {
-			name: string
-
-			constructor() {
-				super()
-				this.name = 'toto'
-			}
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
 		}
+	})
 
-		const connection = await new LegatoConnection({
+	it('should throw an error if collection does not exist', async () => {
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
@@ -27,178 +26,101 @@ describe('insert method', () => {
 		let hasError = false
 
 		try {
-			await new RandomClassWithoutDecoratorInsert().insert()
+			await new InsertTestWithoutDecorator().insert()
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
-				`Collection randomclasswithoutdecoratorinsert does not exist.`
+				'Cannot find InsertTestWithoutDecorator collection.'
 			)
-			expect(error.code).toEqual('Legato_ERROR_404')
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
-	it('should insert', async () => {
-		class UserInsert extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			constructor(email: string) {
-				super()
-				this.email = email
-			}
-		}
-
+	it('should insert with no relations', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		// Check if collection if empty
-		const count = await connection.collections.userinsert.countDocuments()
-		expect(count).toEqual(0)
+		const toInsert = new InsertTest()
+		expect(toInsert._id).toBeUndefined()
 
-		const user = new UserInsert('damien@dev.fr')
-		const userId = await user.insert()
+		const id = await toInsert.insert()
 
-		// One user created
-		expect(userId).toStrictEqual(user._id as {})
+		expect(id).toBeInstanceOf(ObjectID)
+		expect(id).toStrictEqual(toInsert._id)
 
-		// Check with id
-		const userRetrived = await connection.collections.userinsert.findOne({
-			_id: userId,
-		})
-		expect(userRetrived.email).toEqual(user.email)
-	})
-
-	it('should not insert fields without decorator', async () => {
-		class UserInsertNoDecoratorFieldSaved extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			personal: string
-
-			constructor(email: string) {
-				super()
-				this.email = email
-				this.personal = 'love cat'
-			}
-		}
-
-		const connection = await new LegatoConnection({
-			databaseName,
-		}).connect({
-			clean: true,
-		})
-
-		const obj = new UserInsertNoDecoratorFieldSaved('damien@dev.fr')
-
-		const id = await obj.insert()
-
-		const saved = await connection.collections.userinsertnodecoratorfieldsaved.findOne(
-			{
-				_id: id,
-			}
-		)
-
-		expect(saved).toStrictEqual({
+		// Search element in database
+		const fromMongo = await connection.collections.InsertTest.findOne({
 			_id: id,
-			email: 'damien@dev.fr',
 		})
+		expect(fromMongo._id).toStrictEqual(id)
 	})
 
 	it('should not insert the same object 2 times', async () => {
-		class UserSaved2Times extends LegatoEntity {
-			@LegatoField()
-			firstname: string
-
-			constructor() {
-				super()
-				this.firstname = 'Damien'
-			}
-		}
-
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		const user = new UserSaved2Times()
-		const id = await user.insert()
+		const toInsert = new InsertTest()
 
-		expect(id).toStrictEqual((user as any)._id)
+		await toInsert.insert()
 
 		let hasError = false
 		try {
-			await user.insert()
+			await toInsert.insert()
 		} catch (error) {
 			hasError = true
 			expect(error).toBeInstanceOf(LegatoErrorObjectAlreadyInserted)
 		}
 		expect(hasError).toEqual(true)
 
-		const count = await connection.collections.usersaved2times.countDocuments()
+		const count = await connection.collections.InsertTest.countDocuments()
 		expect(count).toEqual(1)
 	})
 
 	it('should trigger beforeInsert', async (done) => {
-		class UserBeforeInsert extends LegatoEntity {
-			@LegatoField()
-			firstname: string
-
-			constructor() {
-				super()
-				this.firstname = 'Damien'
-			}
-		}
-
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		const user = new UserBeforeInsert()
+		const toInsert = new InsertTest()
 
-		user.beforeInsert<UserBeforeInsert>().subscribe((userToInsert) => {
-			expect(userToInsert.firstname).toEqual('Damien')
-			expect(userToInsert._id).not.toBeDefined()
+		toInsert.beforeInsert<InsertTest>().subscribe((willBeinserted) => {
+			expect(willBeinserted).toEqual(toInsert)
 			done()
 		})
 
-		await user.insert()
+		await toInsert.insert()
 	})
 
 	it('should trigger afterInsert', async (done) => {
-		class UserAfterInsert extends LegatoEntity {
-			@LegatoField()
-			firstname: string
-
-			constructor() {
-				super()
-				this.firstname = 'Damien'
-			}
-		}
-
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		const user = new UserAfterInsert()
+		const toInsert = new InsertTest()
 
-		user.afterInsert<UserAfterInsert>().subscribe((userSaved) => {
-			expect(userSaved.firstname).toEqual('Damien')
-			expect(userSaved._id).toBeDefined()
+		toInsert.afterInsert<InsertTest>().subscribe((inserted) => {
+			expect(inserted._id).toBeInstanceOf(ObjectID)
 			done()
 		})
 
-		await user.insert()
+		await toInsert.insert()
 	})
+
+	/*
+	
+
+	
 
 	it('should return an error if relation set does not exist', async () => {
 		const objectIDset = new ObjectID()
@@ -311,5 +233,5 @@ describe('insert method', () => {
 		}
 
 		expect(hasError).toEqual(true)
-	})
+	}*/
 })
