@@ -15,11 +15,10 @@ export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 	childClass: Function
 	childRelationKey: string
 	childRelationKeyValue: any
-	child: LegatoEntity
 
 	constructor(
 		parent: LegatoEntity,
-		child: LegatoEntity,
+		relationKey: string,
 		meta: DataStorageFielRelationValue
 	) {
 		const message = `Cannot insert ${parent.getCollectionName()} because it's linked to his child ${child.getCollectionName()} with ${
@@ -35,7 +34,6 @@ export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 		this.parentRelationKeyValue = (parent as any)[meta.key]
 
 		// Child information
-		this.child = child.toPlainObj()
 		this.childClass = child.constructor
 		this.childCollectionName = child.getCollectionName()
 		this.childRelationKey = meta.targetKey

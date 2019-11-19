@@ -20,6 +20,7 @@ import {
 } from '../errors'
 import { LegatoErrorDeleteNoMongoID } from '../errors/delete/NoMongoIdDelete.error'
 import { LegatoErrorDeleteChild } from '../errors/delete/DeleteChild.error'
+import { LegatoErrorInsertParent } from '../errors/insert/InsertParent.error'
 
 export class LegatoEntity {
 	/**
@@ -445,8 +446,6 @@ export class LegatoEntity {
 							)
 
 							console.log('diff', diff)
-
-							throw new Error()
 						}
 					} else {
 						// Relation with one element
@@ -457,7 +456,7 @@ export class LegatoEntity {
 						})
 
 						if (!relationQueryResult) {
-							throw new Error()
+							throw new LegatoErrorInsertParent(this)
 						}
 					}
 				}
