@@ -6,6 +6,9 @@ import {
 } from './entities/Insert.entity.test'
 import { getConnection, setConnection } from '../../..'
 import { LegatoErrorObjectAlreadyInserted } from '../../../errors'
+import { InsertParentTest } from './entities/InsertParent.entity.test'
+import { InserChildTest } from './entities/InsertChild.entity.test'
+import { connect } from 'http2'
 
 const databaseName = 'insertTest'
 
@@ -115,6 +118,134 @@ describe('insert method', () => {
 		})
 
 		await toInsert.insert()
+	})
+
+	it('should insert with valid one to one relation', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const parent = new InsertParentTest()
+
+		const child = new InserChildTest()
+		await connection.collections.InserChildTest.insertOne(child)
+
+		parent.childId = child._id as ObjectID
+
+		await parent.insert()
+
+		// Search parent
+		const parentFromMongo = await connection.collections.InsertParentTest.findOne(
+			{ _id: parent._id }
+		)
+		expect(parentFromMongo).toBeTruthy()
+		expect(parent.childId).toStrictEqual(child._id)
+	})
+
+	it('should insert with valid one to many relation', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const parent = new InsertParentTest()
+
+		const child1 = new InserChildTest()
+		const child2 = new InserChildTest()
+
+		await connection.collections.InserChildTest.insertMany([child1, child2])
+
+		parent.childIds = [child1._id as ObjectID, child2._id as ObjectID]
+
+		await parent.insert()
+
+		// Search parent
+		const parentFromMongo = await connection.collections.InsertParentTest.findOne(
+			{ _id: parent._id }
+		)
+		expect(parentFromMongo).toBeTruthy()
+		expect(parent.childIds.length).toEqual(2)
+	})
+
+	it('should insert with invalid one to one relation and check = false', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const parent = new InsertParentTest()
+
+		const id = new ObjectID()
+		parent.childIdNoCheck = id
+
+		let hasError = false
+		try {
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+		}
+		expect(hasError).toBeFalsy()
+
+		// Search parent
+		const parentFromMongo = await connection.collections.InsertParentTest.findOne(
+			{ _id: parent._id }
+		)
+		expect(parentFromMongo).toBeTruthy()
+		expect(parent.childIdNoCheck).toStrictEqual(id)
+	})
+
+	it('should insert with invalid one to many relation and check = false', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const parent = new InsertParentTest()
+
+		const ids = [new ObjectID(), new ObjectID()]
+		parent.childIdsNoCheck = ids
+
+		let hasError = false
+		try {
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+		}
+		expect(hasError).toBeFalsy()
+
+		// Search parent
+		const parentFromMongo = await connection.collections.InsertParentTest.findOne(
+			{ _id: parent._id }
+		)
+		expect(parentFromMongo).toBeTruthy()
+		expect(parent.childIdsNoCheck).toStrictEqual(ids)
+	})
+
+	it('should refuse to insert if one to one relation is not valid', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const parent = new InsertParentTest()
+		parent.childId = new ObjectID()
+
+		let hasError = false
+
+		try {
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+			console.log(error)
+		}
+
+		expect(hasError).toBeTruthy()
 	})
 
 	/*

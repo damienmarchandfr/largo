@@ -402,12 +402,10 @@ export class LegatoEntity {
 		this.events.beforeInsert.next(this)
 
 		// Check if all relations works
-		const relations = LegatoMetaDataStorage().LegatoRelationsMetas[
-			this.collectionName
-		]
+		const relationsMetas = this.getMetasToCheck()
 
-		if (relations) {
-			for (const relation of relations) {
+		if (relationsMetas.children && relationsMetas.children.length) {
+			for (const relation of relationsMetas.children) {
 				if ((this as any)[relation.key]) {
 					const relationCollectioName = relation.targetType.name
 
@@ -445,6 +443,8 @@ export class LegatoEntity {
 									return new ObjectID(idString)
 								}
 							)
+
+							console.log('diff', diff)
 
 							throw new Error()
 						}
