@@ -2,6 +2,9 @@ import { LegatoErrorAbstract } from '..'
 import { LegatoEntity } from '../../entity'
 import { DataStorageFielRelationValue } from '../..'
 
+/**
+ * When insert parent and relations are not valid
+ */
 export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 	// Parent want to insert
 	parentCollectionName: string
@@ -21,9 +24,9 @@ export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 		relationKey: string,
 		meta: DataStorageFielRelationValue
 	) {
-		const message = `Cannot insert ${parent.getCollectionName()} because it's linked to his child ${child.getCollectionName()} with ${
-			meta.targetKey
-		} = ${(child as any)[meta.targetKey]}.`
+		const message = `Cannot insert ${parent.getCollectionName()} because it's linked to his child ${
+			meta.targetType.name
+		} with ${meta.targetKey} = ${(parent as any)[relationKey]}.`
 		super(message, 'LEGATO_ERROR_6')
 
 		// Parent informations
@@ -34,10 +37,10 @@ export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 		this.parentRelationKeyValue = (parent as any)[meta.key]
 
 		// Child information
-		this.childClass = child.constructor
-		this.childCollectionName = child.getCollectionName()
+		this.childClass = meta.targetType
+		this.childCollectionName = meta.targetType.name
 		this.childRelationKey = meta.targetKey
-		this.childRelationKeyValue = (child as any)[meta.targetKey]
+		this.childRelationKeyValue = (parent as any)[relationKey]
 	}
 
 	toPlainObj() {
