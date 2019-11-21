@@ -4,9 +4,9 @@ import { LegatoField } from '../../../../decorators/field.decorator'
 export class InsertTestWithoutDecorator extends LegatoEntity {
 	name: string
 
-	constructor() {
+	constructor(name = 'john') {
 		super()
-		this.name = 'john'
+		this.name = name
 	}
 }
 
@@ -14,8 +14,8 @@ export class InsertTest extends LegatoEntity {
 	@LegatoField()
 	name: string
 
-	constructor() {
+	constructor(name = 'john') {
 		super()
-		this.name = 'john'
+		this.name = name
 	}
 }

@@ -27,9 +27,7 @@
 		"test": "jest --forceExit --detectOpenHandles",
 		"test:watch": "jest --watch --verbose false",
 		"example": "ts-node-dev examples/index.ts",
-		"bench_populate_orm": "ts-node-dev benchmark/populate/mongorm.ts",
-		"bench_populate_mongoose": "ts-node-dev benchmark/populate/mongoose.ts",
-		"dev": "jest -- entity/tests/insert/insert.test.ts"
+		"dev": "jest -- entity/tests/update/update.test.ts"
 	},
 	"dependencies": {
 		"lodash": "^4.17.15",

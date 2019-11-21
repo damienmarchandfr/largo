@@ -1,7 +1,7 @@
 import { LegatoEntity } from '../../..'
 import { LegatoField } from '../../../../decorators/field.decorator'
 
-export class CountDocumentsTest extends LegatoEntity {
+export class FindEntityTest extends LegatoEntity {
 	@LegatoField()
 	name: string
 
@@ -11,7 +11,7 @@ export class CountDocumentsTest extends LegatoEntity {
 	}
 }
 
-export class CountDocumentsTestWithoutDecorator extends LegatoEntity {
+export class FindEntityTestWithoutDecorator extends LegatoEntity {
 	name: string
 
 	constructor(name = 'john') {

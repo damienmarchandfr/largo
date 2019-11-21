@@ -12,10 +12,10 @@ export class DeleteManyEntityTestNoDecorator extends LegatoEntity {
 
 export class DeleteManyEntityTest extends LegatoEntity {
 	@LegatoField()
-	email: string
+	name: string
 
-	constructor(email: string) {
+	constructor(name = 'john') {
 		super()
-		this.email = email
+		this.name = name
 	}
 }

@@ -2,7 +2,7 @@ import { LegatoEntity } from '../../..'
 import { LegatoField } from '../../../../decorators/field.decorator'
 import { LegatoIndex } from '../../../../decorators/index.decorator'
 
-export class DeleteManyChildTest extends LegatoEntity {
+export class UpdateManyChildTest extends LegatoEntity {
 	@LegatoField()
 	name: string
 

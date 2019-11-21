@@ -1,38 +1,38 @@
 import { LegatoEntity } from '../../..'
 import { LegatoRelation } from '../../../../decorators/relation.decorator'
-import { DeleteChildTest } from './DeleteChild.entity.test'
 import { ObjectID } from 'mongodb'
 import { LegatoField } from '../../../../decorators/field.decorator'
+import { UpdateManyChildTest } from './UpdateManyChild.entity.test'
 
-export class DeleteParentTest extends LegatoEntity {
+export class UpdateParentTest extends LegatoEntity {
 	@LegatoField()
 	name: string
 
 	@LegatoRelation({
 		checkRelation: true,
 		populatedKey: 'child',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 	})
 	childId: ObjectID | null = null
 
 	@LegatoRelation({
 		checkRelation: true,
 		populatedKey: 'children',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 	})
 	childIds: ObjectID[] = []
 
 	@LegatoRelation({
 		checkRelation: false,
 		populatedKey: 'childNoCheck',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 	})
 	childIdNoCheck: ObjectID | null = null
 
 	@LegatoRelation({
 		checkRelation: false,
 		populatedKey: 'childrenNoCheck',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 	})
 	childIdsNoCheck: ObjectID[] = []
 
@@ -40,7 +40,7 @@ export class DeleteParentTest extends LegatoEntity {
 	@LegatoRelation({
 		checkRelation: true,
 		populatedKey: 'childString',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 		targetKey: 'stringId',
 	})
 	childIdString: string | null = null
@@ -48,7 +48,7 @@ export class DeleteParentTest extends LegatoEntity {
 	@LegatoRelation({
 		checkRelation: true,
 		populatedKey: 'childrenString',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 		targetKey: 'stringId',
 	})
 	childIdsString: string[] = []
@@ -57,7 +57,7 @@ export class DeleteParentTest extends LegatoEntity {
 	@LegatoRelation({
 		checkRelation: true,
 		populatedKey: 'childNumber',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 		targetKey: 'numberId',
 	})
 	childIdNumber: number | null = null
@@ -65,7 +65,7 @@ export class DeleteParentTest extends LegatoEntity {
 	@LegatoRelation({
 		checkRelation: true,
 		populatedKey: 'childrenNumber',
-		targetType: DeleteChildTest,
+		targetType: UpdateManyChildTest,
 		targetKey: 'numberId',
 	})
 	childIdsNumber: number[] = []

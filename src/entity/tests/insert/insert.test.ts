@@ -537,4 +537,20 @@ describe('insert method', () => {
 		counter = await connection.collections.InsertParentTest.countDocuments()
 		expect(counter).toEqual(0)
 	})
+
+	it('should copy value in object after insert', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const obj = new InsertTest('john doe')
+		await obj.insert()
+
+		expect(obj.getCopy()).toStrictEqual({
+			name: 'john doe',
+			_id: obj._id,
+		})
+	})
 })

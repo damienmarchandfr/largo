@@ -5,7 +5,7 @@ export class DeleteEntityTest extends LegatoEntity {
 	@LegatoField()
 	name: string
 
-	constructor(name: string) {
+	constructor(name = 'john') {
 		super()
 		this.name = name
 	}
@@ -14,8 +14,8 @@ export class DeleteEntityTest extends LegatoEntity {
 export class DeleteEntityTestWithoutDecorator extends LegatoEntity {
 	name: string
 
-	constructor() {
+	constructor(name = 'john') {
 		super()
-		this.name = 'John'
+		this.name = name
 	}
 }

@@ -6,7 +6,7 @@ import { DeleteManyChildTest } from './DeleteManyChild.entity.test'
 
 export class DeleteManyParentTest extends LegatoEntity {
 	@LegatoField()
-	name = 'DeleteManyParent'
+	name: string
 
 	@LegatoRelation({
 		checkRelation: true,
@@ -69,4 +69,9 @@ export class DeleteManyParentTest extends LegatoEntity {
 		targetKey: 'numberId',
 	})
 	childIdsNumber: number[] = []
+
+	constructor(name = 'john') {
+		super()
+		this.name = name
+	}
 }

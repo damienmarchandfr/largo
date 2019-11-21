@@ -1,91 +1,72 @@
 import { LegatoConnection } from '../../../connection'
 import { LegatoEntity } from '../..'
 import { LegatoField } from '../../../decorators/field.decorator'
+import {
+	FindOneEntityTestWithoutDecorator,
+	FindOneEntityTest,
+} from './entities/FindOne.entity.test'
+import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
+import { getConnection, setConnection } from '../../..'
 
 const databaseName = 'findoneTest'
 
 describe('static method findOne', () => {
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorFindOne extends LegatoEntity {
-			name: string
-
-			constructor() {
-				super()
-				this.name = 'toto'
-			}
-		}
-
 		let hasError = false
 
 		try {
-			await RandomClassWithoutDecoratorFindOne.findOne<
-				RandomClassWithoutDecoratorFindOne
-			>({ name: 'toto' })
+			await FindOneEntityTestWithoutDecorator.findOne<
+				FindOneEntityTestWithoutDecorator
+			>({ name: 'john' })
 		} catch (error) {
 			hasError = true
-			expect(error.message).toEqual(
-				`Collection randomclasswithoutdecoratorfindone does not exist.`
-			)
-			expect(error.code).toEqual('Legato_ERROR_404')
+			expect(error).toBeInstanceOf(LegatoErrorCollectionDoesNotExist)
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should findOne', async () => {
-		class UserFindOneStatic extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			constructor() {
-				super()
-				this.email = 'damien@marchand.fr'
-			}
-		}
-
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		// Insert user with mongodb native lib
-		await connection.collections.userfindonestatic.insertOne(
-			new UserFindOneStatic()
-		)
+		const obj = new FindOneEntityTest('john')
 
-		const user = await UserFindOneStatic.findOne<UserFindOneStatic>({
-			email: 'damien@marchand.fr',
+		// Insert user with mongodb native lib
+		await connection.collections.FindOneEntityTest.insertOne(obj)
+
+		const result = await FindOneEntityTest.findOne<FindOneEntityTest>({
+			name: 'john',
 		})
 
-		const userResult = user as UserFindOneStatic
+		expect(result).not.toBe(null)
+		expect(result).toMatchObject({
+			_id: obj._id,
+			name: 'john',
+		})
 
-		expect(user).not.toBe(null)
-		expect(userResult.email).toEqual('damien@marchand.fr')
-
-		expect(userResult.getCopy()).toEqual({
-			_id: userResult._id,
-			email: 'damien@marchand.fr',
+		expect((result as FindOneEntityTest).getCopy()).toEqual({
+			_id: obj._id,
+			name: 'john',
 		})
 	})
 
 	it('should not find and return null', async () => {
-		class UserFindOneStaticNull extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			constructor() {
-				super()
-				this.email = 'damien@marchand.fr'
-			}
-		}
-
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
@@ -93,14 +74,14 @@ describe('static method findOne', () => {
 		})
 
 		// Insert user with mongodb native lib
-		await connection.collections.userfindonestaticnull.insertOne(
-			new UserFindOneStaticNull()
+		await connection.collections.FindOneEntityTest.insertOne(
+			new FindOneEntityTest('john')
 		)
 
-		const user = await UserFindOneStaticNull.findOne({
-			email: 'donal@trump.usa',
+		const result = await FindOneEntityTest.findOne({
+			name: 'john doe',
 		})
 
-		expect(user).toEqual(null)
+		expect(result).toEqual(null)
 	})
 })
