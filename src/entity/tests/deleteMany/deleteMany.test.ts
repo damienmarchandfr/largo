@@ -296,6 +296,148 @@ describe('static method deleteMany', () => {
 		expect(childrenCounter).toEqual(2)
 	})
 
+	it('should throw error if want to delete a child in one to one with check = true and custom id', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// id as string
+
+		// Create parent
+		const parent = new DeleteManyParentTest()
+		parent.childIdString = 'john'
+
+		// Create child
+		const child = new DeleteManyChildTest()
+		child.stringId = 'john'
+
+		// Save child
+		await connection.collections.DeleteManyChildTest.insertOne(child)
+
+		// Save parent
+		await connection.collections.DeleteManyParentTest.insertOne(parent)
+
+		// Try to delete child
+		let hasError = false
+
+		try {
+			await DeleteManyChildTest.deleteMany()
+		} catch (error) {
+			expect(error.childRelationKey).toEqual('stringId')
+			expect(error.childRelationKeyValue).toEqual('john')
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		// Child is not deleted
+		let childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
+		expect(childrenCounter).toEqual(1)
+
+		// id as number
+		await connection.collections.DeleteManyChildTest.deleteMany({})
+		await connection.collections.DeleteManyParentTest.deleteMany({})
+
+		const parent2 = new DeleteManyParentTest()
+		parent2.childIdNumber = 1
+
+		const child2 = new DeleteManyChildTest()
+		child2.numberId = 1
+
+		await connection.collections.DeleteManyChildTest.insertOne(child2)
+		await connection.collections.DeleteManyParentTest.insertOne(parent2)
+
+		hasError = false
+
+		try {
+			await DeleteManyChildTest.deleteMany()
+		} catch (error) {
+			expect(error.childRelationKey).toEqual('numberId')
+			expect(error.childRelationKeyValue).toEqual(1)
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
+		expect(childrenCounter).toEqual(1)
+	})
+
+	it('should throw error if want to delete a child in one to many with check = true and custom id', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// id as string
+
+		// Create parent
+		const parent = new DeleteManyParentTest()
+		parent.childIdsString = ['john']
+
+		// Create child
+		const child = new DeleteManyChildTest()
+		child.stringId = 'john'
+
+		// Save child
+		await connection.collections.DeleteManyChildTest.insertOne(child)
+
+		// Save parent
+		await connection.collections.DeleteManyParentTest.insertOne(parent)
+
+		// Try to delete child
+		let hasError = false
+
+		try {
+			await DeleteManyChildTest.deleteMany()
+		} catch (error) {
+			expect(error.childRelationKey).toEqual('stringId')
+			expect(error.childRelationKeyValue).toEqual('john')
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		// Child is not deleted
+		let childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
+		expect(childrenCounter).toEqual(1)
+
+		// id as number
+		await connection.collections.DeleteManyChildTest.deleteMany({})
+		await connection.collections.DeleteManyParentTest.deleteMany({})
+
+		const parent2 = new DeleteManyParentTest()
+		parent2.childIdsNumber = [1]
+
+		const child2 = new DeleteManyChildTest()
+		child2.numberId = 1
+
+		await connection.collections.DeleteManyChildTest.insertOne(child2)
+		await connection.collections.DeleteManyParentTest.insertOne(parent2)
+
+		hasError = false
+
+		try {
+			await DeleteManyChildTest.deleteMany()
+		} catch (error) {
+			expect(error.childRelationKey).toEqual('numberId')
+			expect(error.childRelationKeyValue).toEqual(1)
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
+		expect(childrenCounter).toEqual(1)
+	})
+
 	it('should delete if parent relation is set to null for one to one relation', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,

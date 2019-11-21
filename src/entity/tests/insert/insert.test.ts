@@ -7,8 +7,10 @@ import {
 import { getConnection, setConnection } from '../../..'
 import { LegatoErrorObjectAlreadyInserted } from '../../../errors'
 import { InsertParentTest } from './entities/InsertParent.entity.test'
-import { InserChildTest } from './entities/InsertChild.entity.test'
+import { InsertChildTest } from './entities/InsertChild.entity.test'
 import { connect } from 'http2'
+import { LegatoErrorInsertParent } from '../../../errors/insert/InsertParent.error'
+import { ChildEntityTest } from '../index/enities/Child.entity.test'
 
 const databaseName = 'insertTest'
 
@@ -129,8 +131,8 @@ describe('insert method', () => {
 
 		const parent = new InsertParentTest()
 
-		const child = new InserChildTest()
-		await connection.collections.InserChildTest.insertOne(child)
+		const child = new InsertChildTest()
+		await connection.collections.InsertChildTest.insertOne(child)
 
 		parent.childId = child._id as ObjectID
 
@@ -153,10 +155,10 @@ describe('insert method', () => {
 
 		const parent = new InsertParentTest()
 
-		const child1 = new InserChildTest()
-		const child2 = new InserChildTest()
+		const child1 = new InsertChildTest()
+		const child2 = new InsertChildTest()
 
-		await connection.collections.InserChildTest.insertMany([child1, child2])
+		await connection.collections.InsertChildTest.insertMany([child1, child2])
 
 		parent.childIds = [child1._id as ObjectID, child2._id as ObjectID]
 
@@ -168,6 +170,124 @@ describe('insert method', () => {
 		)
 		expect(parentFromMongo).toBeTruthy()
 		expect(parent.childIds.length).toEqual(2)
+	})
+
+	it('should insert with  valid one to one relation with custom id', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const parent = new InsertParentTest()
+		parent.childIdString = 'john'
+
+		const child = new InsertChildTest()
+		child.stringId = 'john'
+
+		await connection.collections.InsertChildTest.insertOne(child)
+
+		let hasError = false
+		try {
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+		}
+		expect(hasError).toBeFalsy()
+
+		let parentFromMongo = await connection.collections.InsertParentTest.findOne(
+			{ childIdString: 'john' }
+		)
+
+		expect(parentFromMongo._id).toStrictEqual(parent._id)
+
+		// Id as number
+		await connection.collections.InsertChildTest.deleteMany({})
+		await connection.collections.InsertParentTest.deleteMany({})
+
+		const child1 = new InsertChildTest()
+		child1.numberId = 1
+
+		const parent1 = new InsertParentTest()
+		parent1.childIdNumber = 1
+
+		await connection.collections.InsertChildTest.insertOne(child1)
+
+		hasError = false
+
+		try {
+			await parent1.insert()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		parentFromMongo = await connection.collections.InsertParentTest.findOne({
+			childIdNumber: 1,
+		})
+
+		expect(parentFromMongo._id).toStrictEqual(parent1._id)
+	})
+
+	it('should insert with  valid one to many relation with custom id', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// id string
+		const parent = new InsertParentTest()
+		parent.childIdsString = ['john']
+
+		const child = new InsertChildTest()
+		child.stringId = 'john'
+
+		await connection.collections.InsertChildTest.insertOne(child)
+
+		let hasError = false
+
+		try {
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		let parentFromMongo = await connection.collections.InsertParentTest.findOne(
+			{ childIdsString: ['john'] }
+		)
+
+		expect(parentFromMongo._id).toStrictEqual(parent._id)
+
+		// id number
+		await connection.collections.InsertParentTest.deleteMany({})
+		await connection.collections.InsertChildTest.deleteMany({})
+
+		const parent1 = new InsertParentTest()
+		parent1.childIdsNumber = [1]
+
+		const child1 = new InsertChildTest()
+		child1.numberId = 1
+
+		await connection.collections.InsertChildTest.insertOne(child1)
+
+		hasError = false
+
+		try {
+			await parent1.insert()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		parentFromMongo = await connection.collections.InsertParentTest.findOne({
+			childIdsNumber: [1],
+		})
+		expect(parentFromMongo._id).toStrictEqual(parent1._id)
 	})
 
 	it('should insert with invalid one to one relation and check = false', async () => {
@@ -242,127 +362,179 @@ describe('insert method', () => {
 			await parent.insert()
 		} catch (error) {
 			hasError = true
-			console.log(error)
+			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
 		}
 
 		expect(hasError).toBeTruthy()
+
+		// Check that parent not insered
+		const counter = await connection.collections.InsertParentTest.countDocuments()
+
+		expect(counter).toEqual(0)
 	})
 
-	/*
-	
-
-	
-
-	it('should return an error if relation set does not exist', async () => {
-		const objectIDset = new ObjectID()
-		class JobRelationDecoratorInvalidRelation extends LegatoEntity {
-			@LegatoField()
-			companyName: string
-
-			constructor() {
-				super()
-				this.companyName = 'company name'
-			}
-		}
-
-		class UserRelationDecoratorInvalidRelation extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			@LegatoRelation({
-				populatedKey: 'job',
-				targetType: JobRelationDecoratorInvalidRelation,
-			})
-			jobId: ObjectID | null = null
-			job?: JobRelationDecoratorInvalidRelation | null
-
-			constructor() {
-				super()
-				this.email = 'damien@mail.com'
-				this.jobId = objectIDset // No job with this _id
-			}
-		}
-
+	it('should refuse to insert if one to one relation is not valid with custom id', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		// Insert Job
-		await new JobRelationDecoratorInvalidRelation().insert()
+		// id string
+		const parent = new InsertParentTest()
+		parent.childIdString = 'john'
 
-		// Insert User with jobId not in database
 		let hasError = false
 
 		try {
-			await new UserRelationDecoratorInvalidRelation().insert()
+			await parent.insert()
 		} catch (error) {
-			const message = `You set jobId : ${objectIDset.toHexString()} on object UserRelationDecoratorInvalidRelation. JobRelationDecoratorInvalidRelation with _id : ${objectIDset.toHexString()} does not exist.`
-			expect(error.message).toEqual(message)
 			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
 		}
 
-		expect(hasError).toEqual(true)
+		expect(hasError).toBeTruthy()
+
+		// Check that parent not insered
+		let counter = await connection.collections.InsertParentTest.countDocuments()
+
+		expect(counter).toEqual(0)
+
+		// id number
+		const parent1 = new InsertParentTest()
+		parent1.childIdNumber = 1
+
+		hasError = false
+
+		try {
+			await parent1.insert()
+		} catch (error) {
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		// Check that parent not insered
+		counter = await connection.collections.InsertParentTest.countDocuments()
+
+		expect(counter).toEqual(0)
 	})
 
-	it('should throw error if one element does not exist in one to many relation', async () => {
-		const objectIDNotUsed = new ObjectID()
-		class JobRelationDecoratorInvalidRelations extends LegatoEntity {
-			@LegatoField()
-			companyName: string
-
-			constructor(index: number) {
-				super()
-				this.companyName = 'company name ' + index
-			}
-		}
-
-		class UserRelationDecoratorInvalidRelations extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			@LegatoRelation({
-				populatedKey: 'job',
-				targetType: JobRelationDecoratorInvalidRelations,
-			})
-			jobIds: ObjectID[] = []
-			job?: JobRelationDecoratorInvalidRelations[]
-
-			constructor(savedJobId: ObjectID) {
-				super()
-				this.email = 'damien@mail.com'
-				this.jobIds.push(savedJobId)
-			}
-
-			addNotSavedJob(id: ObjectID) {
-				this.jobIds.push(id)
-			}
-		}
-
+	it('should refuse to insert if one to many relation is not valid', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		// Create a job
-		const job = new JobRelationDecoratorInvalidRelations(0)
-		const jobId = await job.insert()
-
-		// Create user linked to the job saved before
-		const user = new UserRelationDecoratorInvalidRelations(jobId)
-		// Add a job not in db
-		user.addNotSavedJob(objectIDNotUsed)
+		const parent = new InsertParentTest()
+		parent.childIds = [new ObjectID()]
 
 		let hasError = false
 
 		try {
-			await user.insert()
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		// Check that parent not insered
+		let counter = await connection.collections.InsertParentTest.countDocuments()
+
+		expect(counter).toEqual(0)
+
+		// Add a real child but let invalid relation
+		const child = new InsertChildTest()
+		await connection.collections.InsertChildTest.insertOne(child)
+
+		parent.childIds.push(child._id as ObjectID)
+
+		hasError = false
+
+		try {
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		counter = await connection.collections.InsertParentTest.countDocuments()
+		expect(counter).toEqual(0)
+
+		// Delete first invalid relation
+		parent.childIds.splice(0, 1)
+
+		expect(parent.childIds[0]).toStrictEqual(child._id)
+
+		hasError = false
+
+		try {
+			await parent.insert()
 		} catch (error) {
 			hasError = true
 		}
 
-		expect(hasError).toEqual(true)
-	}*/
+		expect(hasError).toBeFalsy()
+
+		const parentsFromMongo = await connection.collections.InsertParentTest.find().toArray()
+		expect(parentsFromMongo.length).toEqual(1)
+
+		const parentFromMongo = parentsFromMongo[0] as any
+
+		expect(parentFromMongo.childIds).toStrictEqual([child._id])
+	})
+
+	it('should refuse to insert if one to many relation is not valid with custom id', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// id string
+		const parent = new InsertParentTest()
+		parent.childIdsString = ['john']
+
+		let hasError = false
+
+		try {
+			await parent.insert()
+		} catch (error) {
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		// Check that parent not insered
+		let counter = await connection.collections.InsertParentTest.countDocuments()
+
+		expect(counter).toEqual(0)
+
+		// id number
+		await connection.collections.InsertChildTest.deleteMany({})
+
+		const parent2 = new InsertParentTest()
+		parent2.childIdsNumber = [1]
+
+		hasError = false
+
+		try {
+			await parent2.insert()
+		} catch (error) {
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		counter = await connection.collections.InsertParentTest.countDocuments()
+		expect(counter).toEqual(0)
+	})
 })

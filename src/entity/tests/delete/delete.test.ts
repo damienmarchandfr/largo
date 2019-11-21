@@ -265,6 +265,134 @@ describe('delete method', () => {
 		expect(childNotDeleted._id).toStrictEqual(child2Id)
 	})
 
+	it('should be forbidden to delete an object with a one to one child relation with customs id type', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Custom id as string
+		const parent = new DeleteParentTest()
+
+		const child = new DeleteChildTest()
+		child.stringId = 'john'
+		parent.childIdString = 'john'
+
+		await connection.collections.DeleteParentTest.insertOne(parent)
+		await connection.collections.DeleteChildTest.insertOne(child)
+
+		let hasError = false
+		try {
+			await child.delete()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+			// Custom key
+			expect(error.childRelationKey).toEqual('stringId')
+			// Custom id value
+			expect(error.childRelationKeyValue).toEqual('john')
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		let childCounter = await connection.collections.DeleteChildTest.countDocuments()
+		expect(childCounter).toEqual(1)
+
+		// Custom id as number
+		const parent2 = new DeleteParentTest()
+		const child2 = new DeleteChildTest()
+		child2.numberId = 1
+		parent2.childIdNumber = 1
+
+		await connection.collections.DeleteParentTest.insertOne(parent2)
+		await connection.collections.DeleteChildTest.insertOne(child2)
+
+		hasError = false
+		try {
+			await child2.delete()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+			// Custom key
+			expect(error.childRelationKey).toEqual('numberId')
+			// Custom id value
+			expect(error.childRelationKeyValue).toEqual(1)
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		// search child
+		childCounter = await connection.collections.DeleteChildTest.countDocuments({
+			numberId: 1,
+		})
+		expect(childCounter).toEqual(1)
+	})
+
+	it('should be forbidden to delete an object with a one to many children relation with customs id type', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Custom id as string
+		const parent = new DeleteParentTest()
+
+		const child = new DeleteChildTest()
+		child.stringId = 'john'
+		parent.childIdsString = ['john']
+
+		await connection.collections.DeleteParentTest.insertOne(parent)
+		await connection.collections.DeleteChildTest.insertOne(child)
+
+		let hasError = false
+		try {
+			await child.delete()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+			// Custom key
+			expect(error.childRelationKey).toEqual('stringId')
+			// Custom id value
+			expect(error.childRelationKeyValue).toEqual('john')
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		let childCounter = await connection.collections.DeleteChildTest.countDocuments()
+		expect(childCounter).toEqual(1)
+
+		// Custom id as number
+		const parent2 = new DeleteParentTest()
+		const child2 = new DeleteChildTest()
+		child2.numberId = 1
+		parent2.childIdsNumber = [1]
+
+		await connection.collections.DeleteParentTest.insertOne(parent2)
+		await connection.collections.DeleteChildTest.insertOne(child2)
+
+		hasError = false
+		try {
+			await child2.delete()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorDeleteChild)
+			// Custom key
+			expect(error.childRelationKey).toEqual('numberId')
+			// Custom id value
+			expect(error.childRelationKeyValue).toEqual(1)
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		// search child
+		childCounter = await connection.collections.DeleteChildTest.countDocuments({
+			numberId: 1,
+		})
+		expect(childCounter).toEqual(1)
+	})
+
 	it('should accept to delete child if check relation is false for one to one relation', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,

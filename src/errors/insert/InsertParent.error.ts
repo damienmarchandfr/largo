@@ -1,4 +1,4 @@
-import { LegatoErrorAbstract } from '..'
+import { LegatoErrorAbstract, errorCodes } from '..'
 import { LegatoEntity } from '../../entity'
 import { DataStorageFielRelationValue } from '../..'
 
@@ -19,15 +19,11 @@ export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 	childRelationKey: string
 	childRelationKeyValue: any
 
-	constructor(
-		parent: LegatoEntity,
-		relationKey: string,
-		meta: DataStorageFielRelationValue
-	) {
+	constructor(parent: LegatoEntity, meta: DataStorageFielRelationValue) {
 		const message = `Cannot insert ${parent.getCollectionName()} because it's linked to his child ${
 			meta.targetType.name
-		} with ${meta.targetKey} = ${(parent as any)[relationKey]}.`
-		super(message, 'LEGATO_ERROR_6')
+		} with ${meta.targetKey} = ${(parent as any)[meta.key]}.`
+		super(message, errorCodes.insertParent)
 
 		// Parent informations
 		this.parent = parent.toPlainObj()
@@ -40,7 +36,7 @@ export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 		this.childClass = meta.targetType
 		this.childCollectionName = meta.targetType.name
 		this.childRelationKey = meta.targetKey
-		this.childRelationKeyValue = (parent as any)[relationKey]
+		this.childRelationKeyValue = (parent as any)[meta.key]
 	}
 
 	toPlainObj() {
@@ -57,7 +53,6 @@ export class LegatoErrorInsertParent extends LegatoErrorAbstract {
 			'childClass',
 			'childRelationKey',
 			'childRelationKeyValue',
-			'child',
 		]
 		const toReturn: any = {}
 		for (const key of errorKey.concat(parentKeys, childKeys)) {

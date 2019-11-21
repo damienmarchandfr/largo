@@ -426,26 +426,35 @@ export class LegatoEntity {
 							relationQueryResults.length !== (this as any)[relation.key].length
 						) {
 							const resultIds = relationQueryResults.map((result) => {
-								return result._id
+								return result[relation.targetKey]
 							})
 							const relationIds = (this as any)[relation.key]
 
-							const resultIdsString = (resultIds as ObjectID[]).map((id) => {
-								return id.toHexString()
-							})
-							const relationIdsString = (relationIds as ObjectID[]).map(
-								(id) => {
+							const resultIdsString = resultIds.map((id) => {
+								if (id instanceof ObjectID) {
 									return id.toHexString()
 								}
-							)
+								return id
+							})
+							const relationIdsString = (relationIds as any[]).map((id) => {
+								if (id instanceof ObjectID) {
+									return id.toHexString()
+								}
+								return id
+							})
 
 							const diff = difference(relationIdsString, resultIdsString).map(
-								(idString) => {
-									return new ObjectID(idString)
+								(id) => {
+									if (id instanceof ObjectID) {
+										return id.toHexString()
+									}
+									return id
 								}
 							)
 
-							console.log('diff', diff)
+							if (diff.length) {
+								throw new LegatoErrorInsertParent(this, relation)
+							}
 						}
 					} else {
 						// Relation with one element
@@ -456,7 +465,7 @@ export class LegatoEntity {
 						})
 
 						if (!relationQueryResult) {
-							throw new LegatoErrorInsertParent(this)
+							throw new LegatoErrorInsertParent(this, relation)
 						}
 					}
 				}

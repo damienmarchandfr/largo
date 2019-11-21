@@ -35,4 +35,38 @@ export class DeleteManyParentTest extends LegatoEntity {
 		targetType: DeleteManyChildTest,
 	})
 	childIdsNoCheck: ObjectID[] = []
+
+	// Use string for relation
+	@LegatoRelation({
+		checkRelation: true,
+		populatedKey: 'childString',
+		targetType: DeleteManyChildTest,
+		targetKey: 'stringId',
+	})
+	childIdString: string | null = null
+
+	@LegatoRelation({
+		checkRelation: true,
+		populatedKey: 'childrenString',
+		targetType: DeleteManyChildTest,
+		targetKey: 'stringId',
+	})
+	childIdsString: string[] = []
+
+	// Use number for relation
+	@LegatoRelation({
+		checkRelation: true,
+		populatedKey: 'childNumber',
+		targetType: DeleteManyChildTest,
+		targetKey: 'numberId',
+	})
+	childIdNumber: number | null = null
+
+	@LegatoRelation({
+		checkRelation: true,
+		populatedKey: 'childrenNumber',
+		targetType: DeleteManyChildTest,
+		targetKey: 'numberId',
+	})
+	childIdsNumber: number[] = []
 }

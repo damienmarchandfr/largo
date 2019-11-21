@@ -1,10 +1,13 @@
 import { LegatoEntity } from '../../entity'
 import { ObjectID } from 'mongodb'
 import { DataStorageFielRelationValue } from '../..'
-import { LegatoErrorAbstract } from '..'
+import { LegatoErrorAbstract, errorCodes } from '..'
 
+/**
+ * When try to delete child who has parent
+ */
 export class LegatoErrorDeleteChild extends LegatoErrorAbstract {
-	// Parent want to delete
+	// Parent linked
 	parentCollectionName: string
 	parentMongoID: ObjectID | undefined
 	parentClass: Function
@@ -12,7 +15,7 @@ export class LegatoErrorDeleteChild extends LegatoErrorAbstract {
 	parentRelationKeyValue: any
 	parent: LegatoEntity
 
-	// Child linked
+	// Child to delete
 	childCollectionName: string
 	childMongoID: ObjectID | undefined
 	childClass: Function
@@ -30,7 +33,7 @@ export class LegatoErrorDeleteChild extends LegatoErrorAbstract {
 		} because it's linked to his parent ${parent.getCollectionName()} with _id = ${
 			parent._id
 		}.`
-		super(message, 'LEGATO_ERROR_4')
+		super(message, errorCodes.deleteChild)
 
 		// Parent informations
 		this.parent = parent.toPlainObj()

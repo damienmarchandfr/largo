@@ -1,5 +1,15 @@
 import { LegatoEntity } from '../entity'
 
+export const errorCodes = {
+	notConnected: 'LEGATO_ERROR_0',
+	cannotDisconnect: 'LEGATO_ERROR_1',
+	collectionDoesNotExist: 'LEGATO_ERROR_2',
+	objectAlreadyInserted: 'LEGATO_ERROR_3',
+	deleteChild: 'LEGATO_ERROR_4',
+	deleteNoMongoID: 'LEGATO_ERROR_5',
+	insertParent: 'LEGATO_ERROR_6',
+}
+
 export abstract class LegatoErrorAbstract extends Error {
 	code: string // Use to know error type when you catch error
 
@@ -11,7 +21,7 @@ export abstract class LegatoErrorAbstract extends Error {
 
 export class LegatoErrorNotConnected extends LegatoErrorAbstract {
 	constructor() {
-		super(`Your are not connected to MongoDB server.`, 'LEGATO_ERROR_0')
+		super(`Your are not connected to MongoDB server.`, errorCodes.notConnected)
 	}
 }
 
@@ -19,14 +29,17 @@ export class LegatoErrorCannotDisconnect extends LegatoErrorAbstract {
 	constructor() {
 		super(
 			`Cannot disconnect. Not connected to MongoDB server.`,
-			'LEGATO_ERROR_1'
+			errorCodes.cannotDisconnect
 		)
 	}
 }
 
 export class LegatoErrorCollectionDoesNotExist extends LegatoErrorAbstract {
 	constructor(collectionName: string) {
-		super(`Cannot find ${collectionName} collection.`, 'LEGATO_ERROR_2')
+		super(
+			`Cannot find ${collectionName} collection.`,
+			errorCodes.collectionDoesNotExist
+		)
 	}
 }
 
@@ -36,7 +49,7 @@ export class LegatoErrorObjectAlreadyInserted extends LegatoErrorAbstract {
 	constructor(inserted: LegatoEntity) {
 		super(
 			`Object already inserted with _id = ${inserted._id}.`,
-			'LEGATO_ERROR_3'
+			errorCodes.objectAlreadyInserted
 		)
 		this.inserted = inserted
 	}
