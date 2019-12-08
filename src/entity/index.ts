@@ -21,6 +21,7 @@ import {
 import { LegatoErrorDeleteNoMongoID } from '../errors/delete/NoMongoIdDelete.error'
 import { LegatoErrorDeleteChild } from '../errors/delete/DeleteChild.error'
 import { LegatoErrorInsertParent } from '../errors/insert/InsertParent.error'
+import { LegatoErrorUpdateParent } from '../errors/update/UpdateParent.error'
 
 export class LegatoEntity {
 	/**
@@ -336,7 +337,7 @@ export class LegatoEntity {
 
 	beforeUpdate<T extends LegatoEntity>() {
 		return (this.events.beforeUpdate as unknown) as Subject<{
-			beforeUpdate: T
+			oldValue: T
 			toUpdate: any
 		}>
 	}
@@ -513,6 +514,76 @@ export class LegatoEntity {
 			toUpdate,
 		})
 
+		// Check relations
+		const relationsMetas = this.getMetasToCheck()
+
+		if (relationsMetas.children && relationsMetas.children.length) {
+			for (const relation of relationsMetas.children) {
+				if ((this as any)[relation.key]) {
+					const relationCollectioName = relation.targetType.name
+
+					// Relation with multiple elements
+					if (Array.isArray((this as any)[relation.key])) {
+						const relationQueryResults = await connection.collections[
+							relationCollectioName
+						]
+							.find({
+								[relation.targetKey]: {
+									$in: (this as any)[relation.key],
+								},
+							})
+							.toArray()
+
+						if (
+							relationQueryResults.length !== (this as any)[relation.key].length
+						) {
+							const resultIds = relationQueryResults.map((result) => {
+								return result[relation.targetKey]
+							})
+							const relationIds = (this as any)[relation.key]
+
+							const resultIdsString = resultIds.map((id) => {
+								if (id instanceof ObjectID) {
+									return id.toHexString()
+								}
+								return id
+							})
+							const relationIdsString = (relationIds as any[]).map((id) => {
+								if (id instanceof ObjectID) {
+									return id.toHexString()
+								}
+								return id
+							})
+
+							const diff = difference(relationIdsString, resultIdsString).map(
+								(id) => {
+									if (id instanceof ObjectID) {
+										return id.toHexString()
+									}
+									return id
+								}
+							)
+
+							if (diff.length) {
+								throw new LegatoErrorUpdateParent(this, relation)
+							}
+						}
+					} else {
+						// Relation with one element
+						const relationQueryResult = await connection.collections[
+							relationCollectioName
+						].findOne({
+							[relation.targetKey]: (this as any)[relation.key],
+						})
+
+						if (!relationQueryResult) {
+							throw new LegatoErrorUpdateParent(this, relation)
+						}
+					}
+				}
+			}
+		}
+
 		await connection.collections[this.collectionName].updateOne(
 			{ _id: this._id },
 			{
@@ -521,6 +592,7 @@ export class LegatoEntity {
 			options || undefined
 		)
 
+		this.copy = {}
 		Object.assign(this.copy, this)
 
 		const saved = await connection.collections[this.collectionName].findOne({

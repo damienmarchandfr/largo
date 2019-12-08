@@ -11,6 +11,8 @@ export class UpdateTestWithoutDecorator extends LegatoEntity {
 }
 
 export class UpdateTest extends LegatoEntity {
+	noDecorator?: string
+
 	@LegatoField()
 	name: string
 

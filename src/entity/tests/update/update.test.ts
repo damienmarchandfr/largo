@@ -1,13 +1,14 @@
 import { LegatoConnection } from '../../../connection'
-import { LegatoEntity } from '../..'
 import { ObjectID } from 'mongodb'
-import { LegatoField } from '../../../decorators/field.decorator'
 import { getConnection, setConnection } from '../../..'
 import {
 	UpdateTestWithoutDecorator,
 	UpdateTest,
 } from './entities/Update.entity.test'
 import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
+import { UpdateChildTest } from './entities/UpdateChild.entity.test'
+import { UpdateParentTest } from './entities/UpdateParent.entity.test'
+import { LegatoErrorUpdateParent } from '../../../errors/update/UpdateParent.error'
 
 const databaseName = 'updateTest'
 
@@ -19,7 +20,7 @@ describe('update method', () => {
 	})
 
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
@@ -70,129 +71,523 @@ describe('update method', () => {
 		expect(updated.name).toEqual('john doe')
 	})
 
-	// 	it('should not update prop without decorator', async () => {
-	// 		class UserUpdateNotDecorator extends LegatoEntity {
-	// 			@LegatoField()
-	// 			email: string
+	it('should not update prop without decorator', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
 
-	// 			age: number
+		const obj = new UpdateTest()
+		obj.noDecorator = 'john'
 
-	// 			constructor(email: string) {
-	// 				super()
-	// 				this.email = email
-	// 				this.age = 2
-	// 			}
-	// 		}
+		const insertResult = await connection.collections.UpdateTest.insertOne(obj)
 
-	// 		const connection = await new LegatoConnection({
-	// 			databaseName,
-	// 		}).connect({
-	// 			clean: true,
-	// 		})
+		// Update
+		obj.noDecorator = 'john doe'
+		await obj.update()
 
-	// 		const user = new UserUpdateNotDecorator('damien@dev.fr')
+		// Get obj in db
+		const fromDB = await connection.collections.UpdateTest.findOne({
+			_id: obj._id,
+		})
 
-	// 		// Add user
-	// 		const userCopy = { ...user }
-	// 		delete userCopy.age
+		expect(fromDB.noDecorator).toEqual('john')
+	})
 
-	// 		const insertResult = await connection.collections.userupdatenotdecorator.insertOne(
-	// 			userCopy
-	// 		)
+	it('should trigger beforeUpdate', async (done) => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
 
-	// 		// Update
-	// 		user.age = 18
-	// 		await user.update()
+		const obj = new UpdateTest('john')
 
-	// 		// Get user in db
-	// 		const saved = await connection.collections.userupdatenotdecorator.findOne({
-	// 			_id: insertResult.insertedId,
-	// 		})
+		await connection.collections.UpdateTest.insertOne(obj)
 
-	// 		expect(saved.age).toBeUndefined()
-	// 	})
+		obj.beforeUpdate<UpdateTest>().subscribe((update) => {
+			const source = update.oldValue
+			const partial = update.toUpdate
 
-	// 	it('should trigger beforeUpdate', async (done) => {
-	// 		class UserBeforeUpdate extends LegatoEntity {
-	// 			@LegatoField()
-	// 			firstname: string
+			expect(source._id).toBeDefined()
+			expect(source.name).toEqual('john')
 
-	// 			constructor(firstname: string) {
-	// 				super()
-	// 				this.firstname = firstname
-	// 			}
-	// 		}
+			expect(partial._id).not.toBeDefined()
+			expect(partial.name).toEqual('john doe')
 
-	// 		const connection = await new LegatoConnection({
-	// 			databaseName,
-	// 		}).connect({
-	// 			clean: true,
-	// 		})
+			done()
+		})
 
-	// 		const user = await connection.collections.userbeforeupdate.insertOne({
-	// 			firstname: 'Damien',
-	// 		})
-	// 		const id = user.insertedId
+		obj.name = 'john doe'
+		await obj.update()
+	})
 
-	// 		const updateUser = new UserBeforeUpdate('Damien')
-	// 		updateUser._id = id
+	it('should trigger afterUpdate', async (done) => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
 
-	// 		updateUser.events.beforeUpdate.subscribe((update) => {
-	// 			const source = update.oldValue
-	// 			const partial = update.partial
+		const obj = new UpdateTest('john')
+		await connection.collections.UpdateTest.insertOne(obj)
 
-	// 			expect(source._id).toBeDefined()
-	// 			expect(source.firstname).toEqual('Damien')
+		obj.afterUpdate<UpdateTest>().subscribe((updateResult) => {
+			const before = updateResult.oldValue
+			const after = updateResult.newValue
 
-	// 			expect(partial._id).not.toBeDefined()
-	// 			expect(partial.firstname).toEqual('Jeremy')
+			expect(before._id).toBeDefined()
+			expect(before._id).toStrictEqual(after._id)
 
-	// 			done()
-	// 		})
+			expect(before.name).toEqual('john')
+			expect(after.name).toEqual('john doe')
 
-	// 		updateUser.firstname = 'Jeremy'
-	// 		await updateUser.update()
-	// 	})
+			done()
+		})
 
-	// 	it('should trigger afterUpdate', async (done) => {
-	// 		class UserAfterUpdate extends LegatoEntity {
-	// 			@LegatoField()
-	// 			firstname: string
+		obj.name = 'john doe'
+		await obj.update()
+	})
 
-	// 			constructor(firstname: string) {
-	// 				super()
-	// 				this.firstname = firstname
-	// 			}
-	// 		}
+	// ------------ RELATIONS ----------
 
-	// 		const connection = await new LegatoConnection({
-	// 			databaseName,
-	// 		}).connect({
-	// 			clean: true,
-	// 		})
+	it('should not check if check relation is set to false in one to one relation', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
 
-	// 		const user = await connection.collections.userafterupdate.insertOne({
-	// 			firstname: 'Damien',
-	// 		})
-	// 		const id = user.insertedId
+		const obj = new UpdateParentTest('john doe')
 
-	// 		const updateUser = new UserAfterUpdate('Damien')
-	// 		updateUser._id = id
+		await connection.collections.UpdateParentTest.insertOne(obj)
 
-	// 		updateUser.events.afterUpdate.subscribe((updateResult) => {
-	// 			const before = updateResult.oldValue
-	// 			const after = updateResult.newValue
+		// Set broken relation
+		const brokenId = new ObjectID()
+		obj.childIdNoCheck = brokenId
 
-	// 			expect(before._id).toBeDefined()
-	// 			expect(before._id).toStrictEqual(after._id)
+		let hasError = false
+		try {
+			await obj.update()
+		} catch (error) {
+			hasError = true
+		}
+		expect(hasError).toBeFalsy()
 
-	// 			expect(before.firstname).toEqual('Damien')
-	// 			expect(after.firstname).toEqual('Jeremy')
+		// Check relation is set in database
+		const objFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: obj._id,
+		})
 
-	// 			done()
-	// 		})
+		expect(objFromDb.childIdNoCheck).toStrictEqual(brokenId)
+	})
 
-	// 		updateUser.firstname = 'Jeremy'
-	// 		await updateUser.update()
-	// 	})
+	it('should not check if check relation is set to false in one to many relation', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const brokenIds = [new ObjectID(), new ObjectID()]
+		const obj = new UpdateParentTest('john doe')
+
+		await connection.collections.UpdateParentTest.insertOne(obj)
+
+		obj.childIdsNoCheck = brokenIds
+
+		let hasError = false
+
+		try {
+			await obj.update()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		const objFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: obj._id,
+		})
+
+		expect(objFromDb.childIdsNoCheck).toStrictEqual(brokenIds)
+	})
+
+	it('should update with valid one to one relation with mongo id', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+		const child = new UpdateChildTest('john')
+
+		await connection.collections.UpdateChildTest.insertOne(child)
+
+		await connection.collections.UpdateParentTest.insertOne(parent)
+		parent.childId = child._id as ObjectID
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			console.log(error)
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+
+		expect(parentFromDb.childId).toStrictEqual(child._id)
+	})
+
+	it('should not update with not valid one to one relation with mongo id', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		let hasError = false
+		parent.childId = new ObjectID()
+		try {
+			await parent.update()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorUpdateParent)
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+
+		expect(parentFromDb.childId).toBeNull()
+	})
+
+	it('should update with valid one to many relation with mongo id', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		// Insert two children
+		const child1 = new UpdateChildTest('john')
+		const child2 = new UpdateChildTest('doe')
+
+		await connection.collections.UpdateChildTest.insertMany([child1, child2])
+
+		// Parent
+		const parent = new UpdateParentTest('john doe')
+		expect(parent.childIds).toStrictEqual([])
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		let hasError = false
+		parent.childIds = [child1._id, child2._id] as ObjectID[]
+
+		try {
+			await parent.update()
+		} catch (error) {
+			hasError = true
+		}
+		expect(hasError).toBeFalsy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIds).toStrictEqual([child1._id, child2._id])
+	})
+
+	it('should not update with not valid one to many relation with mongo id', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+		const child = new UpdateChildTest('john')
+		const childIdNotinDb = new ObjectID()
+
+		await connection.collections.UpdateChildTest.insertOne(child)
+		parent.childIds = [child._id as ObjectID]
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		parent.childIds.push(childIdNotinDb)
+
+		let hasError = false
+
+		try {
+			await parent.update()
+		} catch (error) {
+			hasError = true
+			expect(error).toBeInstanceOf(LegatoErrorUpdateParent)
+		}
+
+		expect(hasError).toBeTruthy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+
+		expect(parentFromDb.childIds).toStrictEqual([child._id])
+	})
+
+	// --------------- STRING ID -----------
+
+	it('should update with valid one to one relation with string', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+
+		// Child with custom id
+		const child = new UpdateChildTest('john')
+		child.stringId = '1'
+
+		await connection.collections.UpdateChildTest.insertOne(child)
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdString = '1'
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdString).toEqual('1')
+	})
+
+	it('should not update with invalid one to one relation with string', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdString = '1'
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorUpdateParent)
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdString).toBeNull()
+	})
+
+	it('should update with valid one to many relation with string', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+
+		// Children with custom id
+		const child1 = new UpdateChildTest('john')
+		child1.stringId = '1'
+
+		const child2 = new UpdateChildTest('john')
+		child2.stringId = '2'
+
+		await connection.collections.UpdateChildTest.insertMany([child1, child2])
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdsString = ['1', '2']
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdsString).toEqual(['1', '2'])
+	})
+
+	it('should not update with invalid one to many relation with number', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+		parent.childIdsString = ['1']
+		const child1 = new UpdateChildTest('john')
+		child1.stringId = '1'
+
+		await connection.collections.UpdateChildTest.insertOne(child1)
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdsString = ['1', '2']
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorUpdateParent)
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdsString).toEqual(['1'])
+	})
+
+	// --------------- NUMBER ID -----------
+
+	it('should update with valid one to one relation with number', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+
+		// Child with custom id
+		const child = new UpdateChildTest('john')
+		child.numberId = 1
+
+		await connection.collections.UpdateChildTest.insertOne(child)
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdNumber = 1
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdNumber).toEqual(1)
+	})
+
+	it('should not update with invalid one to one relation with number', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdNumber = 1
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorUpdateParent)
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdNumber).toBeNull()
+	})
+
+	it('should update with valid one to many relation with number', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+
+		// Children with custom id
+		const child1 = new UpdateChildTest('john')
+		child1.numberId = 1
+
+		const child2 = new UpdateChildTest('john')
+		child2.numberId = 2
+
+		await connection.collections.UpdateChildTest.insertMany([child1, child2])
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdsNumber = [1, 2]
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			hasError = true
+		}
+
+		expect(hasError).toBeFalsy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdsNumber).toEqual([1, 2])
+	})
+
+	it('should not update with invalid one to many relation with number', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
+		})
+
+		const parent = new UpdateParentTest('john doe')
+		parent.childIdsNumber = [1]
+		const child1 = new UpdateChildTest('john')
+		child1.numberId = 1
+
+		await connection.collections.UpdateChildTest.insertOne(child1)
+		await connection.collections.UpdateParentTest.insertOne(parent)
+
+		// Update relation
+		parent.childIdsNumber = [1, 2]
+
+		let hasError = false
+		try {
+			await parent.update()
+		} catch (error) {
+			expect(error).toBeInstanceOf(LegatoErrorUpdateParent)
+			hasError = true
+		}
+
+		expect(hasError).toBeTruthy()
+
+		const parentFromDb = await connection.collections.UpdateParentTest.findOne({
+			_id: parent._id,
+		})
+		expect(parentFromDb.childIdsNumber).toEqual([1])
+	})
 })

@@ -8,6 +8,7 @@ export const errorCodes = {
 	deleteChild: 'LEGATO_ERROR_4',
 	deleteNoMongoID: 'LEGATO_ERROR_5',
 	insertParent: 'LEGATO_ERROR_6',
+	updateParent: 'LEGATO_ERROR_7',
 }
 
 export abstract class LegatoErrorAbstract extends Error {
