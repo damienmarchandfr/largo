@@ -143,7 +143,7 @@ export class LegatoEntity {
 	}
 
 	static async updateMany<T extends LegatoEntity>(
-		filter: FilterQuery<any> = {},
+		filter: FilterQuery<T> = {},
 		partial: Partial<T>,
 		options?: UpdateOneOptions
 	) {

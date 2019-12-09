@@ -1,88 +1,138 @@
 import { LegatoConnection } from '../../../connection'
-import { LegatoEntity } from '../..'
-import { LegatoField } from '../../../decorators/field.decorator'
+import {
+	UpdateManyEntityTestNoDecorator,
+	UpdateManyEntityTest,
+} from './entities/UpdateMany.entity.test'
+import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
+import { getConnection, setConnection } from '../../..'
 
 const databaseName = 'updatemanyTest'
 
 describe(`static method updateMany`, () => {
+	beforeEach(() => {
+		if (getConnection()) {
+			setConnection(null)
+		}
+	})
+
 	it('should throw an error if collection does not exist', async () => {
-		const connection = await new LegatoConnection({
+		await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: false,
 		})
 
-		class RandomClassWithoutDecoratorUpdateMany extends LegatoEntity {
-			name: string
-
-			constructor() {
-				super()
-				this.name = 'toto'
-			}
-		}
-
 		let hasError = false
 
 		try {
-			await RandomClassWithoutDecoratorUpdateMany.updateMany<
-				RandomClassWithoutDecoratorUpdateMany
-			>({ name: 'titi' }, { name: 'toto' })
+			await UpdateManyEntityTestNoDecorator.updateMany<
+				UpdateManyEntityTestNoDecorator
+			>({ name: 'john' }, { name: 'damien' })
 		} catch (error) {
 			hasError = true
-			expect(error.message).toEqual(
-				`Collection randomclasswithoutdecoratorupdatemany does not exist.`
-			)
-			expect(error.code).toEqual('Legato_ERROR_404')
+			expect(error).toBeInstanceOf(LegatoErrorCollectionDoesNotExist)
 		}
 
 		expect(hasError).toEqual(true)
 	})
 
 	it('should update one element with query filter', async () => {
-		class UserUpdateManyOneElement extends LegatoEntity {
-			@LegatoField()
-			email: string
-
-			constructor(email: string) {
-				super()
-				this.email = email
-			}
-		}
-
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		// Insert user with mongodb native lib
-		await connection.collections.userupdatemanyoneelement.insertMany([
-			new UserUpdateManyOneElement('damien@marchand.fr'),
-			new UserUpdateManyOneElement('donald@trump.usa'),
-		])
+		const obj1 = new UpdateManyEntityTest('john doe 1')
+		const obj2 = new UpdateManyEntityTest('john doe 2')
+		await connection.collections.UpdateManyEntityTest.insertMany([obj1, obj2])
 
 		// Update
-		await UserUpdateManyOneElement.updateMany<UserUpdateManyOneElement>(
-			{ email: 'barack@obama.usa' },
-			{ email: 'donald@trump.usa' }
+		await UpdateManyEntityTest.updateMany<UpdateManyEntityTest>(
+			{ name: 'john doe 1' },
+			{ name: 'john doe 1.5' }
 		)
 
-		// Search with email
-		const trump = await connection.collections.userupdatemanyoneelement.findOne<
-			UserUpdateManyOneElement
-		>({
-			email: 'donald@trump.usa',
+		// Search old value
+		let counter = await connection.collections.UpdateManyEntityTest.countDocuments(
+			{ name: 'john doe 1' }
+		)
+		expect(counter).toEqual(0)
+
+		// Get updated
+		counter = await connection.collections.UpdateManyEntityTest.countDocuments({
+			name: 'john doe 1.5',
+		})
+		expect(counter).toEqual(1)
+
+		// Get not updated
+		counter = await connection.collections.UpdateManyEntityTest.countDocuments({
+			name: 'john doe 2',
+		})
+		expect(counter).toEqual(1)
+	})
+
+	it('should update many element with query filter', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
 		})
 
-		expect(trump).toEqual(null)
+		// Create 3 elements
+		const obj1 = new UpdateManyEntityTest('john')
+		const obj2 = new UpdateManyEntityTest('john')
+		const obj3 = new UpdateManyEntityTest('doe')
 
-		const barack = await connection.collections.userupdatemanyoneelement.findOne<
-			UserUpdateManyOneElement
-		>({
-			email: 'barack@obama.usa',
+		await connection.collections.UpdateManyEntityTest.insertMany([
+			obj1,
+			obj2,
+			obj3,
+		])
+
+		await UpdateManyEntityTest.updateMany<UpdateManyEntityTest>(
+			{ name: 'john' },
+			{ name: 'john updated' }
+		)
+
+		let updated = await connection.collections.UpdateManyEntityTest.findOne({
+			_id: obj1._id,
+		})
+		expect(updated.name).toEqual('john updated')
+
+		updated = await connection.collections.UpdateManyEntityTest.findOne({
+			_id: obj2._id,
+		})
+		expect(updated.name).toEqual('john updated')
+
+		const notUpdated = await connection.collections.UpdateManyEntityTest.findOne(
+			{ _id: obj3._id }
+		)
+		expect(notUpdated.name).toEqual('doe')
+	})
+
+	it('should update all elements with empty query filter', async () => {
+		const connection = await new LegatoConnection({ databaseName }).connect({
+			clean: true,
 		})
 
-		const barackResult = barack as UserUpdateManyOneElement
-		expect(barackResult.email).toEqual('barack@obama.usa')
+		// Create 3 elements
+		const obj1 = new UpdateManyEntityTest('john')
+		const obj2 = new UpdateManyEntityTest('doe')
+		const obj3 = new UpdateManyEntityTest('damien')
+
+		await connection.collections.UpdateManyEntityTest.insertMany([
+			obj1,
+			obj2,
+			obj3,
+		])
+
+		await UpdateManyEntityTest.updateMany<UpdateManyEntityTest>(
+			{},
+			{ name: 'john updated' }
+		)
+
+		const updatedCounter = await connection.collections.UpdateManyEntityTest.countDocuments(
+			{ name: 'john updated' }
+		)
+		expect(updatedCounter).toEqual(3)
 	})
 })
