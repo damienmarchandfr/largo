@@ -79,9 +79,8 @@ describe('update method', () => {
 		})
 
 		const obj = new UpdateTest()
-		obj.noDecorator = 'john'
-
-		const insertResult = await connection.collections.UpdateTest.insertOne(obj)
+		delete obj.noDecorator
+		await connection.collections.UpdateTest.insertOne(obj)
 
 		// Update
 		obj.noDecorator = 'john doe'
@@ -92,7 +91,7 @@ describe('update method', () => {
 			_id: obj._id,
 		})
 
-		expect(fromDB.noDecorator).toEqual('john')
+		expect(fromDB.noDecorator).toBeUndefined()
 	})
 
 	it('should trigger beforeUpdate', async (done) => {

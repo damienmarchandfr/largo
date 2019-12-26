@@ -4,7 +4,7 @@ import { ObjectID } from 'mongodb'
 import { LegatoField } from '../../../../decorators/field.decorator'
 import { UpdateManyChildTest } from './UpdateManyChild.entity.test'
 
-export class UpdateParentTest extends LegatoEntity {
+export class UpdateManyParentTest extends LegatoEntity {
 	@LegatoField()
 	name: string
 

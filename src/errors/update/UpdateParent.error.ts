@@ -11,7 +11,7 @@ export class LegatoErrorUpdateParent extends LegatoErrorAbstract {
 	parentClass: Function
 	parentRelationKey: string
 	parentRelationKeyValue: any
-	parent: LegatoEntity
+	parent: any
 
 	// Child linked
 	childCollectionName: string

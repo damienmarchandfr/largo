@@ -73,7 +73,7 @@ describe('LegatoIndex decorator', () => {
 		expect(hasError).toBe(true)
 
 		// Check if just one inserted
-		const count = await connexion.collections.UniqueIndex.count({
+		const count = await connexion.collections.UniqueIndex.countDocuments({
 			id: 'hello',
 		})
 

@@ -262,7 +262,7 @@ describe('static method deleteMany', () => {
 		expect(true).toBeTruthy()
 		// Save parent
 		parent.childIds = [child1._id as ObjectID, child2._id as ObjectID]
-		await connection.collections.DeleteManyParentTest.insert(parent)
+		await connection.collections.DeleteManyParentTest.insertOne(parent)
 
 		// Try to delete one child
 		let hasError = false
@@ -276,7 +276,7 @@ describe('static method deleteMany', () => {
 		expect(hasError).toBeTruthy()
 
 		// Check child is not delted
-		let childrenCounter = await connection.collections.DeleteManyChildTest.count()
+		let childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
 		expect(childrenCounter).toEqual(2)
 
 		// Try to delete all children
@@ -292,7 +292,7 @@ describe('static method deleteMany', () => {
 		expect(hasError).toBeTruthy()
 
 		// Check no children deleted
-		childrenCounter = await connection.collections.DeleteManyChildTest.count()
+		childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
 		expect(childrenCounter).toEqual(2)
 	})
 
@@ -469,7 +469,7 @@ describe('static method deleteMany', () => {
 		expect(hasError).toBeFalsy()
 
 		// Check child is deleted
-		const childrenCounter = await connection.collections.DeleteManyChildTest.count()
+		const childrenCounter = await connection.collections.DeleteManyChildTest.countDocuments()
 		expect(childrenCounter).toEqual(0)
 	})
 

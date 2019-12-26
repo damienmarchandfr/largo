@@ -3,6 +3,7 @@ import {
 	UpdateOneOptions,
 	ObjectID,
 	FindOneOptions,
+	UpdateManyOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
 import {
@@ -10,7 +11,7 @@ import {
 	getConnection,
 	DataStorageFielRelationValue,
 } from '..'
-import { difference, filter as f } from 'lodash'
+import { difference, filter as f, isEmpty } from 'lodash'
 import { LegatoEntityArray } from '../entityArray'
 import { getLegatoPartial } from '../helpers'
 import {
@@ -22,6 +23,7 @@ import { LegatoErrorDeleteNoMongoID } from '../errors/delete/NoMongoIdDelete.err
 import { LegatoErrorDeleteChild } from '../errors/delete/DeleteChild.error'
 import { LegatoErrorInsertParent } from '../errors/insert/InsertParent.error'
 import { LegatoErrorUpdateParent } from '../errors/update/UpdateParent.error'
+import { LegatoErrorUpdateManyParent } from '../errors/updateMany/UpdateManyParent.error'
 
 export class LegatoEntity {
 	/**
@@ -145,7 +147,8 @@ export class LegatoEntity {
 	static async updateMany<T extends LegatoEntity>(
 		filter: FilterQuery<T> = {},
 		partial: Partial<T>,
-		options?: UpdateOneOptions
+		checkRelations = true,
+		options?: UpdateManyOptions
 	) {
 		const collectionName = this.getCollectionName()
 		const connection = getConnection()
@@ -163,15 +166,20 @@ export class LegatoEntity {
 
 		delete toUpdate._id // MongoID cannot be changed
 
+		if (isEmpty(toUpdate)) {
+			return
+		}
+
 		// Get meta for relation checking
 		const metasToCheck = this.getMetasToCheck()
 
 		// Must check relation in database
-		if (metasToCheck.children.length) {
+		if (checkRelations && metasToCheck.children.length) {
 			// Get all
 			const mongoResult = await connection.collections[collectionName]
 				.find(filter)
 				.toArray()
+
 			for (const result of mongoResult) {
 				for (const meta of metasToCheck.children) {
 					// Set new vaules
@@ -193,7 +201,9 @@ export class LegatoEntity {
 
 							if (resultOneToMany.length !== result[meta.key].length) {
 								// Number of id != number of results from db
-								throw new Error()
+								const obj = new this()
+								Object.assign(obj, result)
+								throw new LegatoErrorUpdateManyParent(obj, meta)
 							}
 						} else {
 							// One to one
@@ -204,13 +214,14 @@ export class LegatoEntity {
 							})
 
 							if (!resultOneToOne) {
-								throw new Error()
+								const obj = new this()
+								Object.assign(obj, result)
+								throw new LegatoErrorUpdateManyParent(obj, meta)
 							}
 						}
 					}
 				}
 			}
-			// If an id is updated I must check parents
 		}
 
 		return connection.collections[collectionName].updateMany(
@@ -501,6 +512,10 @@ export class LegatoEntity {
 		}
 
 		const toUpdate = getLegatoPartial(this, this.collectionName)
+
+		if (isEmpty(toUpdate)) {
+			return
+		}
 
 		// Search old values
 		const savedVersion = await connection.collections[

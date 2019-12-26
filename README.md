@@ -10,6 +10,7 @@ Master
 
 WIP
 
+- Id not \_id updated check relation
 - Check relation on update with copy
 - Test poplate many
 - Populate deep
