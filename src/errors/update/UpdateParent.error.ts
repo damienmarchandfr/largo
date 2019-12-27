@@ -20,7 +20,7 @@ export class LegatoErrorUpdateParent extends LegatoErrorAbstract {
 	childRelationKeyValue: any
 
 	constructor(parent: LegatoEntity, meta: DataStorageFielRelationValue) {
-		const message = `Cannot update ${parent.getCollectionName()} because there is no child ${
+		const message = `Cannot update parent ${parent.getCollectionName()} because there is no child ${
 			meta.targetType.name
 		} with ${meta.targetKey} = ${(parent as any)[meta.key]}.`
 		super(message, errorCodes.updateParent)
@@ -37,27 +37,5 @@ export class LegatoErrorUpdateParent extends LegatoErrorAbstract {
 		this.childCollectionName = meta.targetType.name
 		this.childRelationKey = meta.targetKey
 		this.childRelationKeyValue = (parent as any)[meta.key]
-	}
-
-	toPlainObj() {
-		const errorKey = ['message']
-		const parentKeys = [
-			'parentCollectionName',
-			'parentClass',
-			'parentRelationKey',
-			'parentRelationKeyValue',
-			'parent',
-		]
-		const childKeys = [
-			'childCollectionName',
-			'childClass',
-			'childRelationKey',
-			'childRelationKeyValue',
-		]
-		const toReturn: any = {}
-		for (const key of errorKey.concat(parentKeys, childKeys)) {
-			toReturn[key] = (this as any)[key]
-		}
-		return toReturn
 	}
 }

@@ -5,7 +5,7 @@ import { LegatoErrorUpdateParent } from '../update/UpdateParent.error'
 
 export class LegatoErrorUpdateManyParent extends LegatoErrorUpdateParent {
 	constructor(parent: LegatoEntity, meta: DataStorageFielRelationValue) {
-		const message = `Cannot update ${parent.getCollectionName()} because there is no child ${
+		const message = `Cannot update parent ${parent.getCollectionName()} because there is no child ${
 			meta.targetType.name
 		} with ${meta.targetKey} = ${(parent as any)[meta.key]}.`
 
