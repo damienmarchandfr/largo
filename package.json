@@ -27,7 +27,7 @@
 		"test": "jest --forceExit --detectOpenHandles",
 		"test:watch": "jest --watch --verbose false",
 		"example": "ts-node-dev examples/index.ts",
-		"dev": "jest -- src/decorators/tests/relation.decorator.test.ts"
+		"dev": "jest -- src/index.test.ts"
 	},
 	"dependencies": {
 		"lodash": "^4.17.15",

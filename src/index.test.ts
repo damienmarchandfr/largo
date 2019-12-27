@@ -1,7 +1,7 @@
 import { setConnection, getConnection } from './index'
 import { LegatoConnection } from './connection'
 
-const databaseName = 'errors'
+const databaseName = 'internalTest'
 
 describe('set connection', () => {
 	beforeEach(() => {
@@ -20,6 +20,9 @@ describe('set connection', () => {
 		try {
 			setConnection(connection)
 		} catch (error) {
+			expect(error.message).toEqual(
+				'Cannot set connection. Cause not connected.'
+			)
 			hasError = true
 		}
 

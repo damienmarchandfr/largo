@@ -114,7 +114,7 @@ export class LegatoEntity {
 	}
 
 	static async findOne<T extends LegatoEntity>(
-		filter: FilterQuery<any>,
+		filter: FilterQuery<T>,
 		findOptions?: FindOneOptions
 	): Promise<T | null> {
 		const collectionName = this.getCollectionName()
