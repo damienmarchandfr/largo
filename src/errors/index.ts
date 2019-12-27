@@ -23,7 +23,7 @@ export abstract class LegatoErrorAbstract extends Error {
 
 export class LegatoErrorNotConnected extends LegatoErrorAbstract {
 	constructor() {
-		super(`Your are not connected to MongoDB server.`, errorCodes.notConnected)
+		super(`You are not connected to MongoDB server.`, errorCodes.notConnected)
 	}
 }
 
