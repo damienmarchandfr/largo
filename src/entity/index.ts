@@ -81,7 +81,7 @@ export class LegatoEntity {
 	 * @param findOptions
 	 */
 	static async find<T extends LegatoEntity>(
-		filter: FilterQuery<any>,
+		filter: FilterQuery<T> = {},
 		findOptions?: FindOneOptions
 	): Promise<LegatoEntityArray<T>> {
 		const collectionName = this.getCollectionName()
@@ -106,7 +106,7 @@ export class LegatoEntity {
 		for (const mongoElement of mongoElements) {
 			const object = new this()
 			Object.assign(object, mongoElement)
-			object.copy = object.toPlainObj()
+			object._copy = object.toPlainObj()
 			results.push(object)
 		}
 
@@ -139,7 +139,7 @@ export class LegatoEntity {
 
 		const object = new this() as T
 		Object.assign(object, mongoElement)
-		object.copy = object.toPlainObj()
+		object._copy = object.toPlainObj()
 
 		return object
 	}
@@ -323,7 +323,7 @@ export class LegatoEntity {
 	}
 
 	// Used to check if relations are changed
-	private copy: any
+	private _copy: any
 	private collectionName: string
 
 	constructor() {
@@ -378,17 +378,17 @@ export class LegatoEntity {
 	toPlainObj() {
 		const obj = Object.assign({}, this)
 		delete obj.events
-		delete obj.copy
+		delete obj._copy
 		delete obj.collectionName
 		return obj
 	}
 
 	getCopy() {
 		// Check if this.copy exsits
-		if (!this.copy) {
-			this.copy = this.toPlainObj()
+		if (!this._copy) {
+			this._copy = this.toPlainObj()
 		}
-		return this.copy
+		return this._copy
 	}
 
 	/**
@@ -488,7 +488,7 @@ export class LegatoEntity {
 			this.collectionName
 		].insertOne(toInsert)
 		this._id = inserted.insertedId as ObjectID
-		this.copy = this.toPlainObj()
+		this._copy = this.toPlainObj()
 
 		this.events.afterInsert.next(this)
 
@@ -607,8 +607,8 @@ export class LegatoEntity {
 			options || undefined
 		)
 
-		this.copy = {}
-		Object.assign(this.copy, this)
+		this._copy = {}
+		Object.assign(this._copy, this)
 
 		const saved = await connection.collections[this.collectionName].findOne({
 			_id: this._id,

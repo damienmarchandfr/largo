@@ -28,6 +28,10 @@ export class LegatoEntityArray<T extends LegatoEntity> {
 			throw new LegatoErrorNotConnected()
 		}
 
+		if (!this.items.length) {
+			return []
+		}
+
 		const collectionName = this.items[0].getCollectionName()
 
 		if (!connection.checkCollectionExists(collectionName)) {

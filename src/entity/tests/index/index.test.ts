@@ -56,7 +56,7 @@ describe('toPlainObj methods', () => {
 		})
 	})
 
-	it('should return upades', () => {
+	it('should return updates', () => {
 		const obj = new GetCopyTest()
 		expect(obj.toPlainObj()).toStrictEqual({
 			name: 'John',
