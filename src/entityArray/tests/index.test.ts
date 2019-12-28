@@ -1,7 +1,3 @@
-import { LegatoEntity } from '../../entity'
-import { LegatoIndex } from '../../decorators/index.decorator'
-import { LegatoField } from '../../decorators/field.decorator'
-import { LegatoRelation } from '../../decorators/relation.decorator'
 import { ObjectID } from 'mongodb'
 import { LegatoConnection } from '../../connection'
 import { ChildEntityArrayTest } from './entities/ChildEntityArray.entity.test'
@@ -9,7 +5,6 @@ import { LegatoEntityArray } from '..'
 import { NoDecoratorEntityArrayTest } from './entities/NoDecoratorEntityArray.entity.test'
 import { LegatoErrorCollectionDoesNotExist } from '../../errors'
 import { ParentEntityArrayTest } from './entities/ParentEntityArray.entity.test'
-import { parentPort } from 'worker_threads'
 import { getConnection, setConnection } from '../..'
 
 const databaseName = 'entityArrayTest'
@@ -72,11 +67,6 @@ describe('LegatoEntityArray class', () => {
 	})
 
 	it('should populate with _id by default with one to one relation', async () => {
-		const connection = await new LegatoConnection({
-			databaseName,
-		}).connect({
-			clean: true,
-		})
 
 		// Insert children
 		const child1 = new ChildEntityArrayTest()
