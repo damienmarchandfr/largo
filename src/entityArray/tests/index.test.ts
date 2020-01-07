@@ -67,6 +67,11 @@ describe('LegatoEntityArray class', () => {
 	})
 
 	it('should populate with _id by default with one to one relation', async () => {
+		await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
 
 		// Insert children
 		const child1 = new ChildEntityArrayTest()

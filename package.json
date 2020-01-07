@@ -27,9 +27,10 @@
 		"test": "jest --forceExit --detectOpenHandles",
 		"test:watch": "jest --watch --verbose false",
 		"example": "ts-node-dev examples/index.ts",
-		"dev": "jest -- src/entity/tests/populate/populate.test.ts"
+		"dev": "jest -- src/entityArray/tests/index.test.ts"
 	},
 	"dependencies": {
+		"class-transformer": "^0.2.3",
 		"lodash": "^4.17.15",
 		"mongodb": "^3.3.2",
 		"reflect-metadata": "^0.1.13",

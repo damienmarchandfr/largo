@@ -24,6 +24,11 @@ import { LegatoErrorDeleteChild } from '../errors/delete/DeleteChild.error'
 import { LegatoErrorInsertParent } from '../errors/insert/InsertParent.error'
 import { LegatoErrorUpdateParent } from '../errors/update/UpdateParent.error'
 import { LegatoErrorUpdateManyParent } from '../errors/updateMany/UpdateManyParent.error'
+import {
+	plainToClass,
+	TransformPlainToClass,
+	plainToClassFromExist,
+} from 'class-transformer'
 
 export class LegatoEntity {
 	/**
@@ -104,9 +109,7 @@ export class LegatoEntity {
 		const results = new LegatoEntityArray()
 
 		for (const mongoElement of mongoElements) {
-			const object = new this()
-			Object.assign(object, mongoElement)
-			object._copy = object.toPlainObj()
+			const object = plainToClass(this, mongoElement)
 			results.push(object)
 		}
 
