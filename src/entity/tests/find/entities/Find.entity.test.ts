@@ -3,19 +3,12 @@ import { LegatoField } from '../../../../decorators/field.decorator'
 
 export class FindEntityTest extends LegatoEntity {
 	@LegatoField()
-	name: string
+	name = 'Legato'
 
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
+	@LegatoField()
+	defaultValue = 'value'
 }
 
 export class FindEntityTestWithoutDecorator extends LegatoEntity {
-	name: string
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
+	name: string = 'Legato'
 }

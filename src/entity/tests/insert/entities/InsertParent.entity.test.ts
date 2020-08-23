@@ -6,7 +6,7 @@ import { ObjectID } from 'mongodb'
 
 export class InsertParentTest extends LegatoEntity {
 	@LegatoField()
-	name: string
+	name = 'Legato'
 
 	@LegatoRelation({
 		checkRelation: true,
@@ -69,9 +69,4 @@ export class InsertParentTest extends LegatoEntity {
 		targetKey: 'numberId',
 	})
 	childIdsNumber: number[] = []
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
 }

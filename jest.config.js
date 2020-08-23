@@ -10,7 +10,7 @@ const config = {
 			},
 		},
 	},
-	collectCoverage: true
+	collectCoverage: true,
 }
 
 module.exports = config

@@ -4,7 +4,7 @@ import { LegatoIndex } from '../../../../decorators/index.decorator'
 
 export class InsertChildTest extends LegatoEntity {
 	@LegatoField()
-	name: string
+	name = 'Legato'
 
 	// Custom ids
 	@LegatoIndex({
@@ -16,9 +16,4 @@ export class InsertChildTest extends LegatoEntity {
 		unique: false,
 	})
 	numberId: number | null = null
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
 }

@@ -35,17 +35,17 @@ interface CustomGlobal extends NodeJS.Global {
 }
 
 export function LegatoMetaDataStorage() {
-	if (!(global as CustomGlobal).LegatoFieldMetas) {
-		;(global as CustomGlobal).LegatoFieldMetas = {}
+	if (!((global as unknown) as CustomGlobal).LegatoFieldMetas) {
+		;((global as unknown) as CustomGlobal).LegatoFieldMetas = {}
 	}
-	if (!(global as CustomGlobal).LegatoIndexMetas) {
-		;(global as CustomGlobal).LegatoIndexMetas = {}
+	if (!((global as unknown) as CustomGlobal).LegatoIndexMetas) {
+		;((global as unknown) as CustomGlobal).LegatoIndexMetas = {}
 	}
-	if (!(global as CustomGlobal).LegatoRelationsMetas) {
-		;(global as CustomGlobal).LegatoRelationsMetas = {}
+	if (!((global as unknown) as CustomGlobal).LegatoRelationsMetas) {
+		;((global as unknown) as CustomGlobal).LegatoRelationsMetas = {}
 	}
 
-	return global as CustomGlobal
+	return (global as unknown) as CustomGlobal
 }
 
 let connection: LegatoConnection | null = null

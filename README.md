@@ -10,6 +10,8 @@ Master
 
 WIP
 
+[Trello](https://trello.com/b/riF1X2VJ/legato)
+
 - Id not \_id updated check relation
 - Check relation on update with copy
 - Test poplate many

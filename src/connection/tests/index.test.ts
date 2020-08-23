@@ -1,9 +1,5 @@
 import { createConnectionString, LegatoConnection } from '..'
-import { LegatoField } from '../../decorators/field.decorator'
-import { LegatoIndex } from '../../decorators/index.decorator'
-import { LegatoEntity } from '../../entity'
 import { getConnection, setConnection } from '../../index'
-import { ObjectID } from 'mongodb'
 import {
 	LegatoErrorNotConnected,
 	LegatoErrorCannotDisconnect,
@@ -56,7 +52,7 @@ describe('connect function', () => {
 		expect(legato.collections.ConnectionTestModel2).toBeDefined()
 	})
 
-	it('must return same if already connected', async () => {
+	it('must return same connection if already connected', async () => {
 		const connection = new LegatoConnection({
 			databaseName,
 		})

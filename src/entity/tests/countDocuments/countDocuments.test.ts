@@ -25,9 +25,7 @@ describe('static method countDocuments', () => {
 		let hasError = false
 
 		try {
-			await CountDocumentsTestWithoutDecorator.countDocuments({
-				name: 'John',
-			})
+			await CountDocumentsTestWithoutDecorator.countDocuments()
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -49,7 +47,9 @@ describe('static method countDocuments', () => {
 		const toInsert: CountDocumentsTest[] = []
 
 		for (let i = 0; i < 10; i++) {
-			toInsert.push(new CountDocumentsTest('john'))
+			toInsert.push(
+				CountDocumentsTest.create<CountDocumentsTest>({ name: 'Legato' })
+			)
 		}
 		await connection.collections.CountDocumentsTest.insertMany(toInsert)
 
@@ -67,15 +67,19 @@ describe('static method countDocuments', () => {
 		const toInsert: CountDocumentsTest[] = []
 
 		for (let i = 0; i < 10; i++) {
-			toInsert.push(new CountDocumentsTest('John'))
+			toInsert.push(
+				CountDocumentsTest.create<CountDocumentsTest>({ name: 'Legato' })
+			)
 		}
 
-		toInsert.push(new CountDocumentsTest('Damien'))
+		toInsert.push(
+			CountDocumentsTest.create<CountDocumentsTest>({ name: 'John' })
+		)
 
 		await connection.collections.CountDocumentsTest.insertMany(toInsert)
 
 		const count = await CountDocumentsTest.countDocuments({
-			name: 'Damien',
+			name: 'John',
 		})
 		expect(count).toEqual(1)
 	})

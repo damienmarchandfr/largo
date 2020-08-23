@@ -2,6 +2,7 @@ import { Db, MongoClient, Collection } from 'mongodb'
 import { uniq } from 'lodash'
 import { LegatoMetaDataStorage, getConnection, setConnection } from '..'
 import { LegatoErrorCannotDisconnect, LegatoErrorNotConnected } from '../errors'
+import { cpuUsage } from 'process'
 
 // MongoDB options to create connection
 interface ConnectionOptions {
@@ -92,16 +93,22 @@ export class LegatoConnection {
 				collectionName
 			]
 			for (const indexMeta of collectionIndexMetas) {
-				await this.collections[collectionName].createIndex(indexMeta.key, {
-					unique: indexMeta.unique,
-				})
+				const createIndexPromises = []
+				createIndexPromises.push(
+					this.collections[collectionName].createIndex(indexMeta.key, {
+						unique: indexMeta.unique,
+					})
+				)
+				await Promise.all(createIndexPromises)
 			}
 		}
 
 		if (options.clean) {
+			const cleanPromises = []
 			for (const collectionName of Object.keys(this.collections)) {
-				await this.collections[collectionName].deleteMany({})
+				cleanPromises.push(this.collections[collectionName].deleteMany({}))
 			}
+			await Promise.all(cleanPromises)
 		}
 
 		setConnection(this)
@@ -151,6 +158,7 @@ export function createConnectionString(options: ConnectionOptions): string {
 		userAuthURL = `${options.username}:${options.password}@`
 	}
 
-	return `mongodb://${userAuthURL}${options.host ||
-		`localhost`}:${options.port || 27017}/${options.databaseName}`
+	return `mongodb://${userAuthURL}${options.host || `localhost`}:${
+		options.port || 27017
+	}/${options.databaseName}`
 }

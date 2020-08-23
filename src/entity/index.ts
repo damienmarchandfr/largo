@@ -24,11 +24,8 @@ import { LegatoErrorDeleteChild } from '../errors/delete/DeleteChild.error'
 import { LegatoErrorInsertParent } from '../errors/insert/InsertParent.error'
 import { LegatoErrorUpdateParent } from '../errors/update/UpdateParent.error'
 import { LegatoErrorUpdateManyParent } from '../errors/updateMany/UpdateManyParent.error'
-import {
-	plainToClass,
-	TransformPlainToClass,
-	plainToClassFromExist,
-} from 'class-transformer'
+
+type PropType<TObj, TProp extends keyof TObj> = TObj[TProp]
 
 export class LegatoEntity {
 	/**
@@ -109,7 +106,7 @@ export class LegatoEntity {
 		const results = new LegatoEntityArray()
 
 		for (const mongoElement of mongoElements) {
-			const object = plainToClass(this, mongoElement)
+			const object = this.create<T>(mongoElement)
 			results.push(object)
 		}
 
@@ -140,11 +137,7 @@ export class LegatoEntity {
 			return null
 		}
 
-		const object = new this() as T
-		Object.assign(object, mongoElement)
-		object._copy = object.toPlainObj()
-
-		return object
+		return this.create<T>(mongoElement)
 	}
 
 	static async updateMany<T extends LegatoEntity>(
@@ -152,7 +145,7 @@ export class LegatoEntity {
 		partial: Partial<T>,
 		checkRelations = true,
 		options?: UpdateManyOptions
-	) {
+	): Promise<number> {
 		const collectionName = this.getCollectionName()
 		const connection = getConnection()
 
@@ -170,7 +163,7 @@ export class LegatoEntity {
 		delete toUpdate._id // MongoID cannot be changed
 
 		if (isEmpty(toUpdate)) {
-			return
+			return 0
 		}
 
 		// Get meta for relation checking
@@ -204,8 +197,7 @@ export class LegatoEntity {
 
 							if (resultOneToMany.length !== result[meta.key].length) {
 								// Number of id != number of results from db
-								const obj = new this()
-								Object.assign(obj, result)
+								const obj = this.create(result)
 								throw new LegatoErrorUpdateManyParent(obj, meta)
 							}
 						} else {
@@ -217,8 +209,7 @@ export class LegatoEntity {
 							})
 
 							if (!resultOneToOne) {
-								const obj = new this()
-								Object.assign(obj, result)
+								const obj = this.create(result)
 								throw new LegatoErrorUpdateManyParent(obj, meta)
 							}
 						}
@@ -227,13 +218,17 @@ export class LegatoEntity {
 			}
 		}
 
-		return connection.collections[collectionName].updateMany(
+		const updateResult = await connection.collections[
+			collectionName
+		].updateMany(
 			filter,
 			{
 				$set: toUpdate,
 			},
 			options
 		)
+
+		return updateResult.modifiedCount
 	}
 
 	static async deleteMany<T extends LegatoEntity>(filter: FilterQuery<T> = {}) {
@@ -310,7 +305,7 @@ export class LegatoEntity {
 
 	public _id?: ObjectID
 
-	private events: {
+	private _events: {
 		beforeInsert: Subject<any> // Values to insert
 		afterInsert: Subject<any> // Values inserted
 		beforeUpdate: Subject<{
@@ -327,10 +322,10 @@ export class LegatoEntity {
 
 	// Used to check if relations are changed
 	private _copy: any
-	private collectionName: string
+	private _collectionName: string
 
 	constructor() {
-		this.events = {
+		this._events = {
 			beforeInsert: new Subject(),
 			afterInsert: new Subject(),
 			beforeUpdate: new Subject(),
@@ -338,7 +333,33 @@ export class LegatoEntity {
 			beforeDelete: new Subject(),
 			afterDelete: new Subject(),
 		}
-		this.collectionName = this.getCollectionName()
+		this._collectionName = this.getCollectionName()
+	}
+
+	static create<T extends LegatoEntity>(initialValues: Partial<T>) {
+		const object = new this() as T
+
+		const connection = getConnection()
+		const collectionName = object._collectionName
+
+		if (!connection) {
+			throw new LegatoErrorNotConnected()
+		}
+
+		if (!connection.checkCollectionExists(collectionName)) {
+			throw new LegatoErrorCollectionDoesNotExist(collectionName)
+		}
+
+		object._copy = initialValues
+
+		for (const key in initialValues) {
+			if (initialValues.hasOwnProperty(key)) {
+				const element = initialValues[key]
+				object[key] = element as PropType<T, typeof key>
+			}
+		}
+
+		return object
 	}
 
 	beforeInsert<T extends LegatoEntity>() {

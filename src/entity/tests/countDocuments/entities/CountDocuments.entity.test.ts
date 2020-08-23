@@ -3,19 +3,9 @@ import { LegatoField } from '../../../../decorators/field.decorator'
 
 export class CountDocumentsTest extends LegatoEntity {
 	@LegatoField()
-	name: string
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
+	name = 'Legato'
 }
 
 export class CountDocumentsTestWithoutDecorator extends LegatoEntity {
-	name: string
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
+	name = 'Legato'
 }

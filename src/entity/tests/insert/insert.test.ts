@@ -1,5 +1,5 @@
 import { LegatoConnection } from '../../../connection'
-import { ObjectID } from 'mongodb'
+import { ObjectID, ObjectId } from 'mongodb'
 import {
 	InsertTestWithoutDecorator,
 	InsertTest,
@@ -8,9 +8,7 @@ import { getConnection, setConnection } from '../../..'
 import { LegatoErrorObjectAlreadyInserted } from '../../../errors'
 import { InsertParentTest } from './entities/InsertParent.entity.test'
 import { InsertChildTest } from './entities/InsertChild.entity.test'
-import { connect } from 'http2'
 import { LegatoErrorInsertParent } from '../../../errors/insert/InsertParent.error'
-import { ChildEntityTest } from '../index/enities/Child.entity.test'
 
 const databaseName = 'insertTest'
 
@@ -31,7 +29,9 @@ describe('insert method', () => {
 		let hasError = false
 
 		try {
-			await new InsertTestWithoutDecorator().insert()
+			await InsertTestWithoutDecorator.create<InsertTestWithoutDecorator>({
+				name: 'Legato',
+			})
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
@@ -49,7 +49,7 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const toInsert = new InsertTest()
+		const toInsert = InsertTest.create<InsertTest>({ name: 'Legato' })
 		expect(toInsert._id).toBeUndefined()
 
 		const id = await toInsert.insert()
@@ -58,10 +58,13 @@ describe('insert method', () => {
 		expect(id).toStrictEqual(toInsert._id)
 
 		// Search element in database
-		const fromMongo = await connection.collections.InsertTest.findOne({
+		const fromMongo = await connection.collections.InsertTest.findOne<
+			InsertTest
+		>({
 			_id: id,
 		})
-		expect(fromMongo._id).toStrictEqual(id)
+		expect(fromMongo?._id).toStrictEqual(id)
+		expect(fromMongo?.name).toStrictEqual('Legato')
 	})
 
 	it('should not insert the same object 2 times', async () => {
@@ -71,7 +74,7 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const toInsert = new InsertTest()
+		const toInsert = InsertTest.create<InsertTest>({ name: 'Legato' })
 
 		await toInsert.insert()
 
@@ -95,10 +98,10 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const toInsert = new InsertTest()
+		const toInsert = InsertTest.create<InsertTest>({ name: 'Legato' })
 
-		toInsert.beforeInsert<InsertTest>().subscribe((willBeinserted) => {
-			expect(willBeinserted).toEqual(toInsert)
+		toInsert.beforeInsert<InsertTest>().subscribe((willBeInserted) => {
+			expect(willBeInserted).toEqual(toInsert)
 			done()
 		})
 
@@ -112,7 +115,7 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const toInsert = new InsertTest()
+		const toInsert = InsertTest.create<InsertTest>({ name: 'Legato' })
 
 		toInsert.afterInsert<InsertTest>().subscribe((inserted) => {
 			expect(inserted._id).toBeInstanceOf(ObjectID)
@@ -129,13 +132,12 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const parent = new InsertParentTest()
+		const parent = InsertParentTest.create<InsertParentTest>({})
 
-		const child = new InsertChildTest()
+		const child = InsertChildTest.create<InsertChildTest>({})
 		await connection.collections.InsertChildTest.insertOne(child)
 
-		parent.childId = child._id as ObjectID
-
+		parent.childId = child._id as ObjectId
 		await parent.insert()
 
 		// Search parent
@@ -153,10 +155,10 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const parent = new InsertParentTest()
+		const parent = InsertParentTest.create<InsertParentTest>({})
 
-		const child1 = new InsertChildTest()
-		const child2 = new InsertChildTest()
+		const child1 = InsertChildTest.create<InsertChildTest>({})
+		const child2 = InsertChildTest.create<InsertChildTest>({})
 
 		await connection.collections.InsertChildTest.insertMany([child1, child2])
 
@@ -179,11 +181,10 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const parent = new InsertParentTest()
-		parent.childIdString = 'john'
-
-		const child = new InsertChildTest()
-		child.stringId = 'john'
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childIdString: 'john',
+		})
+		const child = InsertChildTest.create<InsertChildTest>({ stringId: 'john' })
 
 		await connection.collections.InsertChildTest.insertOne(child)
 
@@ -205,12 +206,12 @@ describe('insert method', () => {
 		await connection.collections.InsertChildTest.deleteMany({})
 		await connection.collections.InsertParentTest.deleteMany({})
 
-		const child1 = new InsertChildTest()
-		child1.numberId = 1
-
-		const parent1 = new InsertParentTest()
-		parent1.childIdNumber = 1
-
+		const child1 = InsertChildTest.create<InsertChildTest>({
+			numberId: 1,
+		})
+		const parent1 = InsertParentTest.create<InsertParentTest>({
+			childIdNumber: 1,
+		})
 		await connection.collections.InsertChildTest.insertOne(child1)
 
 		hasError = false
@@ -238,13 +239,17 @@ describe('insert method', () => {
 		})
 
 		// id string
-		const parent = new InsertParentTest()
-		parent.childIdsString = ['john']
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childIdsString: ['john', 'joe'],
+		})
 
-		const child = new InsertChildTest()
-		child.stringId = 'john'
-
-		await connection.collections.InsertChildTest.insertOne(child)
+		const child3 = InsertChildTest.create<InsertChildTest>({
+			stringId: 'john',
+		})
+		const child4 = InsertChildTest.create<InsertChildTest>({
+			stringId: 'joe',
+		})
+		await connection.collections.InsertChildTest.insertMany([child3, child4])
 
 		let hasError = false
 
@@ -257,7 +262,7 @@ describe('insert method', () => {
 		expect(hasError).toBeFalsy()
 
 		let parentFromMongo = await connection.collections.InsertParentTest.findOne(
-			{ childIdsString: ['john'] }
+			{ childIdsString: ['john', 'joe'] }
 		)
 
 		expect(parentFromMongo._id).toStrictEqual(parent._id)
@@ -266,13 +271,19 @@ describe('insert method', () => {
 		await connection.collections.InsertParentTest.deleteMany({})
 		await connection.collections.InsertChildTest.deleteMany({})
 
-		const parent1 = new InsertParentTest()
-		parent1.childIdsNumber = [1]
+		const parent1 = InsertParentTest.create<InsertParentTest>({
+			name: 'Legato',
+		})
+		parent1.childIdsNumber = [1, 2]
 
-		const child1 = new InsertChildTest()
-		child1.numberId = 1
+		const child1 = InsertChildTest.create<InsertChildTest>({
+			numberId: 1,
+		})
+		const child2 = InsertChildTest.create<InsertChildTest>({
+			numberId: 2,
+		})
 
-		await connection.collections.InsertChildTest.insertOne(child1)
+		await connection.collections.InsertChildTest.insertMany([child1, child2])
 
 		hasError = false
 
@@ -285,7 +296,7 @@ describe('insert method', () => {
 		expect(hasError).toBeFalsy()
 
 		parentFromMongo = await connection.collections.InsertParentTest.findOne({
-			childIdsNumber: [1],
+			childIdsNumber: [1, 2],
 		})
 		expect(parentFromMongo._id).toStrictEqual(parent1._id)
 	})
@@ -297,10 +308,10 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const parent = new InsertParentTest()
-
 		const id = new ObjectID()
-		parent.childIdNoCheck = id
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childIdNoCheck: id,
+		})
 
 		let hasError = false
 		try {
@@ -325,10 +336,10 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const parent = new InsertParentTest()
-
 		const ids = [new ObjectID(), new ObjectID()]
-		parent.childIdsNoCheck = ids
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childIdsNoCheck: ids,
+		})
 
 		let hasError = false
 		try {
@@ -353,11 +364,11 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const parent = new InsertParentTest()
-		parent.childId = new ObjectID()
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childId: new ObjectID(),
+		})
 
 		let hasError = false
-
 		try {
 			await parent.insert()
 		} catch (error) {
@@ -369,7 +380,6 @@ describe('insert method', () => {
 
 		// Check that parent not insered
 		const counter = await connection.collections.InsertParentTest.countDocuments()
-
 		expect(counter).toEqual(0)
 	})
 
@@ -381,11 +391,11 @@ describe('insert method', () => {
 		})
 
 		// id string
-		const parent = new InsertParentTest()
-		parent.childIdString = 'john'
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childIdString: 'john',
+		})
 
 		let hasError = false
-
 		try {
 			await parent.insert()
 		} catch (error) {
@@ -401,11 +411,11 @@ describe('insert method', () => {
 		expect(counter).toEqual(0)
 
 		// id number
-		const parent1 = new InsertParentTest()
-		parent1.childIdNumber = 1
+		const parent1 = InsertParentTest.create<InsertParentTest>({
+			childIdNumber: 1,
+		})
 
 		hasError = false
-
 		try {
 			await parent1.insert()
 		} catch (error) {
@@ -428,11 +438,11 @@ describe('insert method', () => {
 			clean: true,
 		})
 
-		const parent = new InsertParentTest()
-		parent.childIds = [new ObjectID()]
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childIds: [new ObjectID()],
+		})
 
 		let hasError = false
-
 		try {
 			await parent.insert()
 		} catch (error) {
@@ -448,20 +458,17 @@ describe('insert method', () => {
 		expect(counter).toEqual(0)
 
 		// Add a real child but let invalid relation
-		const child = new InsertChildTest()
+		const child = InsertChildTest.create<InsertChildTest>({})
 		await connection.collections.InsertChildTest.insertOne(child)
-
 		parent.childIds.push(child._id as ObjectID)
 
 		hasError = false
-
 		try {
 			await parent.insert()
 		} catch (error) {
 			hasError = true
 			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
 		}
-
 		expect(hasError).toBeTruthy()
 
 		counter = await connection.collections.InsertParentTest.countDocuments()
@@ -469,11 +476,9 @@ describe('insert method', () => {
 
 		// Delete first invalid relation
 		parent.childIds.splice(0, 1)
-
 		expect(parent.childIds[0]).toStrictEqual(child._id)
 
 		hasError = false
-
 		try {
 			await parent.insert()
 		} catch (error) {
@@ -486,7 +491,6 @@ describe('insert method', () => {
 		expect(parentsFromMongo.length).toEqual(1)
 
 		const parentFromMongo = parentsFromMongo[0] as any
-
 		expect(parentFromMongo.childIds).toStrictEqual([child._id])
 	})
 
@@ -498,40 +502,37 @@ describe('insert method', () => {
 		})
 
 		// id string
-		const parent = new InsertParentTest()
-		parent.childIdsString = ['john']
+		const parent = InsertParentTest.create<InsertParentTest>({
+			childIdsString: ['john'],
+		})
 
 		let hasError = false
-
 		try {
 			await parent.insert()
 		} catch (error) {
 			hasError = true
 			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
 		}
-
 		expect(hasError).toBeTruthy()
 
 		// Check that parent not insered
 		let counter = await connection.collections.InsertParentTest.countDocuments()
-
 		expect(counter).toEqual(0)
 
 		// id number
 		await connection.collections.InsertChildTest.deleteMany({})
 
-		const parent2 = new InsertParentTest()
-		parent2.childIdsNumber = [1]
+		const parent2 = InsertParentTest.create<InsertParentTest>({
+			childIdsNumber: [1],
+		})
 
 		hasError = false
-
 		try {
 			await parent2.insert()
 		} catch (error) {
 			hasError = true
 			expect(error).toBeInstanceOf(LegatoErrorInsertParent)
 		}
-
 		expect(hasError).toBeTruthy()
 
 		counter = await connection.collections.InsertParentTest.countDocuments()
@@ -539,18 +540,65 @@ describe('insert method', () => {
 	})
 
 	it('should copy value in object after insert', async () => {
+		await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		const obj = InsertTest.create<InsertTest>({ name: 'Legato' })
+		await obj.insert()
+
+		expect(obj.getCopy()).toStrictEqual({
+			name: 'Legato',
+			_id: obj._id,
+		})
+	})
+
+	it('should insert with default values', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
 		}).connect({
 			clean: true,
 		})
 
-		const obj = new InsertTest('john doe')
-		await obj.insert()
+		const objWithDefaultValues = InsertTest.create<InsertTest>({})
 
-		expect(obj.getCopy()).toStrictEqual({
-			name: 'john doe',
-			_id: obj._id,
+		expect(objWithDefaultValues.name).not.toBeUndefined()
+		const value = objWithDefaultValues.name
+
+		const insertedId = await objWithDefaultValues.insert()
+
+		const mongoValues = await connection.collections.InsertTest.findOne<
+			InsertTest
+		>({
+			_id: insertedId,
 		})
+
+		expect(mongoValues?.name).toStrictEqual(value)
+	})
+
+	it('should insert with set values', async () => {
+		const connection = await new LegatoConnection({
+			databaseName,
+		}).connect({
+			clean: true,
+		})
+
+		// Default
+		const defaultValues = InsertTest.create<InsertTest>({})
+		expect(defaultValues.name).not.toEqual('John')
+
+		const obj = InsertTest.create<InsertTest>({
+			name: 'John',
+		})
+
+		const id = await obj.insert()
+
+		const mongoValue = await connection.collections.InsertTest.findOne<
+			InsertTest
+		>({ _id: id })
+
+		expect(mongoValue?.name).toStrictEqual('John')
 	})
 })
