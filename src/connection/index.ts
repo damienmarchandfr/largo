@@ -2,7 +2,6 @@ import { Db, MongoClient, Collection } from 'mongodb'
 import { uniq } from 'lodash'
 import { LegatoMetaDataStorage, getConnection, setConnection } from '..'
 import { LegatoErrorCannotDisconnect, LegatoErrorNotConnected } from '../errors'
-import { cpuUsage } from 'process'
 
 // MongoDB options to create connection
 interface ConnectionOptions {
@@ -74,11 +73,30 @@ export class LegatoConnection {
 		// Remove duplicate collection name
 		collectionNames = uniq(collectionNames)
 
+		const collectionsList = await this.db.listCollections(
+			{},
+			{ nameOnly: true }
+		)
+		const collectionsNamesList = (await (await collectionsList.toArray()).map(
+			(result) => {
+				return result.name
+			}
+		)) as string[]
+
 		// Create collections
+		const createCollectionsPromises = []
 		for (const collectionName of collectionNames) {
-			const collectionCreated = await this.db.createCollection(collectionName)
-			this.collections[collectionName] = collectionCreated
+			if (!collectionsNamesList.includes(collectionName)) {
+				createCollectionsPromises.push(
+					this.db.createCollection(collectionName).then((collectionCreated) => {
+						this.collections[collectionName] = collectionCreated
+					})
+				)
+			} else {
+				this.collections[collectionName] = this.db.collection(collectionName)
+			}
 		}
+		await Promise.all(createCollectionsPromises)
 
 		// Create indexes
 		collectionNames = Object.keys(LegatoMetaDataStorage().LegatoIndexMetas)
