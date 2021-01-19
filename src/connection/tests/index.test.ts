@@ -7,7 +7,7 @@ import {
 import {
 	ConnectionTestModel,
 	ConnectionTestModel2,
-} from './Connection.entity.test'
+} from './Connection.entity'
 
 const databaseName = 'connectiontest'
 

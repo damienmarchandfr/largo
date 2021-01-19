@@ -3,13 +3,13 @@ import { LegatoEntity } from './entity'
 import { LegatoConnection } from './connection'
 
 // Meta field
-// user : ['id','email'] for User class with 2 fields saved
+// User : ['id','email'] for User class with 2 fields saved
 
 // Meta index
-// user : [{key : 'id', unique : true},{key : 'email', unique : false}]
+// User : [{key : 'id', unique : true},{key : 'email', unique : false}]
 
 // Meta relation
-// user : [{ key : companyId ,populatedKey : company, populatedType : User, targetType : Company, targetKey : id}]
+// User : [{ key : companyId ,populatedKey : company, populatedType : User, targetType : Company, targetKey : id}]
 
 type DataStorageFieldMeta = { [key: string]: string[] }
 type DataStorageIndexMeta = {

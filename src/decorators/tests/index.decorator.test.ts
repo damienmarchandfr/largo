@@ -1,6 +1,9 @@
 import { LegatoMetaDataStorage, getConnection, setConnection } from '../..'
 import { LegatoConnection } from '../../connection'
-import { IndexDecoratorUniqueTest } from './Decorator.entity.test'
+import {
+	IndexDecoratorTest,
+	IndexDecoratorUniqueTest,
+} from './Decorator.entity'
 
 const databaseName = 'indexDecorator'
 
@@ -29,7 +32,7 @@ describe('LegatoIndex decorator', () => {
 		})
 	})
 
-	it('should create a unique index', async () => {
+	it('should create a unique index in database', async () => {
 		const connexion = await new LegatoConnection({
 			databaseName,
 		}).connect({
@@ -37,14 +40,18 @@ describe('LegatoIndex decorator', () => {
 		})
 
 		await connexion.collections.IndexDecoratorUniqueTest.insertOne(
-			new IndexDecoratorUniqueTest()
+			IndexDecoratorUniqueTest.create<IndexDecoratorUniqueTest>({
+				unique: 'uniqueValue',
+			})
 		)
 
 		let hasError = false
 
 		try {
 			await connexion.collections.IndexDecoratorUniqueTest.insertOne(
-				new IndexDecoratorUniqueTest()
+				IndexDecoratorUniqueTest.create<IndexDecoratorUniqueTest>({
+					unique: 'uniqueValue',
+				})
 			)
 		} catch (error) {
 			hasError = true

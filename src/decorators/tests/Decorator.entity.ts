@@ -6,7 +6,7 @@ import { LegatoRelation } from '../relation.decorator'
 
 // ------ FIELD DECORATOR -------
 
-export class FieldDocoratorTest extends LegatoEntity {
+export class FieldDecoratorTest extends LegatoEntity {
 	@LegatoField()
 	field: string = ''
 }
@@ -29,7 +29,7 @@ export class IndexDecoratorUniqueTest extends LegatoEntity {
 	@LegatoIndex({
 		unique: true,
 	})
-	unique: string = new ObjectID().toHexString()
+	unique: string = ''
 }
 
 // -------- RELATION DECORATOR ----------

@@ -2,8 +2,8 @@ import {
 	FilterQuery,
 	UpdateOneOptions,
 	ObjectID,
-	FindOneOptions,
 	UpdateManyOptions,
+	FindOneOptions,
 } from 'mongodb'
 import { Subject } from 'rxjs'
 import {
@@ -26,6 +26,7 @@ import { LegatoErrorUpdateParent } from '../errors/update/UpdateParent.error'
 import { LegatoErrorUpdateManyParent } from '../errors/updateMany/UpdateManyParent.error'
 
 type PropType<TObj, TProp extends keyof TObj> = TObj[TProp]
+type Constructor<T> = { new (): T }
 
 export class LegatoEntity {
 	/**
@@ -84,7 +85,7 @@ export class LegatoEntity {
 	 */
 	static async find<T extends LegatoEntity>(
 		filter: FilterQuery<T> = {},
-		findOptions?: FindOneOptions
+		findOptions: FindOneOptions<any>
 	): Promise<LegatoEntityArray<T>> {
 		const collectionName = this.getCollectionName()
 		const connection = getConnection()
@@ -115,7 +116,7 @@ export class LegatoEntity {
 
 	static async findOne<T extends LegatoEntity>(
 		filter: FilterQuery<T>,
-		findOptions?: FindOneOptions
+		findOptions?: FindOneOptions<any>
 	): Promise<T | null> {
 		const collectionName = this.getCollectionName()
 		const connection = getConnection()
@@ -321,7 +322,6 @@ export class LegatoEntity {
 	}
 
 	// Used to check if relations are changed
-	private _copy: any
 	private _collectionName: string
 
 	constructor() {
@@ -336,8 +336,27 @@ export class LegatoEntity {
 		this._collectionName = this.getCollectionName()
 	}
 
-	static create<T extends LegatoEntity>(initialValues: Partial<T>) {
-		const object = new this() as T
+	static create<T extends LegatoEntity>(
+		initialValues: Partial<
+			Omit<
+				T,
+				| '_id'
+				| 'beforeDelete'
+				| 'afterDelete'
+				| 'beforeInsert'
+				| 'afterInsert'
+				| 'beforeUpdate'
+				| 'afterUpdate'
+				| 'delete'
+				| 'getCollectionName'
+				| 'insert'
+				| 'update'
+				| 'populate'
+				| 'toPlainObj'
+			>
+		>
+	) {
+		const object = new this() as any
 
 		const connection = getConnection()
 		const collectionName = object._collectionName
@@ -350,46 +369,43 @@ export class LegatoEntity {
 			throw new LegatoErrorCollectionDoesNotExist(collectionName)
 		}
 
-		object._copy = initialValues
-
 		for (const key in initialValues) {
 			if (initialValues.hasOwnProperty(key)) {
-				const element = initialValues[key]
-				object[key] = element as PropType<T, typeof key>
+				object[key] = (initialValues as any)[key]
 			}
 		}
 
-		return object
+		return object as T
 	}
 
 	beforeInsert<T extends LegatoEntity>() {
-		return this.events.beforeInsert as Subject<T>
+		return this._events.beforeInsert as Subject<T>
 	}
 
 	afterInsert<T extends LegatoEntity>() {
-		return this.events.afterInsert as Subject<T>
+		return this._events.afterInsert as Subject<T>
 	}
 
 	beforeUpdate<T extends LegatoEntity>() {
-		return (this.events.beforeUpdate as unknown) as Subject<{
+		return (this._events.beforeUpdate as unknown) as Subject<{
 			oldValue: T
 			toUpdate: any
 		}>
 	}
 
-	beforeDelete<T extends LegatoEntity>() {
-		return this.events.beforeDelete as Subject<T>
-	}
-
-	afterDelete<T extends LegatoEntity>() {
-		return this.events.afterDelete as Subject<T>
-	}
-
 	afterUpdate<T extends LegatoEntity>() {
-		return this.events.afterUpdate as Subject<{
+		return this._events.afterUpdate as Subject<{
 			oldValue: T
 			newValue: T
 		}>
+	}
+
+	beforeDelete<T extends LegatoEntity>() {
+		return this._events.beforeDelete as Subject<T>
+	}
+
+	afterDelete<T extends LegatoEntity>() {
+		return this._events.afterDelete as Subject<T>
 	}
 
 	/**
@@ -400,19 +416,11 @@ export class LegatoEntity {
 	}
 
 	toPlainObj() {
-		const obj = Object.assign({}, this)
-		delete obj.events
+		const obj = Object.assign({}, this) as any
+		delete obj._events
 		delete obj._copy
-		delete obj.collectionName
+		delete obj._collectionName
 		return obj
-	}
-
-	getCopy() {
-		// Check if this.copy exsits
-		if (!this._copy) {
-			this._copy = this.toPlainObj()
-		}
-		return this._copy
 	}
 
 	/**
@@ -430,13 +438,13 @@ export class LegatoEntity {
 			throw new LegatoErrorNotConnected()
 		}
 
-		if (!connection.checkCollectionExists(this.collectionName)) {
-			throw new LegatoErrorCollectionDoesNotExist(this.collectionName)
+		if (!connection.checkCollectionExists(this._collectionName)) {
+			throw new LegatoErrorCollectionDoesNotExist(this._collectionName)
 		}
 
-		const toInsert = getLegatoPartial<this>(this, this.collectionName)
+		const toInsert = getLegatoPartial<this>(this, this._collectionName)
 
-		this.events.beforeInsert.next(this)
+		this._events.beforeInsert.next(this)
 
 		// Check if all relations works
 		const relationsMetas = this.getMetasToCheck()
@@ -509,12 +517,11 @@ export class LegatoEntity {
 		}
 
 		const inserted = await connection.collections[
-			this.collectionName
+			this._collectionName
 		].insertOne(toInsert)
 		this._id = inserted.insertedId as ObjectID
-		this._copy = this.toPlainObj()
 
-		this.events.afterInsert.next(this)
+		this._events.afterInsert.next(this)
 
 		return this._id
 	}
@@ -531,11 +538,11 @@ export class LegatoEntity {
 			throw new LegatoErrorNotConnected()
 		}
 
-		if (!connection.checkCollectionExists(this.collectionName)) {
-			throw new LegatoErrorCollectionDoesNotExist(this.collectionName)
+		if (!connection.checkCollectionExists(this._collectionName)) {
+			throw new LegatoErrorCollectionDoesNotExist(this._collectionName)
 		}
 
-		const toUpdate = getLegatoPartial(this, this.collectionName)
+		const toUpdate = getLegatoPartial(this, this._collectionName)
 
 		if (isEmpty(toUpdate)) {
 			return
@@ -543,12 +550,12 @@ export class LegatoEntity {
 
 		// Search old values
 		const savedVersion = await connection.collections[
-			this.collectionName
+			this._collectionName
 		].findOne({
 			_id: this._id,
 		})
 
-		this.events.beforeUpdate.next({
+		this._events.beforeUpdate.next({
 			oldValue: savedVersion,
 			toUpdate,
 		})
@@ -623,7 +630,7 @@ export class LegatoEntity {
 			}
 		}
 
-		await connection.collections[this.collectionName].updateOne(
+		await connection.collections[this._collectionName].updateOne(
 			{ _id: this._id },
 			{
 				$set: toUpdate,
@@ -631,14 +638,11 @@ export class LegatoEntity {
 			options || undefined
 		)
 
-		this._copy = {}
-		Object.assign(this._copy, this)
-
-		const saved = await connection.collections[this.collectionName].findOne({
+		const saved = await connection.collections[this._collectionName].findOne({
 			_id: this._id,
 		})
 
-		this.events.afterUpdate.next({
+		this._events.afterUpdate.next({
 			oldValue: savedVersion,
 			newValue: saved,
 		})
@@ -655,15 +659,15 @@ export class LegatoEntity {
 			throw new LegatoErrorNotConnected()
 		}
 
-		if (!connection.checkCollectionExists(this.collectionName)) {
-			throw new LegatoErrorCollectionDoesNotExist(this.collectionName)
+		if (!connection.checkCollectionExists(this._collectionName)) {
+			throw new LegatoErrorCollectionDoesNotExist(this._collectionName)
 		}
 
 		if (!this._id) {
 			throw new LegatoErrorDeleteNoMongoID(this)
 		}
 
-		this.events.beforeDelete.next(this)
+		this._events.beforeDelete.next(this)
 
 		const relationMetas = this.getMetasToCheck()
 
@@ -692,10 +696,10 @@ export class LegatoEntity {
 			}
 		}
 
-		await connection.collections[this.collectionName].deleteOne({
+		await connection.collections[this._collectionName].deleteOne({
 			_id: this._id,
 		})
-		this.events.afterDelete.next(this)
+		this._events.afterDelete.next(this)
 	}
 
 	async populate(): Promise<any> {
@@ -705,12 +709,12 @@ export class LegatoEntity {
 			throw new LegatoErrorNotConnected()
 		}
 
-		if (!connection.checkCollectionExists(this.collectionName)) {
-			throw new LegatoErrorCollectionDoesNotExist(this.collectionName)
+		if (!connection.checkCollectionExists(this._collectionName)) {
+			throw new LegatoErrorCollectionDoesNotExist(this._collectionName)
 		}
 
 		const relationMetas = LegatoMetaDataStorage().LegatoRelationsMetas[
-			this.collectionName
+			this._collectionName
 		]
 
 		const pipeline: any[] = [
@@ -755,7 +759,7 @@ export class LegatoEntity {
 			}
 		}
 
-		const mongoObj = await connection.collections[this.collectionName]
+		const mongoObj = await connection.collections[this._collectionName]
 			.aggregate(pipeline)
 			.next()
 

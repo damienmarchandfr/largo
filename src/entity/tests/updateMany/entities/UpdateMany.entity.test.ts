@@ -14,7 +14,7 @@ export class UpdateManyEntityTest extends LegatoEntity {
 	@LegatoField()
 	name: string
 
-	noDecorator: string = 'notSaved'
+	noDecorator?: string = 'notSaved'
 
 	constructor(name = 'john') {
 		super()

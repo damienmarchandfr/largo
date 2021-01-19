@@ -7,7 +7,6 @@ import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 import { getConnection, setConnection } from '../../..'
 import { UpdateManyParentTest } from './entities/UpdateManyParent.entity.test'
 import { ObjectID, ObjectId } from 'mongodb'
-import { async } from 'rxjs/internal/scheduler/async'
 import { LegatoErrorUpdateManyParent } from '../../../errors/updateMany/UpdateManyParent.error'
 import { UpdateManyChildTest } from './entities/UpdateManyChild.entity.test'
 

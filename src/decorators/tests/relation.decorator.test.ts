@@ -2,7 +2,7 @@ import { LegatoMetaDataStorage } from '../..'
 import {
 	RelationDecoratorParentTest,
 	RelationDecoratorChildTest,
-} from './Decorator.entity.test'
+} from './Decorator.entity'
 
 describe('Relation decorator', () => {
 	it('should add meta data', () => {

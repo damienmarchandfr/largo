@@ -62,7 +62,7 @@ describe('delete method', () => {
 		} catch (error) {
 			hasError = true
 			expect(error.message).toEqual(
-				`Cannot delete DeleteEntityTest. No mongoID set.`
+				`Cannot delete DeleteEntityTest. No MongoID set.`
 			)
 			expect(error).toBeInstanceOf(LegatoErrorDeleteNoMongoID)
 		}
