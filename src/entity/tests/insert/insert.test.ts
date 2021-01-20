@@ -3,11 +3,11 @@ import { ObjectID, ObjectId } from 'mongodb'
 import {
 	InsertTestWithoutDecorator,
 	InsertTest,
-} from './entities/Insert.entity.test'
+} from './entities/Insert.entity'
 import { getConnection, setConnection } from '../../..'
 import { LegatoErrorObjectAlreadyInserted } from '../../../errors'
-import { InsertParentTest } from './entities/InsertParent.entity.test'
-import { InsertChildTest } from './entities/InsertChild.entity.test'
+import { InsertParentTest } from './entities/InsertParent.entity'
+import { InsertChildTest } from './entities/InsertChild.entity'
 import { LegatoErrorInsertParent } from '../../../errors/insert/InsertParent.error'
 
 const databaseName = 'insertTest'
@@ -58,11 +58,11 @@ describe('insert method', () => {
 		expect(id).toStrictEqual(toInsert._id)
 
 		// Search element in database
-		const fromMongo = await connection.collections.InsertTest.findOne<
-			InsertTest
-		>({
-			_id: id,
-		})
+		const fromMongo = await connection.collections.InsertTest.findOne<InsertTest>(
+			{
+				_id: id,
+			}
+		)
 		expect(fromMongo?._id).toStrictEqual(id)
 		expect(fromMongo?.name).toStrictEqual('Legato')
 	})
@@ -539,22 +539,6 @@ describe('insert method', () => {
 		expect(counter).toEqual(0)
 	})
 
-	it('should copy value in object after insert', async () => {
-		await new LegatoConnection({
-			databaseName,
-		}).connect({
-			clean: true,
-		})
-
-		const obj = InsertTest.create<InsertTest>({ name: 'Legato' })
-		await obj.insert()
-
-		expect(obj.getCopy()).toStrictEqual({
-			name: 'Legato',
-			_id: obj._id,
-		})
-	})
-
 	it('should insert with default values', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
@@ -569,11 +553,11 @@ describe('insert method', () => {
 
 		const insertedId = await objWithDefaultValues.insert()
 
-		const mongoValues = await connection.collections.InsertTest.findOne<
-			InsertTest
-		>({
-			_id: insertedId,
-		})
+		const mongoValues = await connection.collections.InsertTest.findOne<InsertTest>(
+			{
+				_id: insertedId,
+			}
+		)
 
 		expect(mongoValues?.name).toStrictEqual(value)
 	})
@@ -595,9 +579,9 @@ describe('insert method', () => {
 
 		const id = await obj.insert()
 
-		const mongoValue = await connection.collections.InsertTest.findOne<
-			InsertTest
-		>({ _id: id })
+		const mongoValue = await connection.collections.InsertTest.findOne<InsertTest>(
+			{ _id: id }
+		)
 
 		expect(mongoValue?.name).toStrictEqual('John')
 	})

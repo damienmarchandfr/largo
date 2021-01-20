@@ -25,8 +25,42 @@ import { LegatoErrorInsertParent } from '../errors/insert/InsertParent.error'
 import { LegatoErrorUpdateParent } from '../errors/update/UpdateParent.error'
 import { LegatoErrorUpdateManyParent } from '../errors/updateMany/UpdateManyParent.error'
 
-type PropType<TObj, TProp extends keyof TObj> = TObj[TProp]
-type Constructor<T> = { new (): T }
+type LegatoPartial<T> = Partial<
+	Omit<
+		T,
+		| '_id'
+		| 'beforeDelete'
+		| 'afterDelete'
+		| 'beforeInsert'
+		| 'afterInsert'
+		| 'beforeUpdate'
+		| 'afterUpdate'
+		| 'delete'
+		| 'getCollectionName'
+		| 'insert'
+		| 'update'
+		| 'populate'
+		| 'toPlainObj'
+	>
+>
+
+type LegatoPlain<T> = Partial<
+	Omit<
+		T,
+		| 'beforeDelete'
+		| 'afterDelete'
+		| 'beforeInsert'
+		| 'afterInsert'
+		| 'beforeUpdate'
+		| 'afterUpdate'
+		| 'delete'
+		| 'getCollectionName'
+		| 'insert'
+		| 'update'
+		| 'populate'
+		| 'toPlainObj'
+	>
+>
 
 export class LegatoEntity {
 	/**
@@ -336,26 +370,7 @@ export class LegatoEntity {
 		this._collectionName = this.getCollectionName()
 	}
 
-	static create<T extends LegatoEntity>(
-		initialValues: Partial<
-			Omit<
-				T,
-				| '_id'
-				| 'beforeDelete'
-				| 'afterDelete'
-				| 'beforeInsert'
-				| 'afterInsert'
-				| 'beforeUpdate'
-				| 'afterUpdate'
-				| 'delete'
-				| 'getCollectionName'
-				| 'insert'
-				| 'update'
-				| 'populate'
-				| 'toPlainObj'
-			>
-		>
-	) {
+	static create<T extends LegatoEntity>(initialValues: LegatoPartial<T>) {
 		const object = new this() as any
 
 		const connection = getConnection()
@@ -420,7 +435,7 @@ export class LegatoEntity {
 		delete obj._events
 		delete obj._copy
 		delete obj._collectionName
-		return obj
+		return obj as LegatoPlain<this>
 	}
 
 	/**
