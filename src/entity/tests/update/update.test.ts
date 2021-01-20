@@ -4,10 +4,10 @@ import { getConnection, setConnection } from '../../..'
 import {
 	UpdateTestWithoutDecorator,
 	UpdateTest,
-} from './entities/Update.entity.test'
+} from './entities/Update.entity'
 import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
-import { UpdateChildTest } from './entities/UpdateChild.entity.test'
-import { UpdateParentTest } from './entities/UpdateParent.entity.test'
+import { UpdateChildTest } from './entities/UpdateChild.entity'
+import { UpdateParentTest } from './entities/UpdateParent.entity'
 import { LegatoErrorUpdateParent } from '../../../errors/update/UpdateParent.error'
 
 const databaseName = 'updateTest'
@@ -56,13 +56,6 @@ describe('update method', () => {
 
 		obj.name = 'john doe'
 		await obj.update()
-
-		// Copy is set
-		const copy = obj.getCopy()
-		expect(copy).toMatchObject({
-			_id: obj._id,
-			name: 'john doe',
-		})
 
 		const updated = await connection.collections.UpdateTest.findOne({
 			_id: obj._id,

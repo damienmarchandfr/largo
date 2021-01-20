@@ -2,7 +2,7 @@ import { LegatoEntity } from '../../..'
 import { LegatoField } from '../../../../decorators/field.decorator'
 import { LegatoRelation } from '../../../../decorators/relation.decorator'
 import { ObjectID } from 'mongodb'
-import { UpdateChildTest } from './UpdateChild.entity.test'
+import { UpdateChildTest } from './UpdateChild.entity'
 
 export class UpdateParentTest extends LegatoEntity {
 	@LegatoField()
