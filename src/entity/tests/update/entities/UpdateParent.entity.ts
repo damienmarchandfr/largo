@@ -6,7 +6,7 @@ import { UpdateChildTest } from './UpdateChild.entity'
 
 export class UpdateParentTest extends LegatoEntity {
 	@LegatoField()
-	name: string
+	name = 'john'
 
 	@LegatoRelation({
 		checkRelation: true,
@@ -69,9 +69,4 @@ export class UpdateParentTest extends LegatoEntity {
 		targetKey: 'numberId',
 	})
 	childIdsNumber: number[] = []
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
 }

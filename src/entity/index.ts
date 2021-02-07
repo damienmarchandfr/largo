@@ -44,7 +44,7 @@ type LegatoPartial<T> = Partial<
 	>
 >
 
-type LegatoPlain<T> = Partial<
+export type LegatoPlain<T> = Partial<
 	Omit<
 		T,
 		| 'beforeDelete'
@@ -370,7 +370,7 @@ export class LegatoEntity {
 		this._collectionName = this.getCollectionName()
 	}
 
-	static create<T extends LegatoEntity>(initialValues: LegatoPartial<T>) {
+	static create<T extends LegatoEntity>(initialValues: LegatoPartial<T> = {}) {
 		const object = new this() as any
 
 		const connection = getConnection()
