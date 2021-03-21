@@ -4,7 +4,7 @@ import { LegatoIndex } from '../../../../decorators/index.decorator'
 
 export class DeleteChildTest extends LegatoEntity {
 	@LegatoField()
-	name: string
+	name: string = 'john'
 
 	// Custom ids
 	@LegatoIndex({
@@ -16,9 +16,4 @@ export class DeleteChildTest extends LegatoEntity {
 		unique: false,
 	})
 	numberId: number | null = null
-
-	constructor(name = 'john') {
-		super()
-		this.name = 'john'
-	}
 }

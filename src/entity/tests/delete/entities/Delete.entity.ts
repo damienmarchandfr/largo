@@ -3,19 +3,9 @@ import { LegatoField } from '../../../../decorators/field.decorator'
 
 export class DeleteEntityTest extends LegatoEntity {
 	@LegatoField()
-	name: string
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
+	name: string = 'john'
 }
 
 export class DeleteEntityTestWithoutDecorator extends LegatoEntity {
-	name: string
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
+	name: string = 'john'
 }

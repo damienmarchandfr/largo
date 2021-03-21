@@ -1,5 +1,5 @@
 {
-	"name": "mongodm",
+	"name": "legato",
 	"version": "1.0.0",
 	"author": "Damien Marchand",
 	"license": "MIT",
@@ -27,7 +27,7 @@
 		"test": "jest --forceExit --detectOpenHandles",
 		"test:watch": "jest --watch --verbose false",
 		"example": "ts-node-dev examples/index.ts",
-		"dev": "jest --detectOpenHandles -- src/entity/tests/update/update.test.ts"
+		"dev": "jest --detectOpenHandles -- src/entity/tests/delete/delete.test.ts"
 	},
 	"dependencies": {
 		"lodash": "^4.17.20",

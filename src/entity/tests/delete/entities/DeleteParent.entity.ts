@@ -1,12 +1,12 @@
 import { LegatoEntity } from '../../..'
 import { LegatoRelation } from '../../../../decorators/relation.decorator'
-import { DeleteChildTest } from './DeleteChild.entity.test'
+import { DeleteChildTest } from './DeleteChild.entity'
 import { ObjectID } from 'mongodb'
 import { LegatoField } from '../../../../decorators/field.decorator'
 
 export class DeleteParentTest extends LegatoEntity {
 	@LegatoField()
-	name: string
+	name: string = 'john'
 
 	@LegatoRelation({
 		checkRelation: true,
@@ -69,9 +69,4 @@ export class DeleteParentTest extends LegatoEntity {
 		targetKey: 'numberId',
 	})
 	childIdsNumber: number[] = []
-
-	constructor(name = 'john') {
-		super()
-		this.name = name
-	}
 }

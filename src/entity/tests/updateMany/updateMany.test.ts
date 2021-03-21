@@ -2,13 +2,13 @@ import { LegatoConnection } from '../../../connection'
 import {
 	UpdateManyEntityTestNoDecorator,
 	UpdateManyEntityTest,
-} from './entities/UpdateMany.entity.test'
+} from './entities/UpdateMany.entity'
 import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 import { getConnection, setConnection } from '../../..'
-import { UpdateManyParentTest } from './entities/UpdateManyParent.entity.test'
+import { UpdateManyParentTest } from './entities/UpdateManyParent.entity'
 import { ObjectID, ObjectId } from 'mongodb'
 import { LegatoErrorUpdateManyParent } from '../../../errors/updateMany/UpdateManyParent.error'
-import { UpdateManyChildTest } from './entities/UpdateManyChild.entity.test'
+import { UpdateManyChildTest } from './entities/UpdateManyChild.entity'
 
 const databaseName = 'updatemanyTest'
 

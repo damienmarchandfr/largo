@@ -4,9 +4,9 @@ import { getConnection, setConnection } from '../../..'
 import {
 	DeleteEntityTestWithoutDecorator,
 	DeleteEntityTest,
-} from './entities/Delete.entity.test'
-import { DeleteChildTest } from './entities/DeleteChild.entity.test'
-import { DeleteParentTest } from './entities/DeleteParent.entity.test'
+} from './entities/Delete.entity'
+import { DeleteChildTest } from './entities/DeleteChild.entity'
+import { DeleteParentTest } from './entities/DeleteParent.entity'
 import { LegatoErrorDeleteChild } from '../../../errors/delete/DeleteChild.error'
 import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 import { LegatoErrorDeleteNoMongoID } from '../../../errors/delete/NoMongoIdDelete.error'
@@ -56,7 +56,9 @@ describe('delete method', () => {
 		let hasError = false
 
 		// No _id set
-		const toDelete = new DeleteEntityTest('John')
+		const toDelete = DeleteEntityTest.create<DeleteEntityTest>({
+			name: 'John',
+		})
 		try {
 			await toDelete.delete()
 		} catch (error) {
@@ -77,7 +79,7 @@ describe('delete method', () => {
 			clean: true,
 		})
 
-		const obj = new DeleteEntityTest('john')
+		const obj = DeleteEntityTest.create<DeleteEntityTest>({ name: 'john' })
 
 		// Insert with native
 		const insertResult = await connection.collections.DeleteEntityTest.insertOne(
@@ -106,7 +108,7 @@ describe('delete method', () => {
 			clean: true,
 		})
 
-		const obj = new DeleteEntityTest('john')
+		const obj = DeleteEntityTest.create<DeleteEntityTest>({ name: 'john' })
 		const inserted = await connection.collections.DeleteEntityTest.insertOne(
 			obj
 		)
@@ -128,7 +130,7 @@ describe('delete method', () => {
 			clean: true,
 		})
 
-		const obj = new DeleteEntityTest('john')
+		const obj = DeleteEntityTest.create<DeleteEntityTest>({ name: 'john' })
 
 		const inserted = await connection.collections.DeleteEntityTest.insertOne(
 			obj
@@ -159,10 +161,10 @@ describe('delete method', () => {
 			clean: true,
 		})
 
-		const parent = new DeleteParentTest()
+		const parent = DeleteParentTest.create<DeleteParentTest>()
 		await parent.insert()
 
-		const child = new DeleteChildTest()
+		const child = DeleteChildTest.create<DeleteChildTest>()
 		const childId = await child.insert()
 
 		parent.childId = childId
@@ -212,13 +214,13 @@ describe('delete method', () => {
 			clean: true,
 		})
 
-		const parent = new DeleteParentTest()
+		const parent = DeleteParentTest.create<DeleteParentTest>()
 		await parent.insert()
 
-		const child = new DeleteChildTest()
+		const child = DeleteChildTest.create<DeleteChildTest>()
 		const childId = await child.insert()
 
-		const child2 = new DeleteChildTest()
+		const child2 = DeleteChildTest.create<DeleteChildTest>()
 		const child2Id = await child2.insert()
 
 		parent.childIds = [childId, child2Id]
@@ -273,11 +275,13 @@ describe('delete method', () => {
 		})
 
 		// Custom id as string
-		const parent = new DeleteParentTest()
+		const parent = DeleteParentTest.create<DeleteParentTest>({
+			childIdString: 'john',
+		})
 
-		const child = new DeleteChildTest()
-		child.stringId = 'john'
-		parent.childIdString = 'john'
+		const child = DeleteChildTest.create<DeleteChildTest>({
+			stringId: 'john',
+		})
 
 		await connection.collections.DeleteParentTest.insertOne(parent)
 		await connection.collections.DeleteChildTest.insertOne(child)
@@ -300,10 +304,12 @@ describe('delete method', () => {
 		expect(childCounter).toEqual(1)
 
 		// Custom id as number
-		const parent2 = new DeleteParentTest()
-		const child2 = new DeleteChildTest()
-		child2.numberId = 1
-		parent2.childIdNumber = 1
+		const parent2 = DeleteParentTest.create<DeleteParentTest>({
+			childIdNumber: 1,
+		})
+		const child2 = DeleteChildTest.create<DeleteChildTest>({
+			numberId: 1,
+		})
 
 		await connection.collections.DeleteParentTest.insertOne(parent2)
 		await connection.collections.DeleteChildTest.insertOne(child2)
@@ -337,11 +343,13 @@ describe('delete method', () => {
 		})
 
 		// Custom id as string
-		const parent = new DeleteParentTest()
+		const parent = DeleteParentTest.create<DeleteParentTest>({
+			childIdsString: ['john'],
+		})
 
-		const child = new DeleteChildTest()
-		child.stringId = 'john'
-		parent.childIdsString = ['john']
+		const child = DeleteChildTest.create<DeleteChildTest>({
+			stringId: 'john',
+		})
 
 		await connection.collections.DeleteParentTest.insertOne(parent)
 		await connection.collections.DeleteChildTest.insertOne(child)
@@ -364,10 +372,12 @@ describe('delete method', () => {
 		expect(childCounter).toEqual(1)
 
 		// Custom id as number
-		const parent2 = new DeleteParentTest()
-		const child2 = new DeleteChildTest()
-		child2.numberId = 1
-		parent2.childIdsNumber = [1]
+		const parent2 = DeleteParentTest.create<DeleteParentTest>({
+			childIdsNumber: [1],
+		})
+		const child2 = DeleteChildTest.create<DeleteChildTest>({
+			numberId: 1,
+		})
 
 		await connection.collections.DeleteParentTest.insertOne(parent2)
 		await connection.collections.DeleteChildTest.insertOne(child2)
@@ -400,10 +410,10 @@ describe('delete method', () => {
 			clean: true,
 		})
 
-		const parent = new DeleteParentTest()
+		const parent = DeleteParentTest.create<DeleteParentTest>()
 		await parent.insert()
 
-		const child = new DeleteChildTest()
+		const child = DeleteChildTest.create<DeleteChildTest>()
 		const childId = await child.insert()
 
 		parent.childIdNoCheck = childId
@@ -434,13 +444,13 @@ describe('delete method', () => {
 			clean: true,
 		})
 
-		const parent = new DeleteParentTest()
+		const parent = DeleteParentTest.create<DeleteParentTest>()
 		await parent.insert()
 
-		const child = new DeleteChildTest()
+		const child = DeleteChildTest.create<DeleteChildTest>()
 		const childId = await child.insert()
 
-		const child2 = new DeleteChildTest()
+		const child2 = DeleteChildTest.create<DeleteChildTest>()
 		const child2Id = await child2.insert()
 
 		parent.childIdsNoCheck = [childId, child2Id]

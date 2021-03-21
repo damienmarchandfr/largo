@@ -3,7 +3,7 @@ import { getConnection, setConnection } from '../../..'
 import {
 	CountDocumentsTestWithoutDecorator,
 	CountDocumentsTest,
-} from './entities/CountDocuments.entity.test'
+} from './entities/CountDocuments.entity'
 import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 
 const databaseName = 'countDocumentsTest'
