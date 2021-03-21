@@ -1,4 +1,4 @@
-import { LegatoEntity } from '../../entity'
+import { LegatoEntity, LegatoPlain } from '../../entity'
 import { ObjectID } from 'mongodb'
 import { DataStorageFielRelationValue } from '../..'
 import { LegatoErrorAbstract, errorCodes } from '..'
@@ -13,7 +13,7 @@ export class LegatoErrorDeleteChild extends LegatoErrorAbstract {
 	parentClass: Function
 	parentRelationKey: string
 	parentRelationKeyValue: any
-	parent: LegatoEntity
+	parent: LegatoPlain<LegatoEntity>
 
 	// Child to delete
 	childCollectionName: string
@@ -21,7 +21,7 @@ export class LegatoErrorDeleteChild extends LegatoErrorAbstract {
 	childClass: Function
 	childRelationKey: string
 	childRelationKeyValue: any
-	child: LegatoEntity
+	child: LegatoPlain<LegatoEntity>
 
 	constructor(
 		parent: LegatoEntity,

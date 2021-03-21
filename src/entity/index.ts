@@ -44,7 +44,7 @@ type LegatoPartial<T> = Partial<
 	>
 >
 
-type LegatoPlain<T> = Partial<
+export type LegatoPlain<T> = Partial<
 	Omit<
 		T,
 		| 'beforeDelete'

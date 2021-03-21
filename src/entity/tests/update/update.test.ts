@@ -2,10 +2,8 @@ import { LegatoConnection } from '../../../connection'
 import { ObjectID } from 'mongodb'
 import { getConnection, setConnection } from '../../..'
 import {
-	UpdateTestWithoutDecorator,
 	UpdateTest,
 } from './entities/Update.entity'
-import { LegatoErrorCollectionDoesNotExist } from '../../../errors'
 import { UpdateChildTest } from './entities/UpdateChild.entity'
 import { UpdateParentTest } from './entities/UpdateParent.entity'
 import { LegatoErrorUpdateParent } from '../../../errors/update/UpdateParent.error'
@@ -19,29 +17,6 @@ describe('update method', () => {
 		}
 	})
 
-	it('should throw an error if collection does not exist', async () => {
-		await new LegatoConnection({
-			databaseName,
-		}).connect({
-			clean: false,
-		})
-
-		let hasError = false
-
-		const id = new ObjectID()
-
-		const obj = new UpdateTestWithoutDecorator('john')
-		obj._id = id
-
-		try {
-			await obj.update()
-		} catch (error) {
-			hasError = true
-			expect(error).toBeInstanceOf(LegatoErrorCollectionDoesNotExist)
-		}
-		expect(hasError).toEqual(true)
-	})
-
 	it('should update', async () => {
 		const connection = await new LegatoConnection({
 			databaseName,
@@ -49,7 +24,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const obj = new UpdateTest('john')
+		const obj = UpdateTest.create<UpdateTest>({})
 
 		// Insert a user with mongo native
 		await connection.collections.UpdateTest.insertOne(obj)
@@ -71,7 +46,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const obj = new UpdateTest()
+		const obj = UpdateTest.create<UpdateTest>({})
 		delete obj.noDecorator
 		await connection.collections.UpdateTest.insertOne(obj)
 
@@ -94,7 +69,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const obj = new UpdateTest('john')
+		const obj = UpdateTest.create<UpdateTest>({})
 
 		await connection.collections.UpdateTest.insertOne(obj)
 
@@ -122,7 +97,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const obj = new UpdateTest('john')
+		const obj = UpdateTest.create<UpdateTest>({})
 		await connection.collections.UpdateTest.insertOne(obj)
 
 		obj.afterUpdate<UpdateTest>().subscribe((updateResult) => {
@@ -151,7 +126,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const obj = new UpdateParentTest('john doe')
+		const obj = UpdateParentTest.create<UpdateParentTest>({})
 
 		await connection.collections.UpdateParentTest.insertOne(obj)
 
@@ -183,7 +158,7 @@ describe('update method', () => {
 		})
 
 		const brokenIds = [new ObjectID(), new ObjectID()]
-		const obj = new UpdateParentTest('john doe')
+		const obj = UpdateParentTest.create<UpdateParentTest>({})
 
 		await connection.collections.UpdateParentTest.insertOne(obj)
 
@@ -211,8 +186,8 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
-		const child = new UpdateChildTest('john')
+		const parent = UpdateParentTest.create<UpdateParentTest>({})
+		const child = UpdateChildTest.create<UpdateParentTest>({})
 
 		await connection.collections.UpdateChildTest.insertOne(child)
 
@@ -241,7 +216,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 		await connection.collections.UpdateParentTest.insertOne(parent)
 
 		let hasError = false
@@ -268,13 +243,13 @@ describe('update method', () => {
 		})
 
 		// Insert two children
-		const child1 = new UpdateChildTest('john')
-		const child2 = new UpdateChildTest('doe')
+		const child1 = UpdateChildTest.create<UpdateChildTest>()
+		const child2 = UpdateChildTest.create<UpdateChildTest>()
 
 		await connection.collections.UpdateChildTest.insertMany([child1, child2])
 
 		// Parent
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 		expect(parent.childIds).toStrictEqual([])
 		await connection.collections.UpdateParentTest.insertOne(parent)
 
@@ -299,8 +274,8 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
-		const child = new UpdateChildTest('john')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
+		const child = UpdateChildTest.create<UpdateChildTest>()
 		const childIdNotinDb = new ObjectID()
 
 		await connection.collections.UpdateChildTest.insertOne(child)
@@ -334,10 +309,10 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>({})
 
 		// Child with custom id
-		const child = new UpdateChildTest('john')
+		const child = UpdateChildTest.create<UpdateChildTest>()
 		child.stringId = '1'
 
 		await connection.collections.UpdateChildTest.insertOne(child)
@@ -366,7 +341,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 		await connection.collections.UpdateParentTest.insertOne(parent)
 
 		// Update relation
@@ -393,13 +368,13 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 
 		// Children with custom id
-		const child1 = new UpdateChildTest('john')
+		const child1 = UpdateChildTest.create<UpdateChildTest>()
 		child1.stringId = '1'
 
-		const child2 = new UpdateChildTest('john')
+		const child2 = UpdateChildTest.create<UpdateChildTest>()
 		child2.stringId = '2'
 
 		await connection.collections.UpdateChildTest.insertMany([child1, child2])
@@ -428,9 +403,9 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 		parent.childIdsString = ['1']
-		const child1 = new UpdateChildTest('john')
+		const child1 = UpdateChildTest.create<UpdateChildTest>()
 		child1.stringId = '1'
 
 		await connection.collections.UpdateChildTest.insertOne(child1)
@@ -462,10 +437,10 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 
 		// Child with custom id
-		const child = new UpdateChildTest('john')
+		const child = UpdateChildTest.create<UpdateChildTest>()
 		child.numberId = 1
 
 		await connection.collections.UpdateChildTest.insertOne(child)
@@ -494,7 +469,7 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 		await connection.collections.UpdateParentTest.insertOne(parent)
 
 		// Update relation
@@ -521,13 +496,13 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 
 		// Children with custom id
-		const child1 = new UpdateChildTest('john')
+		const child1 = UpdateChildTest.create<UpdateChildTest>()
 		child1.numberId = 1
 
-		const child2 = new UpdateChildTest('john')
+		const child2 = UpdateChildTest.create<UpdateChildTest>()
 		child2.numberId = 2
 
 		await connection.collections.UpdateChildTest.insertMany([child1, child2])
@@ -556,9 +531,9 @@ describe('update method', () => {
 			clean: true,
 		})
 
-		const parent = new UpdateParentTest('john doe')
+		const parent = UpdateParentTest.create<UpdateParentTest>()
 		parent.childIdsNumber = [1]
-		const child1 = new UpdateChildTest('john')
+		const child1 = UpdateChildTest.create<UpdateChildTest>()
 		child1.numberId = 1
 
 		await connection.collections.UpdateChildTest.insertOne(child1)
