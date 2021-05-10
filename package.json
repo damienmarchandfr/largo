@@ -30,7 +30,7 @@
 		"dev": "jest --detectOpenHandles -- src/entity/tests/delete/delete.test.ts"
 	},
 	"dependencies": {
-		"lodash": "^4.17.20",
+		"lodash": "^4.17.21",
 		"mongodb": "^3.6.0",
 		"reflect-metadata": "^0.1.13",
 		"rxjs": "^6.6.3"
